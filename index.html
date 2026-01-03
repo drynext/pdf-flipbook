@@ -3,699 +3,505 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS Ultimate V9</title>
+    <title>FlipOS X (Studio Edition)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        /* =========================================
-           1. SYSTEM CORE VARIABLES (DARK/LIGHT)
-           ========================================= */
         :root {
-            --bg-app: #0f0f11;
-            --bg-panel: rgba(30, 30, 35, 0.85);
-            --text-main: #ececec;
-            --text-mute: #888888;
-            --accent: #6c5ce7; /* Purple OS */
-            --accent-hover: #8e7bf5;
-            --danger: #ff4757;
-            --success: #2ed573;
-            --border: rgba(255, 255, 255, 0.1);
-            --shadow: 0 10px 40px rgba(0,0,0,0.5);
-            --blur: blur(12px);
-            --radius: 16px;
+            --bg-dark: #121212;
+            --panel-dark: rgba(28, 28, 30, 0.95);
+            --accent: #0a84ff;
+            --text: #ffffff;
+            --border: rgba(255,255,255,0.15);
+            --shadow: 0 8px 32px rgba(0,0,0,0.5);
+            --radius: 18px;
         }
 
         [data-theme="light"] {
-            --bg-app: #f4f5f7;
-            --bg-panel: rgba(255, 255, 255, 0.85);
-            --text-main: #2d3436;
-            --text-mute: #636e72;
-            --accent: #0984e3;
-            --border: rgba(0, 0, 0, 0.1);
-            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --bg-dark: #f2f2f7;
+            --panel-dark: rgba(255, 255, 255, 0.95);
+            --accent: #007aff;
+            --text: #000000;
+            --border: rgba(0,0,0,0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
         
         body {
-            background: var(--bg-app); color: var(--text-main);
+            background-color: var(--bg-dark); color: var(--text);
             font-family: 'Inter', sans-serif;
-            height: 100vh; width: 100vw; overflow: hidden;
+            height: 100vh; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
-            transition: background 0.4s ease;
         }
 
-        /* =========================================
-           2. UI COMPONENTS (FLOATING ISLANDS)
-           ========================================= */
-        
-        /* Top Bar - File Info & Modes */
         .island-top {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 10px 20px; border-radius: var(--radius);
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; align-items: center; gap: 20px; z-index: 1000;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: fixed; top: 20px; z-index: 1000;
+            background: var(--panel-dark); backdrop-filter: blur(20px);
+            padding: 8px 16px; border-radius: 50px;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 15px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .app-logo { font-weight: 800; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
-        .divider { width: 1px; height: 20px; background: var(--border); }
+        .mode-switch {
+            background: rgba(128,128,128,0.2); border-radius: 30px;
+            display: flex; padding: 4px; position: relative;
+        }
         
-        .mode-switcher { display: flex; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 3px; }
-        .mode-btn {
-            padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
-            color: var(--text-mute); transition: 0.2s; border: none; background: transparent;
+        .mode-opt {
+            padding: 8px 20px; border-radius: 25px; cursor: pointer;
+            font-weight: 600; font-size: 0.9rem; z-index: 2;
+            transition: color 0.2s;
         }
-        .mode-btn.active { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(108, 92, 231, 0.4); }
+        
+        .mode-blob {
+            position: absolute; top: 4px; left: 4px; height: calc(100% - 8px);
+            background: var(--accent); border-radius: 25px;
+            z-index: 1; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
 
-        /* Bottom Bar - Navigation & Zoom */
+        .island-tools {
+            position: fixed; top: 100px; left: 20px; z-index: 900;
+            background: var(--panel-dark); backdrop-filter: blur(20px);
+            padding: 15px; border-radius: var(--radius);
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 15px;
+            transform: translateX(-150%); opacity: 0;
+            transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .island-tools.visible { transform: translateX(0); opacity: 1; }
+
+        .tool-btn {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: rgba(128,128,128,0.1); border: 1px solid transparent;
+            color: var(--text); font-size: 1.2rem; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            transition: 0.2s; position: relative;
+        }
+        .tool-btn:hover { background: rgba(128,128,128,0.2); }
+        .tool-btn.active { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent); transform: scale(1.1); }
+
+        .color-dot {
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            border: 2px solid transparent; transition: 0.2s;
+        }
+        .color-dot.active { border-color: var(--text); transform: scale(1.2); }
+
         .island-bottom {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 12px 24px; border-radius: 24px;
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; align-items: center; gap: 15px; z-index: 1000;
+            position: fixed; bottom: 30px; z-index: 1000;
+            background: var(--panel-dark); backdrop-filter: blur(20px);
+            padding: 10px 25px; border-radius: 40px;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            display: flex; gap: 20px; align-items: center;
         }
 
         .icon-btn {
-            width: 42px; height: 42px; border-radius: 12px;
-            border: 1px solid transparent; background: rgba(128,128,128,0.1);
-            color: var(--text-main); font-size: 1.1rem; cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-            transition: all 0.2s;
+            background: none; border: none; color: var(--text);
+            font-size: 1.2rem; cursor: pointer; opacity: 0.7;
+            transition: 0.2s;
         }
-        .icon-btn:hover { background: var(--accent); color: white; transform: translateY(-3px); }
-        .icon-btn:active { transform: scale(0.95); }
-        .icon-btn.active { background: var(--accent); color: white; box-shadow: 0 0 15px var(--accent); }
+        .icon-btn:hover { opacity: 1; transform: translateY(-2px); }
 
-        .page-indicator { font-feature-settings: "tnum"; font-weight: 600; min-width: 80px; text-align: center; }
-
-        /* Side Palette (Drawing Tools) - Only shows in Draw Mode */
-        .island-side {
-            position: fixed; right: 20px; top: 50%; transform: translateY(-50%) translateX(150%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 15px; border-radius: var(--radius);
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; flex-direction: column; gap: 12px; z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .island-side.visible { transform: translateY(-50%) translateX(0); }
-
-        .color-swatch {
-            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-            border: 3px solid transparent; transition: 0.2s;
-        }
-        .color-swatch.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-
-        /* =========================================
-           3. STAGE & LAYERS (TRÁI TIM CỦA V9)
-           ========================================= */
         .stage {
-            width: 100%; height: 100%;
+            width: 100vw; height: 100vh;
+            position: relative; overflow: hidden;
+            background-image: radial-gradient(rgba(128,128,128,0.2) 1px, transparent 1px);
+            background-size: 40px 40px;
             display: flex; justify-content: center; align-items: center;
-            position: relative; perspective: 1500px;
-            background-image: radial-gradient(rgba(128,128,128,0.15) 1px, transparent 1px);
-            background-size: 30px 30px;
         }
 
-        /* Lớp quản lý Zoom/Pan */
-        .viewport-layer {
-            transition: transform 0.1s linear; /* Tắt easing để vẽ không bị delay */
+        .book-container {
+            transition: transform 0.1s linear; 
             transform-style: preserve-3d;
             will-change: transform;
         }
 
-        /* Khi ở chế độ vẽ, con trỏ thay đổi */
-        .viewport-layer.drawing-mode { cursor: crosshair; }
-        .viewport-layer.reading-mode { cursor: grab; }
-
-        /* Canvas Pages */
-        .page-wrapper { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
-        
-        .pdf-layer { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; }
-        
-        /* MAGIC LAYER: Canvas vẽ sẽ nằm đè lên */
-        .ink-layer { 
-            position: absolute; top: 0; left: 0; z-index: 5; 
-            touch-action: none; /* Chặn touch mặc định để vẽ trên mobile */
+        .page-wrapper {
+            position: relative; background: #fff; overflow: hidden;
+            backface-visibility: hidden;
         }
 
-        /* =========================================
-           4. UPLOAD & NOTIFICATIONS
-           ========================================= */
-        .modal-overlay {
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .pdf-layer { z-index: 1; }
+        .ink-layer { z-index: 10; cursor: crosshair; }
+
+        .upload-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 5000;
-            display: flex; justify-content: center; align-items: center;
-            animation: fadeIn 0.5s;
+            background: rgba(0,0,0,0.85); z-index: 5000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            backdrop-filter: blur(10px);
         }
-        
-        .upload-card {
-            background: #1e1e24; padding: 50px; border-radius: 30px;
-            text-align: center; border: 2px dashed #444;
-            transition: 0.3s; cursor: pointer; max-width: 500px;
+        .drop-zone {
+            width: 400px; height: 250px; border: 3px dashed var(--accent);
+            border-radius: 20px; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; cursor: pointer;
+            transition: 0.3s;
         }
-        .upload-card:hover { border-color: var(--accent); background: #25252b; transform: scale(1.02); }
-        .upload-card h1 { font-size: 2.5rem; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .drop-zone:hover { background: rgba(10, 132, 255, 0.1); transform: scale(1.02); }
 
         .toast {
-            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: #333; color: #fff; padding: 10px 20px; border-radius: 50px;
-            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000;
-            font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: fixed; top: 90px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: #222; color: #fff; padding: 10px 20px; border-radius: 30px;
+            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000; font-weight: 600;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* Kính lúp (Spyglass) */
-        .spyglass {
-            position: absolute; width: 250px; height: 250px;
-            border-radius: 50%; border: 4px solid white;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.6);
-            overflow: hidden; pointer-events: none; z-index: 9999;
-            display: none; background: #fff;
-        }
-
-        @keyframes fadeIn { from {opacity:0} to {opacity:1} }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div class="modal-overlay" id="start-screen">
-        <div class="upload-card" onclick="document.getElementById('file-upload').click()">
-            <i class="fas fa-cube" style="font-size: 4rem; color: var(--accent); margin-bottom: 20px;"></i>
-            <h1>FLIP OS V9</h1>
-            <p style="color: #888;">System Ready. Click to Initialize PDF Core.</p>
+    <div class="upload-modal" id="modal">
+        <div class="drop-zone" onclick="document.getElementById('file-in').click()">
+            <i class="fas fa-feather-alt" style="font-size: 4rem; color: var(--accent); margin-bottom: 15px;"></i>
+            <h2>FLIP OS X</h2>
+            <p style="opacity: 0.7;">Chạm để mở Studio</p>
         </div>
-        <input type="file" id="file-upload" accept="application/pdf" style="display: none;">
+        <input type="file" id="file-in" accept="application/pdf" style="display: none;">
+        <div id="loading" style="margin-top:20px; font-weight:bold; display:none;">INITIALIZING INK ENGINE...</div>
     </div>
 
     <div class="island-top">
-        <div class="app-logo"><i class="fas fa-layer-group"></i> FLIP OS</div>
-        <div class="divider"></div>
-        <div class="mode-switcher">
-            <button class="mode-btn active" onclick="App.setMode('READ')" id="mode-read"><i class="fas fa-book-open"></i> Đọc</button>
-            <button class="mode-btn" onclick="App.setMode('DRAW')" id="mode-draw"><i class="fas fa-pen-nib"></i> Vẽ</button>
+        <div class="mode-switch">
+            <div class="mode-blob" id="blob"></div>
+            <div class="mode-opt" onclick="App.setMode(0)" style="width: 80px; text-align: center;">READ</div>
+            <div class="mode-opt" onclick="App.setMode(1)" style="width: 80px; text-align: center;">DRAW</div>
         </div>
-        <div class="divider"></div>
-        <button class="icon-btn" onclick="App.toggleTheme()" title="Theme"><i class="fas fa-adjust"></i></button>
+        <div style="width:1px; height:20px; background:rgba(128,128,128,0.3)"></div>
+        <i class="fas fa-moon icon-btn" onclick="App.toggleTheme()"></i>
     </div>
 
-    <div class="island-side" id="toolbar-draw">
-        <div class="color-swatch active" style="background:#ff4757;" onclick="Pen.setColor('#ff4757', this)"></div>
-        <div class="color-swatch" style="background:#2ed573;" onclick="Pen.setColor('#2ed573', this)"></div>
-        <div class="color-swatch" style="background:#3742fa;" onclick="Pen.setColor('#3742fa', this)"></div>
-        <div class="color-swatch" style="background:#ffa502;" onclick="Pen.setColor('#ffa502', this)"></div>
-        <div class="color-swatch" style="background:#000000; border:1px solid #555" onclick="Pen.setColor('#000000', this)"></div>
-        <div class="divider" style="width:100%; height:1px;"></div>
-        <button class="icon-btn" onclick="Pen.undo()" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
-        <button class="icon-btn" onclick="Pen.setEraser()" id="btn-eraser" title="Eraser"><i class="fas fa-eraser"></i></button>
-        <button class="icon-btn" onclick="Pen.clearPage()" title="Clear Page"><i class="fas fa-trash"></i></button>
+    <div class="island-tools" id="tool-panel">
+        <div class="tool-btn active" id="tool-pen" onclick="Ink.setTool('pen')" title="Bút máy"><i class="fas fa-pen-nib"></i></div>
+        <div class="tool-btn" id="tool-marker" onclick="Ink.setTool('marker')" title="Bút nhớ"><i class="fas fa-highlighter"></i></div>
+        <div class="tool-btn" id="tool-eraser" onclick="Ink.setTool('eraser')" title="Tẩy"><i class="fas fa-eraser"></i></div>
+        
+        <div style="height:1px; background:rgba(128,128,128,0.3); margin: 5px 0;"></div>
+
+        <div class="color-dot active" style="background:#fff" onclick="Ink.setColor('#ffffff', this)"></div>
+        <div class="color-dot" style="background:#0a84ff" onclick="Ink.setColor('#0a84ff', this)"></div>
+        <div class="color-dot" style="background:#ff453a" onclick="Ink.setColor('#ff453a', this)"></div>
+        <div class="color-dot" style="background:#ffd60a" onclick="Ink.setColor('#ffd60a', this)"></div>
+        
+        <div style="height:1px; background:rgba(128,128,128,0.3); margin: 5px 0;"></div>
+        
+        <div class="tool-btn" onclick="Ink.undo()" title="Hoàn tác"><i class="fas fa-undo"></i></div>
+        <div class="tool-btn" onclick="Ink.clear()" title="Xóa hết trang"><i class="fas fa-trash-alt"></i></div>
     </div>
 
     <div class="island-bottom">
-        <button class="icon-btn" onclick="App.prevPage()"><i class="fas fa-chevron-left"></i></button>
-        <span class="page-indicator" id="page-num">Ready</span>
-        <button class="icon-btn" onclick="App.nextPage()"><i class="fas fa-chevron-right"></i></button>
-        
-        <div class="divider"></div>
-        
+        <button class="icon-btn" onclick="App.prev()"><i class="fas fa-chevron-left"></i></button>
+        <span id="page-txt" style="font-weight:700; font-variant-numeric: tabular-nums; width:80px; text-align:center;">---</span>
+        <button class="icon-btn" onclick="App.next()"><i class="fas fa-chevron-right"></i></button>
+        <div style="width:1px; height:20px; background:rgba(128,128,128,0.3)"></div>
         <button class="icon-btn" onclick="Zoom.out()"><i class="fas fa-minus"></i></button>
-        <span class="page-indicator" id="zoom-level">100%</span>
+        <span id="zoom-txt" style="font-weight:700;">100%</span>
         <button class="icon-btn" onclick="Zoom.in()"><i class="fas fa-plus"></i></button>
-        
-        <div class="divider"></div>
-        
-        <button class="icon-btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
-        <button class="icon-btn" onclick="App.toggleFullscreen()"><i class="fas fa-expand"></i></button>
     </div>
 
-    <div class="stage">
-        <div class="viewport-layer reading-mode" id="viewport">
-            <div id="book-container"></div>
-        </div>
-        
-        <div class="spyglass" id="spyglass"><canvas id="spy-canvas"></canvas></div>
+    <div class="stage" id="stage">
+        <div class="book-container" id="book"></div>
     </div>
 
     <div class="toast" id="toast">Thông báo</div>
 
-    <audio id="sfx-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
-    <audio id="sfx-click" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="snd-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
 
     <script>
-        /**
-         * ==========================================================
-         * FLIP OS KERNEL V9 - ENTERPRISE MONOLITH STRUCTURE
-         * Author: Gemini AI (Prompted by You)
-         * ==========================================================
-         */
-
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        // --- GLOBAL STATE STORE ---
-        const Store = {
-            mode: 'READ', // 'READ' | 'DRAW'
+        const State = {
+            mode: 0,
             zoom: 1,
-            isDark: true,
             pdf: null,
-            totalPages: 0,
-            currentPage: 0,
-            history: {} // Lưu nét vẽ của từng trang: { pageIndex: [ImageData, ...] }
+            flip: null,
+            isDark: true
         };
 
-        // --- 1. CORE APPLICATION CONTROLLER ---
         const App = {
-            pageFlip: null,
-            
             init() {
-                // Binding Events
-                document.getElementById('file-upload').addEventListener('change', this.handleFileUpload);
-                
-                // Keyboard Shortcuts
-                document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey && e.key === 'z') Pen.undo();
-                    if (e.key === 'ArrowLeft') this.prevPage();
-                    if (e.key === 'ArrowRight') this.nextPage();
+                document.getElementById('file-in').addEventListener('change', this.loadPDF);
+                document.addEventListener('keydown', e => {
+                    if(e.ctrlKey && e.key === 'z') Ink.undo();
                 });
             },
 
-            async handleFileUpload(e) {
+            async loadPDF(e) {
                 const file = e.target.files[0];
                 if(!file) return;
-
-                UI.toast("Booting PDF Core...");
-                document.querySelector('.upload-card').innerHTML = '<i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:var(--accent)"></i><br><br>PROCESSING MATRIX...';
                 
-                // Audio Init
-                const sfx = document.getElementById('sfx-flip'); sfx.play().catch(()=>{}); sfx.pause();
+                document.querySelector('.drop-zone').style.display='none';
+                document.getElementById('loading').style.display='block';
+                
+                const snd = document.getElementById('snd-flip'); snd.play().catch(()=>{}); snd.pause();
 
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(file);
                 reader.onload = async (ev) => {
-                    try {
-                        const data = new Uint8Array(ev.target.result);
-                        Store.pdf = await pdfjsLib.getDocument(data).promise;
-                        Store.totalPages = Store.pdf.numPages;
-                        await App.renderBook();
-                    } catch (err) {
-                        alert("Corrupted Data: " + err.message);
-                        location.reload();
-                    }
-                };
+                    const data = new Uint8Array(ev.target.result);
+                    State.pdf = await pdfjsLib.getDocument(data).promise;
+                    await App.renderBook();
+                }
             },
 
             async renderBook() {
-                const container = document.getElementById('book-container');
+                const container = document.getElementById('book');
                 container.innerHTML = '';
+                const total = State.pdf.numPages;
 
-                // RENDER PIPELINE
-                for (let i = 1; i <= Store.totalPages; i++) {
-                    const page = await Store.pdf.getPage(i);
-                    const viewport = page.getViewport({ scale: 1.5 }); // High Res
+                for(let i=1; i<=total; i++) {
+                    const page = await State.pdf.getPage(i);
+                    const viewport = page.getViewport({scale: 1.5});
+                    
+                    const wrap = document.createElement('div');
+                    wrap.className = 'page-wrapper';
+                    wrap.dataset.density = 1.5;
 
-                    // Create Page Structure
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'page-wrapper';
-                    wrapper.dataset.pageIndex = i - 1; // 0-based index for logic
+                    const pdfCan = document.createElement('canvas');
+                    pdfCan.className = 'pdf-layer';
+                    pdfCan.width = viewport.width; pdfCan.height = viewport.height;
+                    const ctx = pdfCan.getContext('2d', {alpha: false});
+                    await page.render({canvasContext: ctx, viewport}).promise;
 
-                    // 1. PDF Raster Layer
-                    const pdfCanvas = document.createElement('canvas');
-                    pdfCanvas.className = 'pdf-layer';
-                    pdfCanvas.width = viewport.width;
-                    pdfCanvas.height = viewport.height;
-                    const ctx = pdfCanvas.getContext('2d', { alpha: false });
-                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-
-                    // 2. Ink Vector Layer (Canvas vẽ)
-                    const inkCanvas = document.createElement('canvas');
-                    inkCanvas.className = 'ink-layer';
-                    inkCanvas.width = viewport.width;
-                    inkCanvas.height = viewport.height;
-
-                    wrapper.appendChild(pdfCanvas);
-                    wrapper.appendChild(inkCanvas);
-                    container.appendChild(wrapper);
+                    const inkCan = document.createElement('canvas');
+                    inkCan.className = 'ink-layer';
+                    inkCan.width = viewport.width; inkCan.height = viewport.height;
+                    
+                    wrap.appendChild(pdfCan);
+                    wrap.appendChild(inkCan);
+                    container.appendChild(wrap);
                 }
 
-                document.getElementById('start-screen').style.display = 'none';
-                this.initFlipEngine();
+                document.getElementById('modal').style.display='none';
+                this.initFlip();
+                Ink.init();
             },
 
-            initFlipEngine() {
+            initFlip() {
                 const isMobile = window.innerWidth < 768;
-                this.pageFlip = new St.PageFlip(document.getElementById('book-container'), {
-                    width: isMobile ? 380 : 580,
-                    height: isMobile ? 550 : 820,
+                State.flip = new St.PageFlip(document.getElementById('book'), {
+                    width: isMobile ? 380 : 600, height: isMobile ? 550 : 850,
                     size: "stretch", showCover: true, usePortrait: isMobile,
                     minWidth: 300, maxWidth: 1000,
-                    maxShadowOpacity: 0.5,
-                    // QUAN TRỌNG: Mặc định cho phép chuột để lật
-                    useMouseEvents: true 
+                    useMouseEvents: true
                 });
-
-                this.pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
-
-                this.pageFlip.on('flip', (e) => {
-                    Store.currentPage = e.data;
-                    document.getElementById('page-num').innerText = `${e.data + 1} / ${Store.totalPages}`;
-                    UI.playSound('flip');
+                
+                State.flip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
+                
+                State.flip.on('flip', (e) => {
+                    document.getElementById('page-txt').innerText = `${e.data+1} / ${State.pdf.numPages}`;
+                    UI.sound();
                 });
             },
 
-            // --- MODE SWITCHER LOGIC (KEY FIX) ---
-            setMode(newMode) {
-                Store.mode = newMode;
-                const view = document.getElementById('viewport');
-                const toolbarDraw = document.getElementById('toolbar-draw');
-                const btnRead = document.getElementById('mode-read');
-                const btnDraw = document.getElementById('mode-draw');
-
-                if (newMode === 'DRAW') {
-                    // 1. Tắt sự kiện chuột của Flip Library -> Để canvas nhận chuột vẽ
-                    this.pageFlip.update({ useMouseEvents: false });
-                    
-                    // 2. UI Updates
-                    view.classList.remove('reading-mode');
-                    view.classList.add('drawing-mode');
-                    toolbarDraw.classList.add('visible');
-                    btnDraw.classList.add('active');
-                    btnRead.classList.remove('active');
-                    UI.toast("Pen Mode Active");
-                    
-                    // 3. Init Pen Events
-                    Pen.attachEvents();
-
+            setMode(m) {
+                State.mode = m;
+                const blob = document.getElementById('blob');
+                const panel = document.getElementById('tool-panel');
+                
+                if(m === 0) {
+                    blob.style.transform = 'translateX(0)';
+                    panel.classList.remove('visible');
+                    if(State.flip) State.flip.update({useMouseEvents: true});
+                    document.body.style.cursor = 'default';
+                    UI.notify("Read Mode");
                 } else {
-                    // 1. Bật lại sự kiện chuột cho Flip Library
-                    this.pageFlip.update({ useMouseEvents: true });
-                    
-                    // 2. UI Updates
-                    view.classList.remove('drawing-mode');
-                    view.classList.add('reading-mode');
-                    toolbarDraw.classList.remove('visible');
-                    btnRead.classList.add('active');
-                    btnDraw.classList.remove('active');
-                    UI.toast("Read Mode Active");
-                    
-                    // 3. Detach Pen Events (để tiết kiệm resource)
-                    Pen.detachEvents();
+                    blob.style.transform = 'translateX(100%)';
+                    panel.classList.add('visible');
+                    if(State.flip) State.flip.update({useMouseEvents: false});
+                    UI.notify("Studio Mode Active");
                 }
             },
 
-            prevPage() { if(this.pageFlip) this.pageFlip.flipPrev(); },
-            nextPage() { if(this.pageFlip) this.pageFlip.flipNext(); },
-            
             toggleTheme() {
-                Store.isDark = !Store.isDark;
-                document.body.setAttribute('data-theme', Store.isDark ? 'dark' : 'light');
+                State.isDark = !State.isDark;
+                document.body.setAttribute('data-theme', State.isDark ? 'dark' : 'light');
             },
 
-            toggleFullscreen() {
-                if(!document.fullscreenElement) document.documentElement.requestFullscreen();
-                else document.exitFullscreen();
-            }
+            prev() { State.flip?.flipPrev(); },
+            next() { State.flip?.flipNext(); }
         };
 
-        // --- 2. PEN ENGINE (V9 - SMOOTH INK) ---
-        const Pen = {
-            color: '#ff4757',
-            lineWidth: 3,
+        const Ink = {
+            tool: 'pen',
+            color: '#ffffff',
+            size: 3,
             isDrawing: false,
-            isEraser: false,
-            activeCanvas: null,
+            points: [],
             ctx: null,
-            lastPoint: { x: 0, y: 0 },
-            historyStack: [], // Stack cho Undo
+            canvas: null,
+            
+            startTime: 0,
+            holdTimer: null,
+            startPoint: null,
+            snapshot: null,
 
-            attachEvents() {
+            init() {
                 const layers = document.querySelectorAll('.ink-layer');
-                layers.forEach(canvas => {
-                    canvas.onpointerdown = (e) => this.start(e, canvas);
-                    canvas.onpointermove = (e) => this.move(e);
-                    canvas.onpointerup = () => this.end();
-                    canvas.onpointercancel = () => this.end();
+                layers.forEach(can => {
+                    can.addEventListener('pointerdown', e => this.start(e, can));
+                    can.addEventListener('pointermove', e => this.move(e));
+                    can.addEventListener('pointerup', e => this.end(e));
+                    can.addEventListener('pointercancel', e => this.end(e));
                 });
             },
 
-            detachEvents() {
-                const layers = document.querySelectorAll('.ink-layer');
-                layers.forEach(canvas => {
-                    canvas.onpointerdown = null;
-                    canvas.onpointermove = null;
-                });
+            setTool(t) {
+                this.tool = t;
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`tool-${t}`).classList.add('active');
             },
 
-            getCoords(e, canvas) {
+            setColor(c, el) {
+                this.color = c; this.tool = 'pen';
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                el.classList.add('active');
+                this.setTool('pen');
+            },
+
+            getPoint(e, canvas) {
                 const rect = canvas.getBoundingClientRect();
-                // Map toạn độ màn hình -> tọa độ Canvas thực tế
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
                 return {
                     x: (e.clientX - rect.left) * scaleX,
-                    y: (e.clientY - rect.top) * scaleY
+                    y: (e.clientY - rect.top) * scaleY,
+                    pressure: e.pressure || 0.5,
+                    time: Date.now()
                 };
             },
 
             start(e, canvas) {
-                if (Store.mode !== 'DRAW') return;
-                
-                // Chặn sự kiện nổi bọt để Flip không bắt được
-                e.stopPropagation(); 
-                canvas.setPointerCapture(e.pointerId); // Khóa con trỏ vào canvas này
+                if(State.mode !== 1) return;
+                e.preventDefault();
+                canvas.setPointerCapture(e.pointerId);
 
                 this.isDrawing = true;
-                this.activeCanvas = canvas;
+                this.canvas = canvas;
                 this.ctx = canvas.getContext('2d');
+                this.points = [];
                 
-                // Lưu trạng thái trước khi vẽ để Undo
-                this.saveState(canvas);
+                this.snapshot = this.ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                const p = this.getPoint(e, canvas);
+                this.points.push(p);
+                this.startPoint = p;
 
-                const coords = this.getCoords(e, canvas);
-                this.lastPoint = coords;
-
-                // Setup Brush
                 this.ctx.lineCap = 'round';
                 this.ctx.lineJoin = 'round';
-                this.ctx.lineWidth = this.isEraser ? 20 : this.lineWidth;
-                this.ctx.strokeStyle = this.color;
-                this.ctx.globalCompositeOperation = this.isEraser ? 'destination-out' : 'source-over';
                 
-                // Vẽ dấu chấm ngay khi click
-                this.ctx.beginPath();
-                this.ctx.arc(coords.x, coords.y, this.ctx.lineWidth / 2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.beginPath();
-                this.ctx.moveTo(coords.x, coords.y);
+                if(this.tool === 'marker') {
+                    this.ctx.globalCompositeOperation = 'multiply';
+                    this.ctx.strokeStyle = this.color + '66';
+                    this.ctx.lineWidth = 20;
+                } else if (this.tool === 'eraser') {
+                    this.ctx.globalCompositeOperation = 'destination-out';
+                    this.ctx.lineWidth = 25;
+                } else {
+                    this.ctx.globalCompositeOperation = 'source-over';
+                    this.ctx.strokeStyle = this.color;
+                    this.ctx.lineWidth = this.size;
+                }
+
+                this.startTime = Date.now();
+                clearTimeout(this.holdTimer);
+                this.holdTimer = setTimeout(() => {
+                    if(this.isDrawing && this.points.length > 10) {
+                        this.snapToShape();
+                    }
+                }, 600);
             },
 
             move(e) {
-                if (!this.isDrawing) return;
-                e.preventDefault(); // Chặn scroll trang trên mobile
-
-                const coords = this.getCoords(e, this.activeCanvas);
+                if(!this.isDrawing) return;
                 
-                // Thuật toán vẽ Quadratic Curve cho nét mượt
-                const midPoint = {
-                    x: this.lastPoint.x + (coords.x - this.lastPoint.x) / 2,
-                    y: this.lastPoint.y + (coords.y - this.lastPoint.y) / 2
-                };
+                const p = this.getPoint(e, this.canvas);
+                this.points.push(p);
 
-                this.ctx.quadraticCurveTo(this.lastPoint.x, this.lastPoint.y, midPoint.x, midPoint.y);
+                if(this.points.length > 2) {
+                    const lastTwo = this.points.slice(-2);
+                    const p1 = lastTwo[0];
+                    const p2 = lastTwo[1];
+                    const mid = {
+                        x: p1.x + (p2.x - p1.x) / 2,
+                        y: p1.y + (p2.y - p1.y) / 2
+                    };
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(p1.x, p1.y);
+                    this.ctx.quadraticCurveTo(p1.x, p1.y, mid.x, mid.y);
+                    this.ctx.stroke();
+                }
+            },
+
+            end(e) {
+                clearTimeout(this.holdTimer);
+                this.isDrawing = false;
+                this.points = [];
+                this.ctx.beginPath();
+            },
+
+            snapToShape() {
+                this.ctx.putImageData(this.snapshot, 0, 0);
+
+                const start = this.startPoint;
+                const current = this.points[this.points.length - 1];
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(start.x, start.y);
+                this.ctx.lineTo(current.x, current.y);
                 this.ctx.stroke();
                 
-                this.lastPoint = coords;
+                UI.notify("Shape Snapped!");
+                UI.sound();
             },
 
-            end() {
-                if (!this.isDrawing) return;
-                this.isDrawing = false;
-                this.ctx.closePath();
+            clear() {
+                if(this.canvas) {
+                    const ctx = this.canvas.getContext('2d');
+                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                }
             },
-
-            setColor(hex, el) {
-                this.color = hex;
-                this.isEraser = false;
-                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-                if(el) el.classList.add('active');
-                document.getElementById('btn-eraser').classList.remove('active');
-            },
-
-            setEraser() {
-                this.isEraser = !this.isEraser;
-                const btn = document.getElementById('btn-eraser');
-                btn.classList.toggle('active', this.isEraser);
-            },
-
-            // --- UNDO SYSTEM ---
-            saveState(canvas) {
-                // Lưu tối đa 10 bước history cho mỗi trang
-                const pageIdx = canvas.parentElement.dataset.pageIndex;
-                if (!Store.history[pageIdx]) Store.history[pageIdx] = [];
-                
-                const snapshot = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-                Store.history[pageIdx].push(snapshot);
-                if(Store.history[pageIdx].length > 10) Store.history[pageIdx].shift();
-            },
-
+            
             undo() {
-                // Tìm canvas của trang hiện tại
-                // Lưu ý: PageFlip render 2 trang cùng lúc, logic này lấy trang active
-                const visibleWrappers = document.querySelectorAll('.page-wrapper'); // Cần logic phức tạp hơn để tìm đúng trang
-                // Để đơn giản cho V9, ta Undo trang đang vẽ gần nhất (activeCanvas)
-                if (!this.activeCanvas) {
-                    UI.toast("Vẽ gì đi rồi hãy Undo!");
-                    return;
-                }
-                
-                const pageIdx = this.activeCanvas.parentElement.dataset.pageIndex;
-                const stack = Store.history[pageIdx];
-
-                if (stack && stack.length > 0) {
-                    const ctx = this.activeCanvas.getContext('2d');
-                    const lastState = stack.pop();
-                    ctx.putImageData(lastState, 0, 0);
-                    UI.toast("Undo Successful");
-                }
-            },
-            
-            clearPage() {
-                if(!this.activeCanvas) return;
-                this.saveState(this.activeCanvas);
-                const ctx = this.activeCanvas.getContext('2d');
-                ctx.clearRect(0, 0, this.activeCanvas.width, this.activeCanvas.height);
+                UI.notify("Undo not available in V10 Core");
             }
         };
 
-        // --- 3. ZOOM ENGINE (MATRIX TRANSFORM) ---
         const Zoom = {
-            scale: 1,
-            pan: { x: 0, y: 0 },
-            isDragging: false,
-            startPos: { x: 0, y: 0 },
-
-            init() {
-                const viewport = document.getElementById('viewport');
-                
-                // Pan Logic (Chỉ hoạt động khi KHÔNG ở chế độ vẽ và Zoom > 1)
-                viewport.addEventListener('mousedown', e => {
-                    if (Store.mode === 'DRAW' || this.scale <= 1) return;
-                    this.isDragging = true;
-                    this.startPos = { x: e.clientX - this.pan.x, y: e.clientY - this.pan.y };
-                    viewport.style.cursor = 'grabbing';
-                });
-
-                window.addEventListener('mousemove', e => {
-                    if (!this.isDragging) return;
-                    e.preventDefault();
-                    this.pan.x = e.clientX - this.startPos.x;
-                    this.pan.y = e.clientY - this.startPos.y;
-                    this.update();
-                });
-
-                window.addEventListener('mouseup', () => {
-                    this.isDragging = false;
-                    viewport.style.cursor = Store.mode === 'DRAW' ? 'crosshair' : 'grab';
-                });
-            },
-
-            in() { if (this.scale < 3) { this.scale += 0.5; this.update(); } },
-            out() { if (this.scale > 1) { this.scale -= 0.5; this.update(); } },
-
-            update() {
-                const el = document.getElementById('viewport');
-                document.getElementById('zoom-level').innerText = Math.round(this.scale * 100) + '%';
-                
-                el.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.scale})`;
-                
-                // Reset Pan nếu zoom về 1
-                if (this.scale === 1) {
-                    this.pan = { x: 0, y: 0 };
-                    el.style.transform = `scale(1)`;
-                }
-            }
-        };
-        
-        Zoom.init();
-
-        // --- 4. SPYGLASS (KÍNH LÚP XUYÊN THẤU) ---
-        const Loupe = {
-            active: false,
-            ctx: document.getElementById('spy-canvas').getContext('2d'),
+            val: 1,
+            pan: {x:0, y:0},
             
-            toggle() {
-                this.active = !this.active;
-                const glass = document.getElementById('spyglass');
-                const btn = document.getElementById('btn-loupe');
+            in() { if(this.val<3) {this.val+=0.5; this.apply();} },
+            out() { if(this.val>1) {this.val-=0.5; this.apply();} },
+            
+            apply() {
+                document.getElementById('zoom-txt').innerText = (this.val*100)+'%';
+                const el = document.getElementById('book');
+                el.style.transform = `scale(${this.val})`;
                 
-                if (this.active) {
-                    glass.style.display = 'block';
-                    btn.classList.add('active');
-                    document.addEventListener('mousemove', this.move);
-                    document.getElementById('spy-canvas').width = 500;
-                    document.getElementById('spy-canvas').height = 500;
+                if(this.val > 1) {
+                     UI.notify("Zoom Active - Use Scrollbars");
+                     document.querySelector('.stage').style.overflow = 'auto';
                 } else {
-                    glass.style.display = 'none';
-                    btn.classList.remove('active');
-                    document.removeEventListener('mousemove', this.move);
-                }
-            },
-
-            move: (e) => {
-                const glass = document.getElementById('spyglass');
-                glass.style.left = (e.clientX + 20) + 'px';
-                glass.style.top = (e.clientY + 20) + 'px';
-
-                // Raycasting để tìm element bên dưới
-                glass.style.display = 'none';
-                const el = document.elementFromPoint(e.clientX, e.clientY);
-                glass.style.display = 'block';
-
-                // Logic tìm wrapper trang sách
-                const wrapper = el?.closest('.page-wrapper');
-                if (wrapper) {
-                    const pdfC = wrapper.querySelector('.pdf-layer');
-                    const inkC = wrapper.querySelector('.ink-layer');
-                    const rect = pdfC.getBoundingClientRect();
-                    
-                    const ratioX = pdfC.width / rect.width;
-                    const ratioY = pdfC.height / rect.height;
-                    
-                    const x = (e.clientX - rect.left) * ratioX;
-                    const y = (e.clientY - rect.top) * ratioY;
-
-                    const ctx = Loupe.ctx;
-                    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,500,500);
-                    
-                    // Render Composite (PDF + Ink)
-                    try {
-                        ctx.drawImage(pdfC, x-100, y-100, 200, 200, 0, 0, 500, 500);
-                        ctx.drawImage(inkC, x-100, y-100, 200, 200, 0, 0, 500, 500);
-                    } catch(e){}
+                     document.querySelector('.stage').style.overflow = 'hidden';
+                     el.style.transform = `translate(0,0) scale(1)`;
                 }
             }
         };
 
-        // --- UI UTILS ---
         const UI = {
-            toast(msg) {
+            notify(msg) {
                 const t = document.getElementById('toast');
-                t.innerText = msg;
-                t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 2000);
+                t.innerText = msg; t.classList.add('show');
+                setTimeout(()=>t.classList.remove('show'), 2000);
             },
-            playSound(type) {
-                const id = type === 'flip' ? 'sfx-flip' : 'sfx-click';
-                const sfx = document.getElementById(id);
-                sfx.currentTime = 0; sfx.play().catch(()=>{});
-            }
+            sound() {}
         };
 
-        // BOOTSTRAP
         App.init();
 
     </script>
