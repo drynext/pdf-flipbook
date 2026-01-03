@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V11 (GoodNotes Edition)</title>
+    <title>FlipOS V12 (Final)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     
@@ -16,7 +16,6 @@
             --border: rgba(255, 255, 255, 0.1);
             --shadow: 0 10px 40px rgba(0,0,0,0.5);
             --blur: blur(12px);
-            --radius: 16px;
         }
 
         [data-theme="light"] {
@@ -27,30 +26,29 @@
             --border: rgba(0, 0, 0, 0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; touch-action: none; user-select: none; }
         
         body {
             background: var(--bg-app); color: var(--text-main);
             font-family: 'Inter', sans-serif;
             height: 100vh; width: 100vw; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
-            transition: background 0.4s ease;
         }
 
+        /* --- UI ISLANDS --- */
         .island-top {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 8px 16px; border-radius: 50px;
+            padding: 6px 8px; border-radius: 50px;
             border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; align-items: center; gap: 15px; z-index: 1000;
+            display: flex; align-items: center; gap: 10px; z-index: 1000;
         }
 
-        .mode-switcher { display: flex; background: rgba(0,0,0,0.2); border-radius: 20px; padding: 3px; }
         .mode-btn {
-            padding: 6px 15px; border-radius: 18px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
-            color: var(--text-main); transition: 0.2s; border: none; background: transparent; opacity: 0.6;
+            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            color: var(--text-main); border: none; background: transparent; opacity: 0.5; transition: 0.2s;
         }
-        .mode-btn.active { background: var(--accent); color: white; opacity: 1; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .mode-btn.active { background: var(--accent); color: white; opacity: 1; }
 
         .island-bottom {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -64,28 +62,36 @@
             width: 40px; height: 40px; border-radius: 12px;
             border: 1px solid transparent; background: rgba(128,128,128,0.1);
             color: var(--text-main); font-size: 1.1rem; cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-            transition: 0.2s;
+            display: flex; justify-content: center; align-items: center; transition: 0.2s;
         }
         .icon-btn:hover { background: var(--accent); color: white; transform: translateY(-3px); }
         .icon-btn.active { background: var(--accent); color: white; }
 
+        /* --- TOOL PALETTE (SIDEBAR) --- */
         .island-side {
             position: fixed; right: 20px; top: 50%; transform: translateY(-50%) translateX(150%);
             background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 15px; border-radius: var(--radius);
+            padding: 15px; border-radius: 20px;
             border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; flex-direction: column; gap: 12px; z-index: 1000;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column; gap: 12px; z-index: 900;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .island-side.visible { transform: translateY(-50%) translateX(0); }
 
-        .color-swatch {
-            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
-            border: 2px solid transparent; transition: 0.2s;
+        .tool-opt {
+            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; color: var(--text-main); opacity: 0.6; transition: 0.2s;
         }
-        .color-swatch.active { border-color: #fff; transform: scale(1.2); }
+        .tool-opt:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+        .tool-opt.active { opacity: 1; background: var(--accent); color: white; box-shadow: 0 4px 10px var(--accent); }
 
+        .color-dot {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+        }
+        .color-dot.active { border-color: #fff; transform: scale(1.2); }
+
+        /* --- WORKSPACE --- */
         .stage {
             width: 100%; height: 100%; position: relative;
             background-image: radial-gradient(rgba(128,128,128,0.15) 1px, transparent 1px);
@@ -93,15 +99,14 @@
             display: flex; justify-content: center; align-items: center;
         }
 
-        .viewport-layer {
-            transition: transform 0.1s linear;
-            transform-style: preserve-3d; will-change: transform;
-        }
-
+        .viewport-layer { transition: transform 0.1s linear; transform-style: preserve-3d; will-change: transform; }
         .page-wrapper { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
-        .pdf-layer { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; }
-        .ink-layer { position: absolute; top: 0; left: 0; z-index: 10; touch-action: none; }
+        
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .pdf-layer { z-index: 1; pointer-events: none; }
+        .ink-layer { z-index: 10; touch-action: none; }
 
+        /* --- OVERLAYS --- */
         #pan-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 500; display: none; cursor: grab;
@@ -116,75 +121,67 @@
             display: none; background: #fff;
         }
 
+        /* --- START SCREEN --- */
         .upload-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 5000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .upload-btn {
-            background: #1e1e24; padding: 40px; border-radius: 30px;
-            text-align: center; border: 2px dashed #444; cursor: pointer;
-            transition: 0.3s;
+            background: #1e1e24; padding: 40px 60px; border-radius: 30px;
+            text-align: center; border: 2px dashed #444; cursor: pointer; transition: 0.3s;
         }
         .upload-btn:hover { border-color: var(--accent); transform: scale(1.02); }
 
         .toast {
-            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 90px; left: 50%; transform: translateX(-50%);
             background: #333; color: #fff; padding: 10px 20px; border-radius: 30px;
             opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
-
     </style>
 </head>
 <body data-theme="dark">
 
     <div class="upload-modal" id="modal">
         <div class="upload-btn" onclick="document.getElementById('file-in').click()">
-            <i class="fas fa-layer-group" style="font-size: 3rem; color: var(--accent); margin-bottom: 20px;"></i>
-            <h1>FLIP OS V11</h1>
-            <p style="color: #888;">Giao diện V9 + Nét bút GoodNotes</p>
+            <i class="fas fa-book-reader" style="font-size: 3rem; color: var(--accent); margin-bottom: 20px;"></i>
+            <h1 style="color: #fff; font-size: 2rem;">FlipOS</h1>
+            <p style="color: #888; margin-top: 10px;">by Dang Duc Dai</p>
         </div>
         <input type="file" id="file-in" accept="application/pdf" style="display: none;">
     </div>
 
     <div class="island-top">
-        <div style="font-weight:800; color:var(--accent); margin-right:10px;">FLIP OS</div>
-        <div class="mode-switcher">
-            <button class="mode-btn active" onclick="App.setMode('READ')" id="btn-read"><i class="fas fa-book-open"></i> ĐỌC</button>
-            <button class="mode-btn" onclick="App.setMode('DRAW')" id="btn-draw"><i class="fas fa-pen-nib"></i> VẼ</button>
-        </div>
+        <button class="mode-btn active" onclick="App.setMode('READ')" id="btn-read"><i class="fas fa-book-open"></i> ĐỌC</button>
         <div style="width:1px; height:15px; background:rgba(255,255,255,0.2)"></div>
-        <i class="fas fa-moon" style="cursor:pointer; opacity:0.7" onclick="App.toggleTheme()"></i>
+        <button class="mode-btn" onclick="App.setMode('DRAW')" id="btn-draw"><i class="fas fa-pen-nib"></i> VẼ</button>
+        <i class="fas fa-moon" style="cursor:pointer; margin-left:10px; opacity:0.7" onclick="App.toggleTheme()"></i>
     </div>
 
     <div class="island-side" id="draw-tools">
-        <div class="color-swatch active" style="background:#ff4757" onclick="Pen.setColor('#ff4757', this)"></div>
-        <div class="color-swatch" style="background:#2ed573" onclick="Pen.setColor('#2ed573', this)"></div>
-        <div class="color-swatch" style="background:#3742fa" onclick="Pen.setColor('#3742fa', this)"></div>
-        <div class="color-swatch" style="background:#ffa502" onclick="Pen.setColor('#ffa502', this)"></div>
-        <div class="color-swatch" style="background:#000" style="border:1px solid #555" onclick="Pen.setColor('#000000', this)"></div>
-        
-        <div style="height:1px; background:rgba(255,255,255,0.1); margin: 5px 0;"></div>
-        
-        <button class="icon-btn" onclick="Pen.toggleEraser()" id="btn-eraser" title="Tẩy"><i class="fas fa-eraser"></i></button>
-        <button class="icon-btn" onclick="Pen.undo()" title="Hoàn tác"><i class="fas fa-undo"></i></button>
-        <button class="icon-btn" onclick="Pen.clear()" title="Xóa trang"><i class="fas fa-trash"></i></button>
+        <div class="tool-opt active" id="tool-pen" onclick="Pen.setTool('pen')" title="Bút mực"><i class="fas fa-pen"></i></div>
+        <div class="tool-opt" id="tool-marker" onclick="Pen.setTool('marker')" title="Highlight"><i class="fas fa-highlighter"></i></div>
+        <div class="tool-opt" id="tool-eraser" onclick="Pen.setTool('eraser')" title="Tẩy"><i class="fas fa-eraser"></i></div>
+        <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
+        <div class="color-dot active" style="background:#ff4757" onclick="Pen.setColor('#ff4757', this)"></div>
+        <div class="color-dot" style="background:#2ed573" onclick="Pen.setColor('#2ed573', this)"></div>
+        <div class="color-dot" style="background:#3742fa" onclick="Pen.setColor('#3742fa', this)"></div>
+        <div class="color-dot" style="background:#ffa502" onclick="Pen.setColor('#ffa502', this)"></div>
+        <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
+        <div class="tool-opt" onclick="Pen.undo()"><i class="fas fa-undo"></i></div>
+        <div class="tool-opt" onclick="Pen.clear()"><i class="fas fa-trash"></i></div>
     </div>
 
     <div class="island-bottom">
         <button class="icon-btn" onclick="App.prev()"><i class="fas fa-chevron-left"></i></button>
         <span id="page-num" style="font-variant-numeric: tabular-nums; width:60px; text-align:center;">---</span>
         <button class="icon-btn" onclick="App.next()"><i class="fas fa-chevron-right"></i></button>
-        
         <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
-        
         <button class="icon-btn" onclick="Zoom.out()"><i class="fas fa-minus"></i></button>
         <span id="zoom-val" style="font-weight:600; font-size:0.9rem;">100%</span>
         <button class="icon-btn" onclick="Zoom.in()"><i class="fas fa-plus"></i></button>
-        
         <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
-        
         <button class="icon-btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
         <button class="icon-btn" onclick="App.fullscreen()"><i class="fas fa-expand"></i></button>
     </div>
@@ -193,7 +190,6 @@
         <div class="viewport-layer" id="viewport">
             <div id="book"></div>
         </div>
-        
         <div id="pan-overlay"></div>
         <div class="spyglass" id="spyglass"><canvas id="spy-canvas"></canvas></div>
     </div>
@@ -207,13 +203,7 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const State = {
-            mode: 'READ',
-            zoom: 1,
-            pdf: null,
-            flip: null,
-            isDark: true
-        };
+        const State = { mode: 'READ', zoom: 1, pdf: null, flip: null };
 
         const App = {
             init() {
@@ -228,10 +218,8 @@
             async load(e) {
                 const file = e.target.files[0];
                 if(!file) return;
+                document.querySelector('.upload-btn').innerHTML = 'Đang tải dữ liệu...';
                 
-                document.querySelector('.upload-btn').innerHTML = 'Đang xử lý...';
-                const snd = document.getElementById('snd-flip'); snd.play().catch(()=>{}); snd.pause();
-
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(file);
                 reader.onload = async (ev) => {
@@ -283,7 +271,6 @@
                     minWidth: 300, maxWidth: 1000,
                     useMouseEvents: true
                 });
-                
                 State.flip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
                 State.flip.on('flip', (e) => {
                     document.getElementById('page-num').innerText = `${e.data+1}/${State.pdf.numPages}`;
@@ -302,14 +289,13 @@
                     tools.classList.remove('visible');
                     btnR.classList.add('active'); btnD.classList.remove('active');
                     if(State.flip) State.flip.update({useMouseEvents: true});
-                    UI.toast("Chế độ Đọc & Lật trang");
-                    panOv.style.display = 'none'; // Tắt lớp pan
+                    UI.toast("Chế độ Đọc");
+                    panOv.style.display = 'none';
                 } else {
                     tools.classList.add('visible');
                     btnD.classList.add('active'); btnR.classList.remove('active');
-                    if(State.flip) State.flip.update({useMouseEvents: false}); // Tắt lật để vẽ
+                    if(State.flip) State.flip.update({useMouseEvents: false}); 
                     UI.toast("Chế độ Vẽ Studio");
-                    panOv.style.display = 'none'; // Tắt lớp pan, vẽ trực tiếp lên canvas
                 }
             },
 
@@ -325,16 +311,9 @@
             }
         };
 
+        // --- CÔNG CỤ VẼ & HIGHLIGHT ---
         const Pen = {
-            color: '#ff4757',
-            isEraser: false,
-            isDrawing: false,
-            lastPoint: null,
-            ctx: null,
-            canvas: null,
-            snapTimer: null,
-            startPoint: null,
-            history: {}, 
+            tool: 'pen', color: '#ff4757', isDrawing: false, lastPoint: null, ctx: null, canvas: null, history: {},
 
             init() {
                 const layers = document.querySelectorAll('.ink-layer');
@@ -346,17 +325,29 @@
                 });
             },
 
-            setColor(c, el) {
-                this.color = c; this.isEraser = false;
-                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-                if(el) el.classList.add('active');
-                document.getElementById('btn-eraser').classList.remove('active');
+            setTool(t) {
+                this.tool = t;
+                document.querySelectorAll('.tool-opt').forEach(b => b.classList.remove('active'));
+                document.getElementById(`tool-${t}`).classList.add('active');
+                
+                // Reset active color visual
+                if(t === 'eraser') document.querySelectorAll('.color-dot').forEach(c => c.classList.remove('active'));
+                else {
+                    // Re-active color if switching back to pen/marker
+                    // Logic đơn giản: để user tự chọn lại màu hoặc giữ màu cũ
+                }
             },
 
-            toggleEraser() {
-                this.isEraser = !this.isEraser;
-                document.getElementById('btn-eraser').classList.toggle('active', this.isEraser);
+            setColor(c, el) {
+                this.color = c; 
+                // Nếu đang là tẩy thì chuyển về pen
+                if(this.tool === 'eraser') this.setTool('pen');
+                
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                el.classList.add('active');
             },
+
+            toggleEraser() { this.setTool('eraser'); },
 
             getPos(e, canvas) {
                 const rect = canvas.getBoundingClientRect();
@@ -367,50 +358,57 @@
 
             start(e, canvas) {
                 if(State.mode !== 'DRAW') return;
-                e.preventDefault();
-                canvas.setPointerCapture(e.pointerId);
+                e.preventDefault(); canvas.setPointerCapture(e.pointerId);
 
-                this.isDrawing = true;
-                this.canvas = canvas;
+                this.isDrawing = true; this.canvas = canvas;
                 this.ctx = canvas.getContext('2d');
                 this.lastPoint = this.getPos(e, canvas);
-                this.startPoint = this.lastPoint; // Lưu điểm đầu để Snap
-                
-                // Lưu snapshot để Snap
-                this.snapshot = this.ctx.getImageData(0, 0, canvas.width, canvas.height);
 
                 this.ctx.beginPath();
                 this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
                 this.ctx.lineCap = 'round';
                 this.ctx.lineJoin = 'round';
-                this.ctx.lineWidth = this.isEraser ? 25 : 3;
-                this.ctx.strokeStyle = this.color;
-                this.ctx.globalCompositeOperation = this.isEraser ? 'destination-out' : 'source-over';
 
-                // Timer cho Snap: Nếu giữ yên 500ms -> Thẳng
+                if(this.tool === 'marker') {
+                    // HIGHLIGHTER LOGIC: Multiply mode để trong suốt
+                    this.ctx.globalCompositeOperation = 'multiply';
+                    this.ctx.strokeStyle = this.color;
+                    this.ctx.lineWidth = 20; 
+                    // Mẹo: Marker nên hơi mờ
+                    this.ctx.globalAlpha = 0.5;
+                } else if (this.tool === 'eraser') {
+                    this.ctx.globalCompositeOperation = 'destination-out';
+                    this.ctx.lineWidth = 30;
+                    this.ctx.globalAlpha = 1;
+                } else {
+                    // Pen
+                    this.ctx.globalCompositeOperation = 'source-over';
+                    this.ctx.strokeStyle = this.color;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.globalAlpha = 1;
+                }
+                
+                // Shape Snap Start
+                this.snapshot = this.ctx.getImageData(0,0,canvas.width, canvas.height);
+                this.startPoint = this.lastPoint;
                 clearTimeout(this.snapTimer);
             },
 
             move(e) {
                 if(!this.isDrawing) return;
-                const currentPoint = this.getPos(e, this.canvas);
-
-                // Thuật toán vẽ mượt (Quadratic)
-                const mid = {
-                    x: this.lastPoint.x + (currentPoint.x - this.lastPoint.x) / 2,
-                    y: this.lastPoint.y + (currentPoint.y - this.lastPoint.y) / 2
-                };
-
+                const curr = this.getPos(e, this.canvas);
+                
+                // Vẽ mượt
+                const mid = { x: this.lastPoint.x + (curr.x - this.lastPoint.x)/2, y: this.lastPoint.y + (curr.y - this.lastPoint.y)/2 };
                 this.ctx.quadraticCurveTo(this.lastPoint.x, this.lastPoint.y, mid.x, mid.y);
                 this.ctx.stroke();
-
-                this.lastPoint = currentPoint;
                 
-                // Reset Snap Timer nếu di chuyển
+                this.lastPoint = curr;
+
+                // Shape Snap Logic
                 clearTimeout(this.snapTimer);
-                // Nếu người dùng dừng bút (nhưng vẫn giữ chuột) 500ms -> Snap
                 this.snapTimer = setTimeout(() => {
-                    if(this.isDrawing) this.snapShape(currentPoint);
+                    if(this.isDrawing) this.snapShape(curr);
                 }, 600);
             },
 
@@ -422,19 +420,13 @@
             },
 
             snapShape(endPoint) {
-                // Restore ảnh cũ (xóa nét vẽ tay)
-                this.ctx.putImageData(this.snapshot, 0, 0);
-                
-                // Vẽ đường thẳng
+                this.ctx.putImageData(this.snapshot, 0, 0); // Restore
                 this.ctx.beginPath();
                 this.ctx.moveTo(this.startPoint.x, this.startPoint.y);
                 this.ctx.lineTo(endPoint.x, endPoint.y);
-                this.ctx.lineWidth = 3;
-                this.ctx.strokeStyle = this.color;
                 this.ctx.stroke();
-                
-                UI.toast("Shape Snapped!");
-                if(navigator.vibrate) navigator.vibrate(50); // Rung nhẹ nếu là điện thoại
+                UI.toast("Đã nắn thẳng!");
+                if(navigator.vibrate) navigator.vibrate(50);
             },
 
             saveHistory(canvas) {
@@ -445,16 +437,11 @@
             },
 
             undo() {
-                // Tìm canvas hiện tại
-                const canvases = document.querySelectorAll('.ink-layer');
-                // Logic đơn giản: Undo trang đang được active (V9 logic)
-                // Nhưng PageFlip hiển thị 2 trang, ta chọn trang đầu tiên visible hoặc active
-                // Ở đây demo: clear trang cuối cùng vẽ
                 if(!this.canvas) return;
                 const idx = this.canvas.parentElement.dataset.idx;
                 const stack = this.history[idx];
                 if(stack && stack.length > 0) {
-                    stack.pop(); // Bỏ trạng thái hiện tại
+                    stack.pop(); 
                     const prev = stack[stack.length - 1];
                     const ctx = this.canvas.getContext('2d');
                     if(prev) ctx.putImageData(prev, 0, 0);
@@ -471,9 +458,9 @@
             }
         };
 
+        // --- ZOOM & KÍNH LÚP (FIXED OFFSET) ---
         const Zoom = {
-            val: 1,
-            pan: {x:0, y:0}, isDrag: false, start: {x:0,y:0},
+            val: 1, pan: {x:0, y:0}, isDrag: false, start: {x:0,y:0},
 
             init() {
                 const ov = document.getElementById('pan-overlay');
@@ -505,7 +492,7 @@
                 
                 if(this.val > 1) {
                     if(State.mode === 'READ') {
-                        ov.style.display = 'block'; // Bật lớp Pan lên để kéo
+                        ov.style.display = 'block';
                         if(State.flip) State.flip.update({useMouseEvents: false});
                     }
                 } else {
@@ -530,38 +517,50 @@
                 document.getElementById('spy-canvas').width=500;
                 document.getElementById('spy-canvas').height=500;
 
-                spy.style.left = (e.clientX+20)+'px';
-                spy.style.top = (e.clientY+20)+'px';
+                // Fix vị trí kính lúp theo chuột
+                spy.style.left = (e.clientX + 20) + 'px';
+                spy.style.top = (e.clientY + 20) + 'px';
                 
+                // Tìm element bên dưới
                 spy.style.display='none';
                 const el = document.elementFromPoint(e.clientX, e.clientY);
                 spy.style.display='block';
 
-                if(el && (el.classList.contains('pdf-layer') || el.classList.contains('ink-layer'))) {
-                    const wrap = el.parentElement;
+                // Tìm wrapper chứa page
+                const wrap = el ? el.closest('.page-wrapper') : null;
+
+                if(wrap) {
                     const pdf = wrap.querySelector('.pdf-layer');
                     const ink = wrap.querySelector('.ink-layer');
+                    
                     const rect = pdf.getBoundingClientRect();
+                    
+                    // Tính tọa độ chuột tương đối với trang sách
+                    // QUAN TRỌNG: Cần trừ đi rect.left/top
+                    const relX = e.clientX - rect.left;
+                    const relY = e.clientY - rect.top;
+
+                    // Tỉ lệ scale giữa Canvas thực tế và kích thước hiển thị trên màn hình
                     const rx = pdf.width / rect.width;
                     const ry = pdf.height / rect.height;
-                    const x = (e.clientX - rect.left)*rx;
-                    const y = (e.clientY - rect.top)*ry;
+
+                    // Tọa độ trên Canvas gốc
+                    const canvasX = relX * rx;
+                    const canvasY = relY * ry;
 
                     ctx.fillStyle='#fff'; ctx.fillRect(0,0,500,500);
+                    
+                    // Vẽ vùng xung quanh chuột (100x100px) lên kính lúp (500x500px -> Zoom 5x)
+                    // Source: canvasX - 100
                     try {
-                        ctx.drawImage(pdf, x-100, y-100, 200, 200, 0, 0, 500, 500);
-                        ctx.drawImage(ink, x-100, y-100, 200, 200, 0, 0, 500, 500);
+                        ctx.drawImage(pdf, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
+                        ctx.drawImage(ink, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
                     } catch(err){}
                 }
             }
         };
 
-        const UI = {
-            toast(m) {
-                const t = document.getElementById('toast'); t.innerText=m; t.classList.add('show');
-                setTimeout(()=>t.classList.remove('show'), 2000);
-            }
-        };
+        const UI = { toast(m) { const t = document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2000); } };
 
         App.init();
 
