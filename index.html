@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V12 (Final)</title>
+    <title>FlipOS V13 (Freedom)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     
     <style>
+        /* --- 1. CORE VARIABLES --- */
         :root {
             --bg-app: #0f0f11;
             --bg-panel: rgba(30, 30, 35, 0.85);
@@ -15,7 +16,7 @@
             --accent: #6c5ce7;
             --border: rgba(255, 255, 255, 0.1);
             --shadow: 0 10px 40px rgba(0,0,0,0.5);
-            --blur: blur(12px);
+            --blur: blur(15px);
         }
 
         [data-theme="light"] {
@@ -35,28 +36,48 @@
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- UI ISLANDS --- */
-        .island-top {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        /* --- 2. DRAGGABLE ISLANDS --- */
+        /* Class chung cho các đảo nổi để có thể kéo được */
+        .island {
+            position: fixed; z-index: 1000;
             background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 6px 8px; border-radius: 50px;
             border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; align-items: center; gap: 10px; z-index: 1000;
+            transition: transform 0.1s, opacity 0.3s; /* Tắt transition left/top để kéo mượt */
+            cursor: grab; /* Con trỏ báo hiệu có thể kéo */
+        }
+        .island:active { cursor: grabbing; }
+
+        /* Top Bar */
+        .island-top {
+            top: 20px; left: 50%; transform: translateX(-50%); /* Center ban đầu */
+            padding: 6px 10px; border-radius: 50px;
+            display: flex; align-items: center; gap: 10px;
         }
 
+        /* Side Tools */
+        .island-side {
+            right: 20px; top: 50%; transform: translateY(-50%) translateX(150%);
+            padding: 15px; border-radius: 24px;
+            display: flex; flex-direction: column; gap: 12px; z-index: 900;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Animation trượt ra */
+        }
+        .island-side.visible { transform: translateY(-50%) translateX(0); }
+        /* Khi đang kéo side bar thì tắt transform để không bị giật */
+        .island-side.dragging { transform: none !important; transition: none; }
+
+        /* Bottom Bar */
+        .island-bottom {
+            bottom: 30px; left: 50%; transform: translateX(-50%);
+            padding: 10px 24px; border-radius: 24px;
+            display: flex; align-items: center; gap: 15px;
+        }
+
+        /* --- COMPONENTS --- */
         .mode-btn {
-            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
-            color: var(--text-main); border: none; background: transparent; opacity: 0.5; transition: 0.2s;
+            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 700; font-size: 0.85rem;
+            color: var(--text-main); border: none; background: transparent; opacity: 0.6; transition: 0.2s;
         }
         .mode-btn.active { background: var(--accent); color: white; opacity: 1; }
-
-        .island-bottom {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 10px 24px; border-radius: 24px;
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; align-items: center; gap: 15px; z-index: 1000;
-        }
 
         .icon-btn {
             width: 40px; height: 40px; border-radius: 12px;
@@ -64,27 +85,16 @@
             color: var(--text-main); font-size: 1.1rem; cursor: pointer;
             display: flex; justify-content: center; align-items: center; transition: 0.2s;
         }
-        .icon-btn:hover { background: var(--accent); color: white; transform: translateY(-3px); }
+        .icon-btn:hover { background: var(--accent); color: white; transform: scale(1.05); }
         .icon-btn.active { background: var(--accent); color: white; }
 
-        /* --- TOOL PALETTE (SIDEBAR) --- */
-        .island-side {
-            position: fixed; right: 20px; top: 50%; transform: translateY(-50%) translateX(150%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 15px; border-radius: 20px;
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; flex-direction: column; gap: 12px; z-index: 900;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .island-side.visible { transform: translateY(-50%) translateX(0); }
-
         .tool-opt {
-            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+            width: 40px; height: 40px; border-radius: 12px; cursor: pointer;
             display: flex; justify-content: center; align-items: center;
             font-size: 1.2rem; color: var(--text-main); opacity: 0.6; transition: 0.2s;
         }
         .tool-opt:hover { opacity: 1; background: rgba(255,255,255,0.1); }
-        .tool-opt.active { opacity: 1; background: var(--accent); color: white; box-shadow: 0 4px 10px var(--accent); }
+        .tool-opt.active { opacity: 1; background: var(--accent); color: white; box-shadow: 0 4px 12px var(--accent); }
 
         .color-dot {
             width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
@@ -106,19 +116,25 @@
         .pdf-layer { z-index: 1; pointer-events: none; }
         .ink-layer { z-index: 10; touch-action: none; }
 
-        /* --- OVERLAYS --- */
         #pan-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 500; display: none; cursor: grab;
         }
         #pan-overlay.grabbing { cursor: grabbing; }
 
+        /* Kính lúp fixed */
         .spyglass {
-            position: absolute; width: 220px; height: 220px;
+            position: absolute; width: 200px; height: 200px;
             border-radius: 50%; border: 4px solid #fff;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 50px rgba(0,0,0,0.6);
             overflow: hidden; pointer-events: none; z-index: 9999;
             display: none; background: #fff;
+        }
+        /* Tâm kính lúp */
+        .spyglass::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 4px; background: red; border-radius: 50%;
+            transform: translate(-50%, -50%); opacity: 0.5;
         }
 
         /* --- START SCREEN --- */
@@ -134,7 +150,7 @@
         .upload-btn:hover { border-color: var(--accent); transform: scale(1.02); }
 
         .toast {
-            position: fixed; top: 90px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
             background: #333; color: #fff; padding: 10px 20px; border-radius: 30px;
             opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000;
         }
@@ -145,43 +161,52 @@
 
     <div class="upload-modal" id="modal">
         <div class="upload-btn" onclick="document.getElementById('file-in').click()">
-            <i class="fas fa-book-reader" style="font-size: 3rem; color: var(--accent); margin-bottom: 20px;"></i>
-            <h1 style="color: #fff; font-size: 2rem;">FlipOS</h1>
-            <p style="color: #888; margin-top: 10px;">by Dang Duc Dai</p>
+            <i class="fas fa-book-reader" style="font-size: 3.5rem; color: var(--accent); margin-bottom: 20px;"></i>
+            <h1 style="color: #fff; font-size: 2.5rem; font-weight: 800;">FlipOS</h1>
+            <p style="color: #888; margin-top: 10px; font-weight: 300;">by Dang Duc Dai</p>
         </div>
         <input type="file" id="file-in" accept="application/pdf" style="display: none;">
     </div>
 
-    <div class="island-top">
+    <div class="island island-top" id="island-top">
         <button class="mode-btn active" onclick="App.setMode('READ')" id="btn-read"><i class="fas fa-book-open"></i> ĐỌC</button>
         <div style="width:1px; height:15px; background:rgba(255,255,255,0.2)"></div>
         <button class="mode-btn" onclick="App.setMode('DRAW')" id="btn-draw"><i class="fas fa-pen-nib"></i> VẼ</button>
         <i class="fas fa-moon" style="cursor:pointer; margin-left:10px; opacity:0.7" onclick="App.toggleTheme()"></i>
     </div>
 
-    <div class="island-side" id="draw-tools">
+    <div class="island island-side" id="draw-tools">
         <div class="tool-opt active" id="tool-pen" onclick="Pen.setTool('pen')" title="Bút mực"><i class="fas fa-pen"></i></div>
-        <div class="tool-opt" id="tool-marker" onclick="Pen.setTool('marker')" title="Highlight"><i class="fas fa-highlighter"></i></div>
+        <div class="tool-opt" id="tool-marker" onclick="Pen.setTool('marker')" title="Highlight (Bút nhớ)"><i class="fas fa-highlighter"></i></div>
         <div class="tool-opt" id="tool-eraser" onclick="Pen.setTool('eraser')" title="Tẩy"><i class="fas fa-eraser"></i></div>
+        
         <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
+        
         <div class="color-dot active" style="background:#ff4757" onclick="Pen.setColor('#ff4757', this)"></div>
         <div class="color-dot" style="background:#2ed573" onclick="Pen.setColor('#2ed573', this)"></div>
         <div class="color-dot" style="background:#3742fa" onclick="Pen.setColor('#3742fa', this)"></div>
         <div class="color-dot" style="background:#ffa502" onclick="Pen.setColor('#ffa502', this)"></div>
+        <div class="color-dot" style="background:#000; border:1px solid #555" onclick="Pen.setColor('#000000', this)"></div>
+        
         <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
+        
         <div class="tool-opt" onclick="Pen.undo()"><i class="fas fa-undo"></i></div>
         <div class="tool-opt" onclick="Pen.clear()"><i class="fas fa-trash"></i></div>
     </div>
 
-    <div class="island-bottom">
+    <div class="island island-bottom" id="island-bottom">
         <button class="icon-btn" onclick="App.prev()"><i class="fas fa-chevron-left"></i></button>
         <span id="page-num" style="font-variant-numeric: tabular-nums; width:60px; text-align:center;">---</span>
         <button class="icon-btn" onclick="App.next()"><i class="fas fa-chevron-right"></i></button>
+        
         <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
+        
         <button class="icon-btn" onclick="Zoom.out()"><i class="fas fa-minus"></i></button>
         <span id="zoom-val" style="font-weight:600; font-size:0.9rem;">100%</span>
         <button class="icon-btn" onclick="Zoom.in()"><i class="fas fa-plus"></i></button>
+        
         <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
+        
         <button class="icon-btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
         <button class="icon-btn" onclick="App.fullscreen()"><i class="fas fa-expand"></i></button>
     </div>
@@ -207,6 +232,11 @@
 
         const App = {
             init() {
+                // Khởi tạo kéo thả cho các đảo chức năng
+                Drag.make(document.getElementById('island-top'));
+                Drag.make(document.getElementById('island-bottom'));
+                Drag.make(document.getElementById('draw-tools'));
+
                 document.getElementById('file-in').addEventListener('change', this.load);
                 document.addEventListener('keydown', e => {
                     if(e.ctrlKey && e.key === 'z') Pen.undo();
@@ -295,7 +325,7 @@
                     tools.classList.add('visible');
                     btnD.classList.add('active'); btnR.classList.remove('active');
                     if(State.flip) State.flip.update({useMouseEvents: false}); 
-                    UI.toast("Chế độ Vẽ Studio");
+                    UI.toast("Chế độ Vẽ");
                 }
             },
 
@@ -311,7 +341,51 @@
             }
         };
 
-        // --- CÔNG CỤ VẼ & HIGHLIGHT ---
+        // --- HỆ THỐNG KÉO THẢ UI (NEW) ---
+        const Drag = {
+            make(el) {
+                let isDown = false;
+                let startX, startY, initialLeft, initialTop;
+
+                el.addEventListener('mousedown', (e) => {
+                    // Không kéo nếu bấm vào nút con
+                    if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I' || e.target.classList.contains('color-dot')) return;
+                    
+                    isDown = true;
+                    el.style.cursor = 'grabbing';
+                    
+                    // Nếu đang dùng transform center, cần reset về absolute left/top để tính toán
+                    const rect = el.getBoundingClientRect();
+                    el.style.transform = 'none'; // Tắt transform center
+                    el.style.left = rect.left + 'px';
+                    el.style.top = rect.top + 'px';
+                    el.style.bottom = 'auto'; 
+                    el.style.right = 'auto';
+                    
+                    if(el.classList.contains('island-side')) el.classList.add('dragging');
+
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    initialLeft = rect.left;
+                    initialTop = rect.top;
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if(!isDown) return;
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    el.style.left = (initialLeft + dx) + 'px';
+                    el.style.top = (initialTop + dy) + 'px';
+                });
+
+                window.addEventListener('mouseup', () => {
+                    isDown = false;
+                    el.style.cursor = 'grab';
+                    if(el.classList.contains('island-side')) el.classList.remove('dragging');
+                });
+            }
+        };
+
         const Pen = {
             tool: 'pen', color: '#ff4757', isDrawing: false, lastPoint: null, ctx: null, canvas: null, history: {},
 
@@ -329,20 +403,12 @@
                 this.tool = t;
                 document.querySelectorAll('.tool-opt').forEach(b => b.classList.remove('active'));
                 document.getElementById(`tool-${t}`).classList.add('active');
-                
-                // Reset active color visual
                 if(t === 'eraser') document.querySelectorAll('.color-dot').forEach(c => c.classList.remove('active'));
-                else {
-                    // Re-active color if switching back to pen/marker
-                    // Logic đơn giản: để user tự chọn lại màu hoặc giữ màu cũ
-                }
             },
 
             setColor(c, el) {
                 this.color = c; 
-                // Nếu đang là tẩy thì chuyển về pen
                 if(this.tool === 'eraser') this.setTool('pen');
-                
                 document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
                 el.classList.add('active');
             },
@@ -363,6 +429,8 @@
                 this.isDrawing = true; this.canvas = canvas;
                 this.ctx = canvas.getContext('2d');
                 this.lastPoint = this.getPos(e, canvas);
+                this.startPoint = this.lastPoint;
+                this.snapshot = this.ctx.getImageData(0,0,canvas.width, canvas.height);
 
                 this.ctx.beginPath();
                 this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
@@ -370,27 +438,21 @@
                 this.ctx.lineJoin = 'round';
 
                 if(this.tool === 'marker') {
-                    // HIGHLIGHTER LOGIC: Multiply mode để trong suốt
                     this.ctx.globalCompositeOperation = 'multiply';
                     this.ctx.strokeStyle = this.color;
                     this.ctx.lineWidth = 20; 
-                    // Mẹo: Marker nên hơi mờ
                     this.ctx.globalAlpha = 0.5;
                 } else if (this.tool === 'eraser') {
                     this.ctx.globalCompositeOperation = 'destination-out';
                     this.ctx.lineWidth = 30;
                     this.ctx.globalAlpha = 1;
                 } else {
-                    // Pen
                     this.ctx.globalCompositeOperation = 'source-over';
                     this.ctx.strokeStyle = this.color;
                     this.ctx.lineWidth = 3;
                     this.ctx.globalAlpha = 1;
                 }
                 
-                // Shape Snap Start
-                this.snapshot = this.ctx.getImageData(0,0,canvas.width, canvas.height);
-                this.startPoint = this.lastPoint;
                 clearTimeout(this.snapTimer);
             },
 
@@ -398,14 +460,12 @@
                 if(!this.isDrawing) return;
                 const curr = this.getPos(e, this.canvas);
                 
-                // Vẽ mượt
                 const mid = { x: this.lastPoint.x + (curr.x - this.lastPoint.x)/2, y: this.lastPoint.y + (curr.y - this.lastPoint.y)/2 };
                 this.ctx.quadraticCurveTo(this.lastPoint.x, this.lastPoint.y, mid.x, mid.y);
                 this.ctx.stroke();
                 
                 this.lastPoint = curr;
 
-                // Shape Snap Logic
                 clearTimeout(this.snapTimer);
                 this.snapTimer = setTimeout(() => {
                     if(this.isDrawing) this.snapShape(curr);
@@ -420,13 +480,12 @@
             },
 
             snapShape(endPoint) {
-                this.ctx.putImageData(this.snapshot, 0, 0); // Restore
+                this.ctx.putImageData(this.snapshot, 0, 0); 
                 this.ctx.beginPath();
                 this.ctx.moveTo(this.startPoint.x, this.startPoint.y);
                 this.ctx.lineTo(endPoint.x, endPoint.y);
                 this.ctx.stroke();
                 UI.toast("Đã nắn thẳng!");
-                if(navigator.vibrate) navigator.vibrate(50);
             },
 
             saveHistory(canvas) {
@@ -458,7 +517,6 @@
             }
         };
 
-        // --- ZOOM & KÍNH LÚP (FIXED OFFSET) ---
         const Zoom = {
             val: 1, pan: {x:0, y:0}, isDrag: false, start: {x:0,y:0},
 
@@ -504,6 +562,7 @@
             }
         };
 
+        // --- KÍNH LÚP (FIX LỆCH) ---
         const Loupe = {
             active: false,
             toggle() {
@@ -517,17 +576,17 @@
                 document.getElementById('spy-canvas').width=500;
                 document.getElementById('spy-canvas').height=500;
 
-                // Fix vị trí kính lúp theo chuột
+                // Di chuyển kính theo chuột
                 spy.style.left = (e.clientX + 20) + 'px';
                 spy.style.top = (e.clientY + 20) + 'px';
                 
-                // Tìm element bên dưới
-                spy.style.display='none';
-                const el = document.elementFromPoint(e.clientX, e.clientY);
+                // Kỹ thuật Xuyên thấu mới: Dùng elementsFromPoint để tìm canvas kể cả khi bị overlay che
+                spy.style.display='none'; // Ẩn tạm để soi xuống dưới
+                const elements = document.elementsFromPoint(e.clientX, e.clientY);
                 spy.style.display='block';
 
-                // Tìm wrapper chứa page
-                const wrap = el ? el.closest('.page-wrapper') : null;
+                // Tìm wrapper trang sách trong danh sách elements
+                const wrap = elements.find(el => el.classList.contains('page-wrapper'));
 
                 if(wrap) {
                     const pdf = wrap.querySelector('.pdf-layer');
@@ -535,23 +594,18 @@
                     
                     const rect = pdf.getBoundingClientRect();
                     
-                    // Tính tọa độ chuột tương đối với trang sách
-                    // QUAN TRỌNG: Cần trừ đi rect.left/top
+                    // Tính tọa độ chuột tương đối chuẩn xác
                     const relX = e.clientX - rect.left;
                     const relY = e.clientY - rect.top;
 
-                    // Tỉ lệ scale giữa Canvas thực tế và kích thước hiển thị trên màn hình
                     const rx = pdf.width / rect.width;
                     const ry = pdf.height / rect.height;
 
-                    // Tọa độ trên Canvas gốc
                     const canvasX = relX * rx;
                     const canvasY = relY * ry;
 
                     ctx.fillStyle='#fff'; ctx.fillRect(0,0,500,500);
                     
-                    // Vẽ vùng xung quanh chuột (100x100px) lên kính lúp (500x500px -> Zoom 5x)
-                    // Source: canvasX - 100
                     try {
                         ctx.drawImage(pdf, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
                         ctx.drawImage(ink, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
