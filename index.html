@@ -2,357 +2,457 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>PDF Flipbook V8 (Artist Edition)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlipOS Ultimate V9</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. THEME VARIABLES --- */
+        /* =========================================
+           1. SYSTEM CORE VARIABLES (DARK/LIGHT)
+           ========================================= */
         :root {
-            --bg-color: #1a1a1a;
-            --panel-bg: #2d2d2d;
-            --text-color: #fff;
-            --accent: #3498db;
-            --border: #444;
+            --bg-app: #0f0f11;
+            --bg-panel: rgba(30, 30, 35, 0.85);
+            --text-main: #ececec;
+            --text-mute: #888888;
+            --accent: #6c5ce7; /* Purple OS */
+            --accent-hover: #8e7bf5;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow: 0 10px 40px rgba(0,0,0,0.5);
+            --blur: blur(12px);
+            --radius: 16px;
         }
 
         [data-theme="light"] {
-            --bg-color: #f0f2f5;
-            --panel-bg: #ffffff;
-            --text-color: #333;
-            --accent: #2980b9;
-            --border: #ccc;
+            --bg-app: #f4f5f7;
+            --bg-panel: rgba(255, 255, 255, 0.85);
+            --text-main: #2d3436;
+            --text-mute: #636e72;
+            --accent: #0984e3;
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', sans-serif;
-            height: 100vh;
-            display: flex; flex-direction: column;
-            overflow: hidden;
-            transition: 0.3s;
-        }
-
-        /* --- 2. TOOLBAR --- */
-        .toolbar {
-            height: 60px;
-            background: var(--panel-bg);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 15px; z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .group { display: flex; gap: 8px; align-items: center; }
-
-        .btn {
-            width: 40px; height: 40px;
-            border: 1px solid var(--border);
-            background: rgba(128,128,128,0.1);
-            color: var(--text-color);
-            border-radius: 6px; cursor: pointer;
+            background: var(--bg-app); color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh; width: 100vw; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
-            font-size: 1.1rem; transition: 0.2s;
+            transition: background 0.4s ease;
         }
-        .btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
-        .btn.active { background: var(--accent); color: white; box-shadow: 0 0 10px var(--accent); }
 
-        /* Color Picker cho bút */
-        .color-dot {
-            width: 20px; height: 20px; border-radius: 50%;
-            cursor: pointer; border: 2px solid transparent;
+        /* =========================================
+           2. UI COMPONENTS (FLOATING ISLANDS)
+           ========================================= */
+        
+        /* Top Bar - File Info & Modes */
+        .island-top {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--bg-panel); backdrop-filter: var(--blur);
+            padding: 10px 20px; border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 20px; z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        .color-dot.selected { border-color: var(--text-color); transform: scale(1.2); }
 
-        /* --- 3. STAGE & BOOK --- */
+        .app-logo { font-weight: 800; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+        .divider { width: 1px; height: 20px; background: var(--border); }
+        
+        .mode-switcher { display: flex; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 3px; }
+        .mode-btn {
+            padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+            color: var(--text-mute); transition: 0.2s; border: none; background: transparent;
+        }
+        .mode-btn.active { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(108, 92, 231, 0.4); }
+
+        /* Bottom Bar - Navigation & Zoom */
+        .island-bottom {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--bg-panel); backdrop-filter: var(--blur);
+            padding: 12px 24px; border-radius: 24px;
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 15px; z-index: 1000;
+        }
+
+        .icon-btn {
+            width: 42px; height: 42px; border-radius: 12px;
+            border: 1px solid transparent; background: rgba(128,128,128,0.1);
+            color: var(--text-main); font-size: 1.1rem; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { background: var(--accent); color: white; transform: translateY(-3px); }
+        .icon-btn:active { transform: scale(0.95); }
+        .icon-btn.active { background: var(--accent); color: white; box-shadow: 0 0 15px var(--accent); }
+
+        .page-indicator { font-feature-settings: "tnum"; font-weight: 600; min-width: 80px; text-align: center; }
+
+        /* Side Palette (Drawing Tools) - Only shows in Draw Mode */
+        .island-side {
+            position: fixed; right: 20px; top: 50%; transform: translateY(-50%) translateX(150%);
+            background: var(--bg-panel); backdrop-filter: var(--blur);
+            padding: 15px; border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+            display: flex; flex-direction: column; gap: 12px; z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .island-side.visible { transform: translateY(-50%) translateX(0); }
+
+        .color-swatch {
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            border: 3px solid transparent; transition: 0.2s;
+        }
+        .color-swatch.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
+        /* =========================================
+           3. STAGE & LAYERS (TRÁI TIM CỦA V9)
+           ========================================= */
         .stage {
-            flex: 1; position: relative; overflow: hidden;
+            width: 100%; height: 100%;
             display: flex; justify-content: center; align-items: center;
-            background-image: radial-gradient(rgba(128,128,128,0.2) 1px, transparent 1px);
-            background-size: 20px 20px;
+            position: relative; perspective: 1500px;
+            background-image: radial-gradient(rgba(128,128,128,0.15) 1px, transparent 1px);
+            background-size: 30px 30px;
         }
 
-        .zoom-layer {
-            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            transform-origin: center center;
+        /* Lớp quản lý Zoom/Pan */
+        .viewport-layer {
+            transition: transform 0.1s linear; /* Tắt easing để vẽ không bị delay */
+            transform-style: preserve-3d;
             will-change: transform;
         }
 
-        /* Container của mỗi trang (Chứa PDF + Lớp Vẽ) */
-        .page-wrapper {
-            position: relative; overflow: hidden;
-            background: white; /* Giấy trắng */
-        }
+        /* Khi ở chế độ vẽ, con trỏ thay đổi */
+        .viewport-layer.drawing-mode { cursor: crosshair; }
+        .viewport-layer.reading-mode { cursor: grab; }
 
-        canvas.pdf-layer {
-            position: absolute; top: 0; left: 0; z-index: 1;
-            width: 100%; height: 100%; object-fit: contain;
-        }
+        /* Canvas Pages */
+        .page-wrapper { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
         
-        canvas.draw-layer {
-            position: absolute; top: 0; left: 0; z-index: 2;
-            width: 100%; height: 100%; cursor: crosshair;
-            touch-action: none;
+        .pdf-layer { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        
+        /* MAGIC LAYER: Canvas vẽ sẽ nằm đè lên */
+        .ink-layer { 
+            position: absolute; top: 0; left: 0; z-index: 5; 
+            touch-action: none; /* Chặn touch mặc định để vẽ trên mobile */
         }
 
-        /* --- 4. PAN OVERLAY (Kéo thả khi Zoom) --- */
-        #pan-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 500; display: none; cursor: grab;
-        }
-        #pan-overlay.grabbing { cursor: grabbing; }
-
-        /* --- 5. KÍNH LÚP --- */
-        #magnifier {
-            position: absolute; width: 220px; height: 220px;
-            border: 4px solid #fff; border-radius: 50%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: none; pointer-events: none; z-index: 9999;
-            background: #fff; overflow: hidden;
-        }
-
-        /* --- 6. UPLOAD UI --- */
-        #upload-modal {
+        /* =========================================
+           4. UPLOAD & NOTIFICATIONS
+           ========================================= */
+        .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 2000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.9); z-index: 5000;
+            display: flex; justify-content: center; align-items: center;
+            animation: fadeIn 0.5s;
         }
-        .upload-card {
-            padding: 40px; border: 2px dashed var(--accent); color: #ccc;
-            border-radius: 15px; cursor: pointer; text-align: center;
-        }
-        .upload-card:hover { color: #fff; background: rgba(255,255,255,0.05); }
         
+        .upload-card {
+            background: #1e1e24; padding: 50px; border-radius: 30px;
+            text-align: center; border: 2px dashed #444;
+            transition: 0.3s; cursor: pointer; max-width: 500px;
+        }
+        .upload-card:hover { border-color: var(--accent); background: #25252b; transform: scale(1.02); }
+        .upload-card h1 { font-size: 2.5rem; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+
+        .toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: #333; color: #fff; padding: 10px 20px; border-radius: 50px;
+            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000;
+            font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Kính lúp (Spyglass) */
+        .spyglass {
+            position: absolute; width: 250px; height: 250px;
+            border-radius: 50%; border: 4px solid white;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.6);
+            overflow: hidden; pointer-events: none; z-index: 9999;
+            display: none; background: #fff;
+        }
+
+        @keyframes fadeIn { from {opacity:0} to {opacity:1} }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div id="upload-modal">
-        <div class="upload-card" onclick="document.getElementById('inp-file').click()">
-            <i class="fas fa-palette" style="font-size: 3rem; margin-bottom: 20px; color: var(--accent);"></i>
-            <h2>CHỌN FILE PDF</h2>
-            <p>Phiên bản V8: Vẽ, Kính lúp, Giao diện chuẩn</p>
+    <div class="modal-overlay" id="start-screen">
+        <div class="upload-card" onclick="document.getElementById('file-upload').click()">
+            <i class="fas fa-cube" style="font-size: 4rem; color: var(--accent); margin-bottom: 20px;"></i>
+            <h1>FLIP OS V9</h1>
+            <p style="color: #888;">System Ready. Click to Initialize PDF Core.</p>
         </div>
-        <input type="file" id="inp-file" accept="application/pdf" style="display: none;">
-        <div id="loading-txt" style="margin-top:20px; color:var(--accent); display:none;">Đang xử lý...</div>
+        <input type="file" id="file-upload" accept="application/pdf" style="display: none;">
     </div>
 
-    <div class="toolbar">
-        <div class="group">
-            <button class="btn" onclick="UI.toggleTheme()" title="Sáng/Tối"><i class="fas fa-adjust"></i></button>
-            <button class="btn" id="btn-sound" onclick="UI.toggleSound()"><i class="fas fa-volume-up"></i></button>
+    <div class="island-top">
+        <div class="app-logo"><i class="fas fa-layer-group"></i> FLIP OS</div>
+        <div class="divider"></div>
+        <div class="mode-switcher">
+            <button class="mode-btn active" onclick="App.setMode('READ')" id="mode-read"><i class="fas fa-book-open"></i> Đọc</button>
+            <button class="mode-btn" onclick="App.setMode('DRAW')" id="mode-draw"><i class="fas fa-pen-nib"></i> Vẽ</button>
         </div>
+        <div class="divider"></div>
+        <button class="icon-btn" onclick="App.toggleTheme()" title="Theme"><i class="fas fa-adjust"></i></button>
+    </div>
 
-        <div class="group">
-            <button class="btn" id="btn-prev"><i class="fas fa-chevron-left"></i></button>
-            <span id="page-num" style="font-weight:bold; min-width:80px; text-align:center;">0/0</span>
-            <button class="btn" id="btn-next"><i class="fas fa-chevron-right"></i></button>
-        </div>
+    <div class="island-side" id="toolbar-draw">
+        <div class="color-swatch active" style="background:#ff4757;" onclick="Pen.setColor('#ff4757', this)"></div>
+        <div class="color-swatch" style="background:#2ed573;" onclick="Pen.setColor('#2ed573', this)"></div>
+        <div class="color-swatch" style="background:#3742fa;" onclick="Pen.setColor('#3742fa', this)"></div>
+        <div class="color-swatch" style="background:#ffa502;" onclick="Pen.setColor('#ffa502', this)"></div>
+        <div class="color-swatch" style="background:#000000; border:1px solid #555" onclick="Pen.setColor('#000000', this)"></div>
+        <div class="divider" style="width:100%; height:1px;"></div>
+        <button class="icon-btn" onclick="Pen.undo()" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+        <button class="icon-btn" onclick="Pen.setEraser()" id="btn-eraser" title="Eraser"><i class="fas fa-eraser"></i></button>
+        <button class="icon-btn" onclick="Pen.clearPage()" title="Clear Page"><i class="fas fa-trash"></i></button>
+    </div>
 
-        <div class="group" style="border-left:1px solid var(--border); padding-left:10px;">
-            <button class="btn" id="btn-pen" onclick="Pen.toggle()" title="Bật bút vẽ"><i class="fas fa-pen"></i></button>
-            <div class="group" id="pen-controls" style="display:none;">
-                <div class="color-dot selected" style="background:red;" onclick="Pen.setColor('red', this)"></div>
-                <div class="color-dot" style="background:blue;" onclick="Pen.setColor('blue', this)"></div>
-                <div class="color-dot" style="background:black;" onclick="Pen.setColor('black', this)"></div>
-                <button class="btn" onclick="Pen.toggleEraser()" id="btn-eraser" title="Tẩy"><i class="fas fa-eraser"></i></button>
-            </div>
-        </div>
-
-        <div class="group" style="border-left:1px solid var(--border); padding-left:10px;">
-            <button class="btn" id="btn-loupe" onclick="Loupe.toggle()" title="Kính lúp"><i class="fas fa-search"></i></button>
-            <button class="btn" onclick="Zoom.out()"><i class="fas fa-minus"></i></button>
-            <span id="zoom-lvl" style="font-size:0.9rem; font-weight:bold;">100%</span>
-            <button class="btn" onclick="Zoom.in()"><i class="fas fa-plus"></i></button>
-        </div>
+    <div class="island-bottom">
+        <button class="icon-btn" onclick="App.prevPage()"><i class="fas fa-chevron-left"></i></button>
+        <span class="page-indicator" id="page-num">Ready</span>
+        <button class="icon-btn" onclick="App.nextPage()"><i class="fas fa-chevron-right"></i></button>
+        
+        <div class="divider"></div>
+        
+        <button class="icon-btn" onclick="Zoom.out()"><i class="fas fa-minus"></i></button>
+        <span class="page-indicator" id="zoom-level">100%</span>
+        <button class="icon-btn" onclick="Zoom.in()"><i class="fas fa-plus"></i></button>
+        
+        <div class="divider"></div>
+        
+        <button class="icon-btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
+        <button class="icon-btn" onclick="App.toggleFullscreen()"><i class="fas fa-expand"></i></button>
     </div>
 
     <div class="stage">
-        <div class="zoom-layer" id="zoom-layer">
-            <div id="book"></div>
+        <div class="viewport-layer reading-mode" id="viewport">
+            <div id="book-container"></div>
         </div>
         
-        <div id="pan-overlay"></div>
-        
-        <div id="magnifier"><canvas id="mag-canvas"></canvas></div>
+        <div class="spyglass" id="spyglass"><canvas id="spy-canvas"></canvas></div>
     </div>
 
-    <audio id="snd" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
+    <div class="toast" id="toast">Thông báo</div>
+
+    <audio id="sfx-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
+    <audio id="sfx-click" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
 
     <script>
+        /**
+         * ==========================================================
+         * FLIP OS KERNEL V9 - ENTERPRISE MONOLITH STRUCTURE
+         * Author: Gemini AI (Prompted by You)
+         * ==========================================================
+         */
+
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        let pdfDoc = null;
-        let pageFlip = null;
-        
-        // --- 1. QUẢN LÝ UI & FILE ---
-        const UI = {
-            isSound: true,
+        // --- GLOBAL STATE STORE ---
+        const Store = {
+            mode: 'READ', // 'READ' | 'DRAW'
+            zoom: 1,
             isDark: true,
+            pdf: null,
+            totalPages: 0,
+            currentPage: 0,
+            history: {} // Lưu nét vẽ của từng trang: { pageIndex: [ImageData, ...] }
+        };
+
+        // --- 1. CORE APPLICATION CONTROLLER ---
+        const App = {
+            pageFlip: null,
             
             init() {
-                // Upload Event
-                document.getElementById('inp-file').addEventListener('change', this.handleUpload);
-                // Buttons
-                document.getElementById('btn-prev').onclick = () => pageFlip && pageFlip.flipPrev();
-                document.getElementById('btn-next').onclick = () => pageFlip && pageFlip.flipNext();
+                // Binding Events
+                document.getElementById('file-upload').addEventListener('change', this.handleFileUpload);
+                
+                // Keyboard Shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.key === 'z') Pen.undo();
+                    if (e.key === 'ArrowLeft') this.prevPage();
+                    if (e.key === 'ArrowRight') this.nextPage();
+                });
             },
 
-            async handleUpload(e) {
+            async handleFileUpload(e) {
                 const file = e.target.files[0];
                 if(!file) return;
+
+                UI.toast("Booting PDF Core...");
+                document.querySelector('.upload-card').innerHTML = '<i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:var(--accent)"></i><br><br>PROCESSING MATRIX...';
                 
-                document.querySelector('.upload-card').style.display='none';
-                document.getElementById('loading-txt').style.display='block';
-                
-                // Mồi âm thanh
-                document.getElementById('snd').play().catch(()=>{}); 
-                document.getElementById('snd').pause();
+                // Audio Init
+                const sfx = document.getElementById('sfx-flip'); sfx.play().catch(()=>{}); sfx.pause();
 
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(file);
                 reader.onload = async (ev) => {
-                    const data = new Uint8Array(ev.target.result);
-                    pdfDoc = await pdfjsLib.getDocument(data).promise;
-                    document.getElementById('page-num').innerText = `1 / ${pdfDoc.numPages}`;
-                    await UI.renderPages();
+                    try {
+                        const data = new Uint8Array(ev.target.result);
+                        Store.pdf = await pdfjsLib.getDocument(data).promise;
+                        Store.totalPages = Store.pdf.numPages;
+                        await App.renderBook();
+                    } catch (err) {
+                        alert("Corrupted Data: " + err.message);
+                        location.reload();
+                    }
                 };
             },
 
-            async renderPages() {
-                const book = document.getElementById('book');
-                book.innerHTML = '';
-                const total = pdfDoc.numPages;
+            async renderBook() {
+                const container = document.getElementById('book-container');
+                container.innerHTML = '';
 
-                for(let i=1; i<=total; i++) {
-                    const page = await pdfDoc.getPage(i);
-                    const viewport = page.getViewport({ scale: 1.5 });
-                    
-                    // Tạo Wrapper chứa (PDF Canvas + Draw Canvas)
+                // RENDER PIPELINE
+                for (let i = 1; i <= Store.totalPages; i++) {
+                    const page = await Store.pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5 }); // High Res
+
+                    // Create Page Structure
                     const wrapper = document.createElement('div');
-                    wrapper.className = 'page-wrapper'; 
-                    // Set cứng kích thước wrapper theo viewport để tránh lỗi layout
-                    // (Sẽ được PageFlip override nhưng cần set ban đầu)
-                    
-                    // 1. PDF Canvas
-                    const pdfCan = document.createElement('canvas');
-                    pdfCan.className = 'pdf-layer';
-                    pdfCan.width = viewport.width; pdfCan.height = viewport.height;
-                    const ctx = pdfCan.getContext('2d', {alpha: false});
-                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-                    
-                    // 2. Drawing Canvas (Nằm đè lên PDF)
-                    const drawCan = document.createElement('canvas');
-                    drawCan.className = 'draw-layer';
-                    drawCan.width = viewport.width; drawCan.height = viewport.height;
-                    
-                    // Ghép vào wrapper
-                    wrapper.appendChild(pdfCan);
-                    wrapper.appendChild(drawCan);
-                    book.appendChild(wrapper);
+                    wrapper.className = 'page-wrapper';
+                    wrapper.dataset.pageIndex = i - 1; // 0-based index for logic
 
-                    document.getElementById('loading-txt').innerText = `Đang xử lý ${i}/${total}`;
+                    // 1. PDF Raster Layer
+                    const pdfCanvas = document.createElement('canvas');
+                    pdfCanvas.className = 'pdf-layer';
+                    pdfCanvas.width = viewport.width;
+                    pdfCanvas.height = viewport.height;
+                    const ctx = pdfCanvas.getContext('2d', { alpha: false });
+                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+                    // 2. Ink Vector Layer (Canvas vẽ)
+                    const inkCanvas = document.createElement('canvas');
+                    inkCanvas.className = 'ink-layer';
+                    inkCanvas.width = viewport.width;
+                    inkCanvas.height = viewport.height;
+
+                    wrapper.appendChild(pdfCanvas);
+                    wrapper.appendChild(inkCanvas);
+                    container.appendChild(wrapper);
                 }
 
-                document.getElementById('upload-modal').style.display='none';
-                UI.initBook();
-                Pen.init(); // Khởi tạo bút
+                document.getElementById('start-screen').style.display = 'none';
+                this.initFlipEngine();
             },
 
-            initBook() {
+            initFlipEngine() {
                 const isMobile = window.innerWidth < 768;
-                pageFlip = new St.PageFlip(document.getElementById('book'), {
-                    width: isMobile ? 350 : 550, height: isMobile ? 500 : 750,
+                this.pageFlip = new St.PageFlip(document.getElementById('book-container'), {
+                    width: isMobile ? 380 : 580,
+                    height: isMobile ? 550 : 820,
                     size: "stretch", showCover: true, usePortrait: isMobile,
-                    minWidth: 300, maxWidth: 1000, minHeight: 400, maxHeight: 1200,
-                    // QUAN TRỌNG: Để true để dùng chuột lật trang khi ko vẽ/zoom
+                    minWidth: 300, maxWidth: 1000,
+                    maxShadowOpacity: 0.5,
+                    // QUAN TRỌNG: Mặc định cho phép chuột để lật
                     useMouseEvents: true 
                 });
 
-                pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
+                this.pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
 
-                pageFlip.on('flip', (e) => {
-                    document.getElementById('page-num').innerText = `${e.data+1}/${pdfDoc.numPages}`;
-                    if(UI.isSound) {
-                        const aud = document.getElementById('snd'); aud.currentTime=0; aud.play().catch(()=>{});
-                    }
+                this.pageFlip.on('flip', (e) => {
+                    Store.currentPage = e.data;
+                    document.getElementById('page-num').innerText = `${e.data + 1} / ${Store.totalPages}`;
+                    UI.playSound('flip');
                 });
             },
 
-            toggleTheme() {
-                this.isDark = !this.isDark;
-                document.body.setAttribute('data-theme', this.isDark ? 'dark' : 'light');
-            },
+            // --- MODE SWITCHER LOGIC (KEY FIX) ---
+            setMode(newMode) {
+                Store.mode = newMode;
+                const view = document.getElementById('viewport');
+                const toolbarDraw = document.getElementById('toolbar-draw');
+                const btnRead = document.getElementById('mode-read');
+                const btnDraw = document.getElementById('mode-draw');
 
-            toggleSound() {
-                this.isSound = !this.isSound;
-                const btn = document.getElementById('btn-sound');
-                btn.style.opacity = this.isSound ? 1 : 0.5;
-            }
-        };
+                if (newMode === 'DRAW') {
+                    // 1. Tắt sự kiện chuột của Flip Library -> Để canvas nhận chuột vẽ
+                    this.pageFlip.update({ useMouseEvents: false });
+                    
+                    // 2. UI Updates
+                    view.classList.remove('reading-mode');
+                    view.classList.add('drawing-mode');
+                    toolbarDraw.classList.add('visible');
+                    btnDraw.classList.add('active');
+                    btnRead.classList.remove('active');
+                    UI.toast("Pen Mode Active");
+                    
+                    // 3. Init Pen Events
+                    Pen.attachEvents();
 
-        // --- 2. BÚT VẼ (PEN SYSTEM) ---
-        const Pen = {
-            enabled: false,
-            color: 'red',
-            isEraser: false,
-            lineWidth: 2,
-            isDrawing: false,
-            lastX: 0, lastY: 0,
-
-            init() {
-                // Gán sự kiện vẽ cho TOÀN BỘ drawing canvas
-                const layers = document.querySelectorAll('.draw-layer');
-                layers.forEach(canvas => {
-                    canvas.addEventListener('mousedown', e => this.start(e, canvas));
-                    canvas.addEventListener('mousemove', e => this.move(e, canvas));
-                    canvas.addEventListener('mouseup', () => this.stop());
-                    canvas.addEventListener('mouseleave', () => this.stop());
-                });
-            },
-
-            toggle() {
-                this.enabled = !this.enabled;
-                const btn = document.getElementById('btn-pen');
-                const ctrls = document.getElementById('pen-controls');
-                
-                if(this.enabled) {
-                    btn.classList.add('active');
-                    ctrls.style.display = 'flex';
-                    // Tắt chuột lật trang để ưu tiên vẽ
-                    if(pageFlip) pageFlip.update({ useMouseEvents: false });
-                    Zoom.disablePan(); // Tắt kéo trang
                 } else {
-                    btn.classList.remove('active');
-                    ctrls.style.display = 'none';
-                    // Bật lại lật trang
-                    if(pageFlip) pageFlip.update({ useMouseEvents: true });
+                    // 1. Bật lại sự kiện chuột cho Flip Library
+                    this.pageFlip.update({ useMouseEvents: true });
+                    
+                    // 2. UI Updates
+                    view.classList.remove('drawing-mode');
+                    view.classList.add('reading-mode');
+                    toolbarDraw.classList.remove('visible');
+                    btnRead.classList.add('active');
+                    btnDraw.classList.remove('active');
+                    UI.toast("Read Mode Active");
+                    
+                    // 3. Detach Pen Events (để tiết kiệm resource)
+                    Pen.detachEvents();
                 }
             },
 
-            setColor(c, el) {
-                this.color = c; this.isEraser = false;
-                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
-                el.classList.add('selected');
-                document.getElementById('btn-eraser').classList.remove('active');
+            prevPage() { if(this.pageFlip) this.pageFlip.flipPrev(); },
+            nextPage() { if(this.pageFlip) this.pageFlip.flipNext(); },
+            
+            toggleTheme() {
+                Store.isDark = !Store.isDark;
+                document.body.setAttribute('data-theme', Store.isDark ? 'dark' : 'light');
             },
 
-            toggleEraser() {
-                this.isEraser = !this.isEraser;
-                const btn = document.getElementById('btn-eraser');
-                if(this.isEraser) btn.classList.add('active'); else btn.classList.remove('active');
+            toggleFullscreen() {
+                if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            }
+        };
+
+        // --- 2. PEN ENGINE (V9 - SMOOTH INK) ---
+        const Pen = {
+            color: '#ff4757',
+            lineWidth: 3,
+            isDrawing: false,
+            isEraser: false,
+            activeCanvas: null,
+            ctx: null,
+            lastPoint: { x: 0, y: 0 },
+            historyStack: [], // Stack cho Undo
+
+            attachEvents() {
+                const layers = document.querySelectorAll('.ink-layer');
+                layers.forEach(canvas => {
+                    canvas.onpointerdown = (e) => this.start(e, canvas);
+                    canvas.onpointermove = (e) => this.move(e);
+                    canvas.onpointerup = () => this.end();
+                    canvas.onpointercancel = () => this.end();
+                });
             },
 
-            // Logic Vẽ
-            getPos(e, canvas) {
+            detachEvents() {
+                const layers = document.querySelectorAll('.ink-layer');
+                layers.forEach(canvas => {
+                    canvas.onpointerdown = null;
+                    canvas.onpointermove = null;
+                });
+            },
+
+            getCoords(e, canvas) {
                 const rect = canvas.getBoundingClientRect();
-                // Phải tính tỉ lệ scale vì canvas size thực tế khác size hiển thị
+                // Map toạn độ màn hình -> tọa độ Canvas thực tế
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
                 return {
@@ -362,147 +462,241 @@
             },
 
             start(e, canvas) {
-                if(!this.enabled) return;
+                if (Store.mode !== 'DRAW') return;
+                
+                // Chặn sự kiện nổi bọt để Flip không bắt được
+                e.stopPropagation(); 
+                canvas.setPointerCapture(e.pointerId); // Khóa con trỏ vào canvas này
+
                 this.isDrawing = true;
-                const pos = this.getPos(e, canvas);
-                this.lastX = pos.x; this.lastY = pos.y;
+                this.activeCanvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                
+                // Lưu trạng thái trước khi vẽ để Undo
+                this.saveState(canvas);
+
+                const coords = this.getCoords(e, canvas);
+                this.lastPoint = coords;
+
+                // Setup Brush
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+                this.ctx.lineWidth = this.isEraser ? 20 : this.lineWidth;
+                this.ctx.strokeStyle = this.color;
+                this.ctx.globalCompositeOperation = this.isEraser ? 'destination-out' : 'source-over';
+                
+                // Vẽ dấu chấm ngay khi click
+                this.ctx.beginPath();
+                this.ctx.arc(coords.x, coords.y, this.ctx.lineWidth / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.beginPath();
+                this.ctx.moveTo(coords.x, coords.y);
             },
 
-            move(e, canvas) {
-                if(!this.isDrawing || !this.enabled) return;
-                const ctx = canvas.getContext('2d');
-                const pos = this.getPos(e, canvas);
+            move(e) {
+                if (!this.isDrawing) return;
+                e.preventDefault(); // Chặn scroll trang trên mobile
 
-                ctx.beginPath();
-                ctx.moveTo(this.lastX, this.lastY);
-                ctx.lineTo(pos.x, pos.y);
+                const coords = this.getCoords(e, this.activeCanvas);
                 
-                if(this.isEraser) {
-                    ctx.globalCompositeOperation = 'destination-out';
-                    ctx.lineWidth = 20;
-                } else {
-                    ctx.globalCompositeOperation = 'source-over';
-                    ctx.strokeStyle = this.color;
-                    ctx.lineWidth = 3;
+                // Thuật toán vẽ Quadratic Curve cho nét mượt
+                const midPoint = {
+                    x: this.lastPoint.x + (coords.x - this.lastPoint.x) / 2,
+                    y: this.lastPoint.y + (coords.y - this.lastPoint.y) / 2
+                };
+
+                this.ctx.quadraticCurveTo(this.lastPoint.x, this.lastPoint.y, midPoint.x, midPoint.y);
+                this.ctx.stroke();
+                
+                this.lastPoint = coords;
+            },
+
+            end() {
+                if (!this.isDrawing) return;
+                this.isDrawing = false;
+                this.ctx.closePath();
+            },
+
+            setColor(hex, el) {
+                this.color = hex;
+                this.isEraser = false;
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                if(el) el.classList.add('active');
+                document.getElementById('btn-eraser').classList.remove('active');
+            },
+
+            setEraser() {
+                this.isEraser = !this.isEraser;
+                const btn = document.getElementById('btn-eraser');
+                btn.classList.toggle('active', this.isEraser);
+            },
+
+            // --- UNDO SYSTEM ---
+            saveState(canvas) {
+                // Lưu tối đa 10 bước history cho mỗi trang
+                const pageIdx = canvas.parentElement.dataset.pageIndex;
+                if (!Store.history[pageIdx]) Store.history[pageIdx] = [];
+                
+                const snapshot = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+                Store.history[pageIdx].push(snapshot);
+                if(Store.history[pageIdx].length > 10) Store.history[pageIdx].shift();
+            },
+
+            undo() {
+                // Tìm canvas của trang hiện tại
+                // Lưu ý: PageFlip render 2 trang cùng lúc, logic này lấy trang active
+                const visibleWrappers = document.querySelectorAll('.page-wrapper'); // Cần logic phức tạp hơn để tìm đúng trang
+                // Để đơn giản cho V9, ta Undo trang đang vẽ gần nhất (activeCanvas)
+                if (!this.activeCanvas) {
+                    UI.toast("Vẽ gì đi rồi hãy Undo!");
+                    return;
                 }
                 
-                ctx.lineCap = 'round';
-                ctx.stroke();
+                const pageIdx = this.activeCanvas.parentElement.dataset.pageIndex;
+                const stack = Store.history[pageIdx];
 
-                this.lastX = pos.x; this.lastY = pos.y;
+                if (stack && stack.length > 0) {
+                    const ctx = this.activeCanvas.getContext('2d');
+                    const lastState = stack.pop();
+                    ctx.putImageData(lastState, 0, 0);
+                    UI.toast("Undo Successful");
+                }
             },
-
-            stop() { this.isDrawing = false; }
+            
+            clearPage() {
+                if(!this.activeCanvas) return;
+                this.saveState(this.activeCanvas);
+                const ctx = this.activeCanvas.getContext('2d');
+                ctx.clearRect(0, 0, this.activeCanvas.width, this.activeCanvas.height);
+            }
         };
 
-        // --- 3. ZOOM & KÍNH LÚP ---
+        // --- 3. ZOOM ENGINE (MATRIX TRANSFORM) ---
         const Zoom = {
             scale: 1,
-            panX: 0, panY: 0,
-            isDragging: false, startX:0, startY:0,
+            pan: { x: 0, y: 0 },
+            isDragging: false,
+            startPos: { x: 0, y: 0 },
 
-            in() { if(this.scale < 3) { this.scale += 0.5; this.apply(); } },
-            out() { if(this.scale > 1) { this.scale -= 0.5; this.apply(); } },
-            
-            apply() {
-                document.getElementById('zoom-lvl').innerText = (this.scale*100)+'%';
-                document.getElementById('zoom-layer').style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
+            init() {
+                const viewport = document.getElementById('viewport');
                 
-                const overlay = document.getElementById('pan-overlay');
-                if(this.scale > 1) {
-                    overlay.style.display = 'block';
-                    // Tắt chuột lật trang khi zoom
-                    if(pageFlip) pageFlip.update({ useMouseEvents: false });
-                } else {
-                    overlay.style.display = 'none';
-                    this.panX=0; this.panY=0;
-                    document.getElementById('zoom-layer').style.transform = `translate(0,0) scale(1)`;
-                    // Bật lại lật trang nếu ko vẽ
-                    if(pageFlip && !Pen.enabled) pageFlip.update({ useMouseEvents: true });
-                }
+                // Pan Logic (Chỉ hoạt động khi KHÔNG ở chế độ vẽ và Zoom > 1)
+                viewport.addEventListener('mousedown', e => {
+                    if (Store.mode === 'DRAW' || this.scale <= 1) return;
+                    this.isDragging = true;
+                    this.startPos = { x: e.clientX - this.pan.x, y: e.clientY - this.pan.y };
+                    viewport.style.cursor = 'grabbing';
+                });
+
+                window.addEventListener('mousemove', e => {
+                    if (!this.isDragging) return;
+                    e.preventDefault();
+                    this.pan.x = e.clientX - this.startPos.x;
+                    this.pan.y = e.clientY - this.startPos.y;
+                    this.update();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                    viewport.style.cursor = Store.mode === 'DRAW' ? 'crosshair' : 'grab';
+                });
             },
-            
-            disablePan() { document.getElementById('pan-overlay').style.display='none'; }
-        };
 
-        // Pan Logic
-        const panOv = document.getElementById('pan-overlay');
-        panOv.addEventListener('mousedown', e => {
-            Zoom.isDragging = true;
-            Zoom.startX = e.clientX - Zoom.panX;
-            Zoom.startY = e.clientY - Zoom.panY;
-            panOv.style.cursor='grabbing';
-        });
-        window.addEventListener('mousemove', e => {
-            if(Zoom.isDragging) {
-                e.preventDefault();
-                Zoom.panX = e.clientX - Zoom.startX;
-                Zoom.panY = e.clientY - Zoom.startY;
-                Zoom.apply();
+            in() { if (this.scale < 3) { this.scale += 0.5; this.update(); } },
+            out() { if (this.scale > 1) { this.scale -= 0.5; this.update(); } },
+
+            update() {
+                const el = document.getElementById('viewport');
+                document.getElementById('zoom-level').innerText = Math.round(this.scale * 100) + '%';
+                
+                el.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.scale})`;
+                
+                // Reset Pan nếu zoom về 1
+                if (this.scale === 1) {
+                    this.pan = { x: 0, y: 0 };
+                    el.style.transform = `scale(1)`;
+                }
             }
-            if(Loupe.active) Loupe.update(e);
-        });
-        window.addEventListener('mouseup', () => { Zoom.isDragging = false; panOv.style.cursor='grab'; });
+        };
+        
+        Zoom.init();
 
-
-        // --- 4. KÍNH LÚP (FIXED) ---
+        // --- 4. SPYGLASS (KÍNH LÚP XUYÊN THẤU) ---
         const Loupe = {
             active: false,
+            ctx: document.getElementById('spy-canvas').getContext('2d'),
             
             toggle() {
                 this.active = !this.active;
+                const glass = document.getElementById('spyglass');
                 const btn = document.getElementById('btn-loupe');
-                const mag = document.getElementById('magnifier');
-                if(this.active) {
+                
+                if (this.active) {
+                    glass.style.display = 'block';
                     btn.classList.add('active');
-                    mag.style.display = 'block';
+                    document.addEventListener('mousemove', this.move);
+                    document.getElementById('spy-canvas').width = 500;
+                    document.getElementById('spy-canvas').height = 500;
                 } else {
+                    glass.style.display = 'none';
                     btn.classList.remove('active');
-                    mag.style.display = 'none';
+                    document.removeEventListener('mousemove', this.move);
                 }
             },
 
-            update(e) {
-                const mag = document.getElementById('magnifier');
-                mag.style.left = (e.clientX + 20) + 'px';
-                mag.style.top = (e.clientY + 20) + 'px';
+            move: (e) => {
+                const glass = document.getElementById('spyglass');
+                glass.style.left = (e.clientX + 20) + 'px';
+                glass.style.top = (e.clientY + 20) + 'px';
 
-                // Tìm canvas bên dưới chuột
-                mag.style.display = 'none';
+                // Raycasting để tìm element bên dưới
+                glass.style.display = 'none';
                 const el = document.elementFromPoint(e.clientX, e.clientY);
-                mag.style.display = 'block';
+                glass.style.display = 'block';
 
-                if(el && (el.classList.contains('pdf-layer') || el.classList.contains('draw-layer'))) {
-                    // Nếu trỏ vào draw-layer, ta cần lấy cả pdf-layer bên dưới nó để soi cho đủ
-                    const wrapper = el.parentElement;
-                    if(!wrapper.classList.contains('page-wrapper')) return;
-
-                    const pdfCan = wrapper.querySelector('.pdf-layer');
-                    const drawCan = wrapper.querySelector('.draw-layer');
-                    const rect = pdfCan.getBoundingClientRect();
+                // Logic tìm wrapper trang sách
+                const wrapper = el?.closest('.page-wrapper');
+                if (wrapper) {
+                    const pdfC = wrapper.querySelector('.pdf-layer');
+                    const inkC = wrapper.querySelector('.ink-layer');
+                    const rect = pdfC.getBoundingClientRect();
                     
-                    const magCtx = document.getElementById('mag-canvas').getContext('2d');
-                    document.getElementById('mag-canvas').width = 500;
-                    document.getElementById('mag-canvas').height = 500;
+                    const ratioX = pdfC.width / rect.width;
+                    const ratioY = pdfC.height / rect.height;
+                    
+                    const x = (e.clientX - rect.left) * ratioX;
+                    const y = (e.clientY - rect.top) * ratioY;
 
-                    // Tính toạ độ tương đối
-                    const x = (e.clientX - rect.left) * (pdfCan.width / rect.width);
-                    const y = (e.clientY - rect.top) * (pdfCan.height / rect.height);
-
-                    // Vẽ nền trắng
-                    magCtx.fillStyle = '#fff'; magCtx.fillRect(0,0,500,500);
-
-                    // Vẽ lớp PDF
+                    const ctx = Loupe.ctx;
+                    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,500,500);
+                    
+                    // Render Composite (PDF + Ink)
                     try {
-                        magCtx.drawImage(pdfCan, x-100, y-100, 200, 200, 0, 0, 500, 500);
-                        // Vẽ lớp Mực (Đè lên)
-                        magCtx.drawImage(drawCan, x-100, y-100, 200, 200, 0, 0, 500, 500);
-                    } catch(err){}
+                        ctx.drawImage(pdfC, x-100, y-100, 200, 200, 0, 0, 500, 500);
+                        ctx.drawImage(inkC, x-100, y-100, 200, 200, 0, 0, 500, 500);
+                    } catch(e){}
                 }
             }
         };
 
-        UI.init();
+        // --- UI UTILS ---
+        const UI = {
+            toast(msg) {
+                const t = document.getElementById('toast');
+                t.innerText = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 2000);
+            },
+            playSound(type) {
+                const id = type === 'flip' ? 'sfx-flip' : 'sfx-click';
+                const sfx = document.getElementById(id);
+                sfx.currentTime = 0; sfx.play().catch(()=>{});
+            }
+        };
+
+        // BOOTSTRAP
+        App.init();
 
     </script>
 </body>
