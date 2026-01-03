@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate PDF Flipbook</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #2b2d42;
+            --panel-color: #1e1e2e;
+            --accent-color: #ff006e;
+            --text-color: #edf2f4;
+            --btn-hover: #3a86ff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #upload-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(43, 45, 66, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        .upload-box {
+            border: 3px dashed var(--accent-color);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        .upload-box:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .upload-box i { font-size: 4rem; margin-bottom: 20px; color: var(--accent-color); }
+        .upload-box h2 { margin: 0; font-size: 2rem; }
+        .upload-box p { color: #aaa; margin-top: 10px; }
+        #file-input { display: none; }
+        #loading-bar-container {
+            width: 300px;
+            height: 10px;
+            background: #444;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+            overflow: hidden;
+        }
+        #loading-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), var(--btn-hover));
+            transition: width 0.2s;
+        }
+        #loading-text { margin-top: 10px; font-size: 0.9rem; color: #ffd700; display: none; }
+        .toolbar {
+            height: 60px;
+            background-color: var(--panel-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+        .toolbar-group { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            background: transparent;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn:hover { background: var(--btn-hover); border-color: var(--btn-hover); transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .page-info { font-weight: bold; margin: 0 15px; font-variant-numeric: tabular-nums; }
+        .stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            padding: 20px;
+            position: relative;
+            background-image: radial-gradient(#3e405b 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .stf__wrapper {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .book-wrapper {
+            transition: transform 0.3s ease;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: contrast(1.05) brightness(0.98); 
+        }
+        .hard-cover {
+            background: #4a1c1c;
+            border: 2px solid #2e1212;
+        }
+    </style>
+</head>
+<body>
+    <div id="upload-overlay">
+        <div class="upload-box" onclick="document.getElementById('file-input').click()">
+            <i class="fas fa-book-open"></i>
+            <h2>MỞ THƯ VIỆN SÁCH</h2>
+            <p>Click để chọn file PDF hoặc Kéo thả vào đây</p>
+        </div>
+        <input type="file" id="file-input" accept="application/pdf">
+        <div id="loading-bar-container">
+            <div id="loading-bar"></div>
+        </div>
+        <div id="loading-text">Đang xử lý trang: 0/0</div>
+    </div>
+
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <div style="font-weight:bold; color: var(--accent-color); font-size: 1.2rem;">
+                <i class="fas fa-atlas"></i> PDF FLIPBOOK
+            </div>
+        </div>
+        <div class="toolbar-group">
+            <button class="btn" id="btn-prev" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
+            <span class="page-info">Trang <span id="current-page">0</span> / <span id="total-page">0</span></span>
+            <button class="btn" id="btn-next" title="Trang sau"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="toolbar-group">
+            <button class="btn" id="btn-zoom-out"><i class="fas fa-search-minus"></i></button>
+            <button class="btn" id="btn-zoom-in"><i class="fas fa-search-plus"></i></button>
+            <button class="btn" id="btn-sound" onclick="toggleSound()"><i class="fas fa-volume-up"></i></button>
+            <button class="btn" id="btn-reset" onclick="location.reload()" title="Mở file khác"><i class="fas fa-redo"></i></button>
+        </div>
+    </div>
+
+    <div class="stage">
+        <div class="book-wrapper" id="book-wrapper">
+            <div id="book"></div>
+        </div>
+    </div>
+
+    <audio id="page-flip-sound" src="https://cdn.pixabay.com/audio/2022/03/10/audio_5b35735071.mp3"></audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        const fileInput = document.getElementById('file-input');
+        const uploadOverlay = document.getElementById('upload-overlay');
+        const bookElement = document.getElementById('book');
+        const loadingBar = document.getElementById('loading-bar');
+        const loadingText = document.getElementById('loading-text');
+        const loadingContainer = document.getElementById('loading-bar-container');
+        const bookWrapper = document.getElementById('book-wrapper');
+        
+        let pageFlip = null;
+        let pdfDoc = null;
+        let currentZoom = 1;
+        let isSoundOn = true;
+
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        uploadOverlay.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.querySelector('.upload-box').style.borderColor = '#3a86ff';
+        });
+
+        uploadOverlay.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            document.querySelector('.upload-box').style.borderColor = '#ff006e';
+        });
+
+        uploadOverlay.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            if (!file || file.type !== 'application/pdf') {
+                alert('Vui lòng chọn đúng file PDF!');
+                return;
+            }
+
+            document.querySelector('.upload-box').style.display = 'none';
+            loadingContainer.style.display = 'block';
+            loadingText.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+
+            reader.onload = async function() {
+                try {
+                    const typedarray = new Uint8Array(this.result);
+                    pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
+                    
+                    const totalPages = pdfDoc.numPages;
+                    document.getElementById('total-page').innerText = totalPages;
+
+                    bookElement.innerHTML = ''; 
+                    
+                    for (let i = 1; i <= totalPages; i++) {
+                        await renderPage(i);
+                        const percent = Math.round((i / totalPages) * 100);
+                        loadingBar.style.width = percent + '%';
+                        loadingText.innerText = `Đang vẽ trang: ${i} / ${totalPages} (${percent}%)`;
+                    }
+
+                    initFlipBook();
+
+                    setTimeout(() => {
+                        uploadOverlay.style.opacity = 0;
+                        setTimeout(() => uploadOverlay.style.display = 'none', 500);
+                    }, 500);
+
+                } catch (error) {
+                    console.error(error);
+                    alert('Lỗi khi đọc file PDF! Có thể file bị hỏng hoặc có mật khẩu.');
+                    location.reload();
+                }
+            };
+        }
+
+        async function renderPage(pageNum) {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 2.0 }); 
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.classList.add('page-canvas');
+
+            if(pageNum === 1 || pageNum === pdfDoc.numPages) {
+                canvas.classList.add('hard-cover');
+            }
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            bookElement.appendChild(canvas);
+        }
+
+        function initFlipBook() {
+            const width = window.innerWidth < 768 ? 300 : 550;
+            const height = window.innerWidth < 768 ? 420 : 750;
+
+            pageFlip = new St.PageFlip(bookElement, {
+                width: width, 
+                height: height,
+                size: "stretch",
+                minWidth: 300,
+                maxWidth: 1000,
+                minHeight: 400,
+                maxHeight: 1200,
+                maxShadowOpacity: 0.5,
+                showCover: true,
+                mobileScrollSupport: false,
+                useMouseEvents: true
+            });
+
+            pageFlip.loadFromHTML(document.querySelectorAll('.page-canvas'));
+
+            pageFlip.on('flip', (e) => {
+                document.getElementById('current-page').innerText = e.data + 1;
+                playSound();
+            });
+
+            document.getElementById('current-page').innerText = 1;
+        }
+
+        document.getElementById('btn-prev').onclick = () => pageFlip.flipPrev();
+        document.getElementById('btn-next').onclick = () => pageFlip.flipNext();
+
+        document.addEventListener('keydown', (e) => {
+            if (uploadOverlay.style.display !== 'none') return;
+            if (e.code === 'ArrowLeft') pageFlip.flipPrev();
+            if (e.code === 'ArrowRight') pageFlip.flipNext();
+        });
+
+        function playSound() {
+            if (!isSoundOn) return;
+            const audio = document.getElementById('page-flip-sound');
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Audio play blocked"));
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            const btn = document.getElementById('btn-sound');
+            btn.innerHTML = isSoundOn ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+            btn.style.color = isSoundOn ? 'white' : '#aaa';
+        }
+
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+
+        btnZoomIn.onclick = () => {
+            if (currentZoom < 2.0) {
+                currentZoom += 0.2;
+                updateZoom();
+            }
+        };
+
+        btnZoomOut.onclick = () => {
+            if (currentZoom > 0.6) {
+                currentZoom -= 0.2;
+                updateZoom();
+            }
+        };
+
+        function updateZoom() {
+            bookWrapper.style.transform = `scale(${currentZoom})`;
+            btnZoomIn.disabled = currentZoom >= 2.0;
+            btnZoomOut.disabled = currentZoom <= 0.6;
+        }
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if(pdfDoc) {
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
