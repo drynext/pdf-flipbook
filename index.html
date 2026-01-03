@@ -3,224 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V13 (Freedom)</title>
+    <title>FlipOS V14 (Hybrid Titan)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. CORE VARIABLES --- */
+        /* --- 1. CORE & THEME --- */
         :root {
-            --bg-app: #0f0f11;
-            --bg-panel: rgba(30, 30, 35, 0.85);
-            --text-main: #ececec;
-            --accent: #6c5ce7;
+            --bg: #121212; --panel: rgba(30, 30, 35, 0.9);
+            --text: #ececec; --accent: #6c5ce7;
             --border: rgba(255, 255, 255, 0.1);
-            --shadow: 0 10px 40px rgba(0,0,0,0.5);
+            --shadow: 0 10px 40px rgba(0,0,0,0.6);
             --blur: blur(15px);
         }
-
         [data-theme="light"] {
-            --bg-app: #f4f5f7;
-            --bg-panel: rgba(255, 255, 255, 0.85);
-            --text-main: #2d3436;
-            --accent: #0984e3;
-            --border: rgba(0, 0, 0, 0.1);
+            --bg: #f4f5f7; --panel: rgba(255, 255, 255, 0.9);
+            --text: #2d3436; --accent: #0984e3; --border: rgba(0, 0, 0, 0.1);
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; touch-action: none; user-select: none; }
+        * { margin:0; padding:0; box-sizing:border-box; outline:none; user-select:none; touch-action:none; }
         
         body {
-            background: var(--bg-app); color: var(--text-main);
+            background: var(--bg); color: var(--text);
             font-family: 'Inter', sans-serif;
-            height: 100vh; width: 100vw; overflow: hidden;
+            height: 100vh; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
+            transition: 0.3s;
         }
 
-        /* --- 2. DRAGGABLE ISLANDS --- */
-        /* Class chung cho các đảo nổi để có thể kéo được */
+        /* --- 2. DYNAMIC ISLANDS (UI) --- */
         .island {
             position: fixed; z-index: 1000;
-            background: var(--bg-panel); backdrop-filter: var(--blur);
+            background: var(--panel); backdrop-filter: var(--blur);
             border: 1px solid var(--border); box-shadow: var(--shadow);
-            transition: transform 0.1s, opacity 0.3s; /* Tắt transition left/top để kéo mượt */
-            cursor: grab; /* Con trỏ báo hiệu có thể kéo */
-        }
-        .island:active { cursor: grabbing; }
-
-        /* Top Bar */
-        .island-top {
-            top: 20px; left: 50%; transform: translateX(-50%); /* Center ban đầu */
-            padding: 6px 10px; border-radius: 50px;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex; align-items: center; gap: 10px;
         }
 
-        /* Side Tools */
-        .island-side {
-            right: 20px; top: 50%; transform: translateY(-50%) translateX(150%);
-            padding: 15px; border-radius: 24px;
-            display: flex; flex-direction: column; gap: 12px; z-index: 900;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Animation trượt ra */
+        /* --- UI MODE: MOBILE (Default Horizontal) --- */
+        body.mode-mobile .island-top {
+            top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 8px 20px; border-radius: 50px; flex-direction: row;
         }
-        .island-side.visible { transform: translateY(-50%) translateX(0); }
-        /* Khi đang kéo side bar thì tắt transform để không bị giật */
-        .island-side.dragging { transform: none !important; transition: none; }
-
-        /* Bottom Bar */
-        .island-bottom {
+        body.mode-mobile .island-side {
+            bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+            padding: 10px 20px; border-radius: 20px; flex-direction: row;
+            opacity: 0; pointer-events: none;
+        }
+        body.mode-mobile .island-side.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
+        
+        body.mode-mobile .island-bottom {
             bottom: 30px; left: 50%; transform: translateX(-50%);
-            padding: 10px 24px; border-radius: 24px;
-            display: flex; align-items: center; gap: 15px;
+            padding: 10px 25px; border-radius: 24px; flex-direction: row;
         }
+
+        /* --- UI MODE: DESKTOP (Vertical Sidebars) --- */
+        body.mode-desktop .island-top {
+            top: 50%; left: 20px; transform: translateY(-50%);
+            padding: 20px 8px; border-radius: 24px; flex-direction: column;
+        }
+        body.mode-desktop .island-side {
+            top: 50%; left: 90px; transform: translateY(-50%) translateX(-20px);
+            padding: 15px 10px; border-radius: 20px; flex-direction: column;
+            opacity: 0; pointer-events: none;
+        }
+        body.mode-desktop .island-side.visible { opacity: 1; transform: translateY(-50%) translateX(0); pointer-events: all; }
+
+        body.mode-desktop .island-bottom {
+            top: 50%; right: 20px; transform: translateY(-50%);
+            padding: 20px 10px; border-radius: 24px; flex-direction: column; bottom: auto; left: auto;
+        }
+
+        /* Adjust Stage Padding to avoid covering content */
+        body.mode-desktop .stage { padding: 0 100px; } 
+        body.mode-mobile .stage { padding: 80px 0; }
 
         /* --- COMPONENTS --- */
-        .mode-btn {
-            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 700; font-size: 0.85rem;
-            color: var(--text-main); border: none; background: transparent; opacity: 0.6; transition: 0.2s;
+        .btn-mode {
+            padding: 8px 16px; border-radius: 16px; cursor: pointer; font-weight: 700;
+            color: var(--text); background: transparent; opacity: 0.5; transition: 0.2s; border: none;
+            white-space: nowrap;
         }
-        .mode-btn.active { background: var(--accent); color: white; opacity: 1; }
+        .btn-mode.active { background: var(--accent); color: #fff; opacity: 1; }
+        /* Vertical Text for Desktop Mode */
+        body.mode-desktop .btn-mode { writing-mode: vertical-rl; padding: 16px 8px; }
 
-        .icon-btn {
+        .btn-icon {
             width: 40px; height: 40px; border-radius: 12px;
             border: 1px solid transparent; background: rgba(128,128,128,0.1);
-            color: var(--text-main); font-size: 1.1rem; cursor: pointer;
+            color: var(--text); font-size: 1.1rem; cursor: pointer;
             display: flex; justify-content: center; align-items: center; transition: 0.2s;
         }
-        .icon-btn:hover { background: var(--accent); color: white; transform: scale(1.05); }
-        .icon-btn.active { background: var(--accent); color: white; }
+        .btn-icon:hover { background: var(--accent); color: #fff; transform: scale(1.1); }
+        .btn-icon.active { background: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent); }
 
-        .tool-opt {
-            width: 40px; height: 40px; border-radius: 12px; cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.2rem; color: var(--text-main); opacity: 0.6; transition: 0.2s;
-        }
-        .tool-opt:hover { opacity: 1; background: rgba(255,255,255,0.1); }
-        .tool-opt.active { opacity: 1; background: var(--accent); color: white; box-shadow: 0 4px 12px var(--accent); }
-
-        .color-dot {
-            width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
-        }
+        .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
         .color-dot.active { border-color: #fff; transform: scale(1.2); }
 
-        /* --- WORKSPACE --- */
+        .divider { width: 1px; height: 20px; background: rgba(128,128,128,0.3); }
+        body.mode-desktop .divider { width: 20px; height: 1px; }
+
+        /* --- UI SWITCHER BUTTON (FIXED CORNER) --- */
+        #ui-switcher {
+            position: fixed; bottom: 20px; right: 20px; z-index: 2000;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: var(--panel); border: 2px solid var(--accent);
+            color: var(--accent); font-size: 1.2rem; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: 0.3s;
+        }
+        #ui-switcher:hover { transform: rotate(180deg); background: var(--accent); color: #fff; }
+
+        /* --- STAGE --- */
         .stage {
             width: 100%; height: 100%; position: relative;
             background-image: radial-gradient(rgba(128,128,128,0.15) 1px, transparent 1px);
-            background-size: 30px 30px;
+            background-size: 30px 30px; transition: padding 0.4s;
             display: flex; justify-content: center; align-items: center;
         }
-
-        .viewport-layer { transition: transform 0.1s linear; transform-style: preserve-3d; will-change: transform; }
-        .page-wrapper { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
         
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .pdf-layer { z-index: 1; pointer-events: none; }
-        .ink-layer { z-index: 10; touch-action: none; }
+        .viewport { transition: transform 0.1s linear; transform-style: preserve-3d; }
+        .page-wrap { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
+        canvas { position: absolute; top:0; left:0; width:100%; height:100%; }
+        .ink-layer { z-index: 10; cursor: crosshair; }
 
-        #pan-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 500; display: none; cursor: grab;
-        }
-        #pan-overlay.grabbing { cursor: grabbing; }
-
-        /* Kính lúp fixed */
+        /* --- OVERLAYS --- */
+        #pan-ol { position: absolute; top:0; left:0; width:100%; height:100%; z-index:500; display:none; cursor:grab; }
         .spyglass {
-            position: absolute; width: 200px; height: 200px;
-            border-radius: 50%; border: 4px solid #fff;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.6);
-            overflow: hidden; pointer-events: none; z-index: 9999;
+            position: absolute; width:200px; height:200px; border-radius:50%; border:4px solid #fff;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.6); overflow: hidden; pointer-events: none; z-index: 9999;
             display: none; background: #fff;
         }
-        /* Tâm kính lúp */
-        .spyglass::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 4px; height: 4px; background: red; border-radius: 50%;
-            transform: translate(-50%, -50%); opacity: 0.5;
-        }
 
-        /* --- START SCREEN --- */
+        /* --- UPLOAD --- */
         .upload-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 5000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:5000;
+            display:flex; flex-direction:column; justify-content:center; align-items:center;
         }
-        .upload-btn {
-            background: #1e1e24; padding: 40px 60px; border-radius: 30px;
-            text-align: center; border: 2px dashed #444; cursor: pointer; transition: 0.3s;
+        .upload-box {
+            padding:40px; border:2px dashed #444; border-radius:30px; text-align:center; cursor:pointer;
         }
-        .upload-btn:hover { border-color: var(--accent); transform: scale(1.02); }
-
-        .toast {
-            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; padding: 10px 20px; border-radius: 30px;
-            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+        .upload-box:hover { border-color:var(--accent); }
     </style>
 </head>
-<body data-theme="dark">
+<body class="mode-mobile" data-theme="dark">
 
-    <div class="upload-modal" id="modal">
-        <div class="upload-btn" onclick="document.getElementById('file-in').click()">
-            <i class="fas fa-book-reader" style="font-size: 3.5rem; color: var(--accent); margin-bottom: 20px;"></i>
-            <h1 style="color: #fff; font-size: 2.5rem; font-weight: 800;">FlipOS</h1>
-            <p style="color: #888; margin-top: 10px; font-weight: 300;">by Dang Duc Dai</p>
-        </div>
-        <input type="file" id="file-in" accept="application/pdf" style="display: none;">
+    <div id="ui-switcher" onclick="App.toggleUIMode()" title="Chuyển chế độ Desktop/Mobile">
+        <i class="fas fa-mobile-alt" id="ui-icon"></i>
     </div>
 
-    <div class="island island-top" id="island-top">
-        <button class="mode-btn active" onclick="App.setMode('READ')" id="btn-read"><i class="fas fa-book-open"></i> ĐỌC</button>
-        <div style="width:1px; height:15px; background:rgba(255,255,255,0.2)"></div>
-        <button class="mode-btn" onclick="App.setMode('DRAW')" id="btn-draw"><i class="fas fa-pen-nib"></i> VẼ</button>
-        <i class="fas fa-moon" style="cursor:pointer; margin-left:10px; opacity:0.7" onclick="App.toggleTheme()"></i>
+    <div class="island island-top">
+        <button class="btn-mode active" id="btn-read" onclick="App.setMode('READ')">ĐỌC</button>
+        <div class="divider"></div>
+        <button class="btn-mode" id="btn-draw" onclick="App.setMode('DRAW')">VẼ</button>
+        <div class="divider"></div>
+        <i class="fas fa-moon btn-icon" onclick="App.toggleTheme()" style="border:none; width:30px;"></i>
     </div>
 
-    <div class="island island-side" id="draw-tools">
-        <div class="tool-opt active" id="tool-pen" onclick="Pen.setTool('pen')" title="Bút mực"><i class="fas fa-pen"></i></div>
-        <div class="tool-opt" id="tool-marker" onclick="Pen.setTool('marker')" title="Highlight (Bút nhớ)"><i class="fas fa-highlighter"></i></div>
-        <div class="tool-opt" id="tool-eraser" onclick="Pen.setTool('eraser')" title="Tẩy"><i class="fas fa-eraser"></i></div>
-        
-        <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
-        
-        <div class="color-dot active" style="background:#ff4757" onclick="Pen.setColor('#ff4757', this)"></div>
-        <div class="color-dot" style="background:#2ed573" onclick="Pen.setColor('#2ed573', this)"></div>
-        <div class="color-dot" style="background:#3742fa" onclick="Pen.setColor('#3742fa', this)"></div>
-        <div class="color-dot" style="background:#ffa502" onclick="Pen.setColor('#ffa502', this)"></div>
-        <div class="color-dot" style="background:#000; border:1px solid #555" onclick="Pen.setColor('#000000', this)"></div>
-        
-        <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
-        
-        <div class="tool-opt" onclick="Pen.undo()"><i class="fas fa-undo"></i></div>
-        <div class="tool-opt" onclick="Pen.clear()"><i class="fas fa-trash"></i></div>
+    <div class="island island-side" id="tools">
+        <div class="btn-icon active" id="t-pen" onclick="Pen.tool='pen'; Pen.ui()"><i class="fas fa-pen"></i></div>
+        <div class="btn-icon" id="t-marker" onclick="Pen.tool='marker'; Pen.ui()"><i class="fas fa-highlighter"></i></div>
+        <div class="btn-icon" id="t-eraser" onclick="Pen.tool='eraser'; Pen.ui()"><i class="fas fa-eraser"></i></div>
+        <div class="divider"></div>
+        <div class="color-dot active" style="background:#ff4757" onclick="Pen.setColor('#ff4757',this)"></div>
+        <div class="color-dot" style="background:#2ed573" onclick="Pen.setColor('#2ed573',this)"></div>
+        <div class="color-dot" style="background:#3742fa" onclick="Pen.setColor('#3742fa',this)"></div>
+        <div class="divider"></div>
+        <div class="btn-icon" onclick="Pen.clear()"><i class="fas fa-trash"></i></div>
     </div>
 
-    <div class="island island-bottom" id="island-bottom">
-        <button class="icon-btn" onclick="App.prev()"><i class="fas fa-chevron-left"></i></button>
-        <span id="page-num" style="font-variant-numeric: tabular-nums; width:60px; text-align:center;">---</span>
-        <button class="icon-btn" onclick="App.next()"><i class="fas fa-chevron-right"></i></button>
-        
-        <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
-        
-        <button class="icon-btn" onclick="Zoom.out()"><i class="fas fa-minus"></i></button>
-        <span id="zoom-val" style="font-weight:600; font-size:0.9rem;">100%</span>
-        <button class="icon-btn" onclick="Zoom.in()"><i class="fas fa-plus"></i></button>
-        
-        <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
-        
-        <button class="icon-btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
-        <button class="icon-btn" onclick="App.fullscreen()"><i class="fas fa-expand"></i></button>
+    <div class="island island-bottom">
+        <div class="btn-icon" onclick="App.flip('prev')"><i class="fas fa-chevron-left"></i></div>
+        <span id="pg-num" style="font-weight:800; font-variant-numeric:tabular-nums;">--/--</span>
+        <div class="btn-icon" onclick="App.flip('next')"><i class="fas fa-chevron-right"></i></div>
+        <div class="divider"></div>
+        <div class="btn-icon" onclick="Zoom.act(-1)"><i class="fas fa-minus"></i></div>
+        <div class="btn-icon" onclick="Zoom.act(1)"><i class="fas fa-plus"></i></div>
+        <div class="divider"></div>
+        <div class="btn-icon" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></div>
     </div>
 
     <div class="stage">
-        <div class="viewport-layer" id="viewport">
-            <div id="book"></div>
-        </div>
-        <div id="pan-overlay"></div>
-        <div class="spyglass" id="spyglass"><canvas id="spy-canvas"></canvas></div>
+        <div class="viewport" id="viewport"><div id="book"></div></div>
+        <div id="pan-ol"></div>
+        <div class="spyglass" id="spy"><canvas id="spy-c"></canvas></div>
     </div>
 
-    <div class="toast" id="toast">Thông báo</div>
-    <audio id="snd-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
+    <div class="upload-modal" id="modal">
+        <div class="upload-box" onclick="document.getElementById('inp').click()">
+            <i class="fas fa-meteor" style="font-size:3rem; color:var(--accent); margin-bottom:15px;"></i>
+            <h1>FlipOS V14</h1>
+            <p style="color:#888">Hybrid Titan Edition</p>
+        </div>
+        <input type="file" id="inp" hidden accept="application/pdf">
+    </div>
+
+    <audio id="sfx" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
@@ -228,396 +205,214 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const State = { mode: 'READ', zoom: 1, pdf: null, flip: null };
+        const S = { pdf:null, flip:null, mode:'READ', zoom:1 };
 
         const App = {
             init() {
-                // Khởi tạo kéo thả cho các đảo chức năng
-                Drag.make(document.getElementById('island-top'));
-                Drag.make(document.getElementById('island-bottom'));
-                Drag.make(document.getElementById('draw-tools'));
-
-                document.getElementById('file-in').addEventListener('change', this.load);
-                document.addEventListener('keydown', e => {
-                    if(e.ctrlKey && e.key === 'z') Pen.undo();
-                    if(e.key === 'ArrowLeft') this.prev();
-                    if(e.key === 'ArrowRight') this.next();
-                });
+                document.getElementById('inp').onchange = this.load;
+                window.onresize = () => this.checkUI();
             },
-
             async load(e) {
-                const file = e.target.files[0];
-                if(!file) return;
-                document.querySelector('.upload-btn').innerHTML = 'Đang tải dữ liệu...';
-                
-                const reader = new FileReader();
-                reader.readAsArrayBuffer(file);
-                reader.onload = async (ev) => {
-                    const data = new Uint8Array(ev.target.result);
-                    State.pdf = await pdfjsLib.getDocument(data).promise;
-                    await App.render();
-                };
+                if(!e.target.files[0]) return;
+                document.querySelector('.upload-box').innerHTML = 'Loading System...';
+                const ab = await e.target.files[0].arrayBuffer();
+                S.pdf = await pdfjsLib.getDocument(ab).promise;
+                await App.render();
             },
-
             async render() {
-                const container = document.getElementById('book');
-                container.innerHTML = '';
-                const total = State.pdf.numPages;
-
-                for(let i=1; i<=total; i++) {
-                    const page = await State.pdf.getPage(i);
-                    const viewport = page.getViewport({scale: 1.5});
+                const b = document.getElementById('book'); b.innerHTML='';
+                for(let i=1; i<=S.pdf.numPages; i++) {
+                    const p = await S.pdf.getPage(i);
+                    const v = p.getViewport({scale:1.5});
+                    const w = document.createElement('div'); w.className='page-wrap';
                     
-                    const wrap = document.createElement('div');
-                    wrap.className = 'page-wrapper';
-                    wrap.dataset.idx = i;
-
-                    const pdfCan = document.createElement('canvas');
-                    pdfCan.className = 'pdf-layer';
-                    pdfCan.width = viewport.width; pdfCan.height = viewport.height;
-                    const ctx = pdfCan.getContext('2d', {alpha: false});
-                    await page.render({canvasContext: ctx, viewport}).promise;
-
-                    const inkCan = document.createElement('canvas');
-                    inkCan.className = 'ink-layer';
-                    inkCan.width = viewport.width; inkCan.height = viewport.height;
+                    const pc = document.createElement('canvas'); pc.className='pdf-l'; pc.width=v.width; pc.height=v.height;
+                    await p.render({canvasContext:pc.getContext('2d'), viewport:v}).promise;
                     
-                    wrap.appendChild(pdfCan);
-                    wrap.appendChild(inkCan);
-                    container.appendChild(wrap);
+                    const ic = document.createElement('canvas'); ic.className='ink-layer'; ic.width=v.width; ic.height=v.height;
+                    
+                    w.append(pc, ic); b.append(w);
                 }
-
                 document.getElementById('modal').style.display='none';
-                this.initFlip();
-                Pen.init();
-                Zoom.init();
+                this.initFlip(); Pen.init(); Zoom.init();
             },
-
             initFlip() {
-                const isMobile = window.innerWidth < 768;
-                State.flip = new St.PageFlip(document.getElementById('book'), {
-                    width: isMobile ? 380 : 580, height: isMobile ? 550 : 820,
-                    size: "stretch", showCover: true, usePortrait: isMobile,
-                    minWidth: 300, maxWidth: 1000,
-                    useMouseEvents: true
+                const w = window.innerWidth;
+                S.flip = new St.PageFlip(document.getElementById('book'), {
+                    width: w<768?380:550, height: w<768?550:750,
+                    size:'stretch', showCover:true, useMouseEvents:true
                 });
-                State.flip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
-                State.flip.on('flip', (e) => {
-                    document.getElementById('page-num').innerText = `${e.data+1}/${State.pdf.numPages}`;
-                    const snd = document.getElementById('snd-flip'); snd.currentTime=0; snd.play().catch(()=>{});
+                S.flip.loadFromHTML(document.querySelectorAll('.page-wrap'));
+                S.flip.on('flip', e => {
+                    document.getElementById('pg-num').innerText = (e.data+1)+'/'+S.pdf.numPages;
+                    document.getElementById('sfx').play().catch(()=>{});
                 });
             },
-
             setMode(m) {
-                State.mode = m;
-                const tools = document.getElementById('draw-tools');
-                const btnR = document.getElementById('btn-read');
-                const btnD = document.getElementById('btn-draw');
-                const panOv = document.getElementById('pan-overlay');
-
-                if(m === 'READ') {
-                    tools.classList.remove('visible');
-                    btnR.classList.add('active'); btnD.classList.remove('active');
-                    if(State.flip) State.flip.update({useMouseEvents: true});
-                    UI.toast("Chế độ Đọc");
-                    panOv.style.display = 'none';
+                S.mode = m;
+                const r = document.getElementById('btn-read'), d = document.getElementById('btn-draw');
+                const t = document.getElementById('tools'), p = document.getElementById('pan-ol');
+                
+                if(m==='READ') {
+                    r.classList.add('active'); d.classList.remove('active');
+                    t.classList.remove('visible'); p.style.display='none';
+                    if(S.flip) S.flip.update({useMouseEvents:true});
                 } else {
-                    tools.classList.add('visible');
-                    btnD.classList.add('active'); btnR.classList.remove('active');
-                    if(State.flip) State.flip.update({useMouseEvents: false}); 
-                    UI.toast("Chế độ Vẽ");
+                    d.classList.add('active'); r.classList.remove('active');
+                    t.classList.add('visible'); p.style.display='none';
+                    if(S.flip) S.flip.update({useMouseEvents:false});
                 }
             },
-
-            prev() { State.flip?.flipPrev(); },
-            next() { State.flip?.flipNext(); },
-            toggleTheme() {
-                const isDark = document.body.getAttribute('data-theme') === 'dark';
-                document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            flip(d) { S.flip?.[d==='prev'?'flipPrev':'flipNext'](); },
+            toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')=='dark'?'light':'dark'); },
+            
+            // --- UI SWITCHER LOGIC ---
+            toggleUIMode() {
+                const b = document.body;
+                const i = document.getElementById('ui-icon');
+                if(b.classList.contains('mode-mobile')) {
+                    b.classList.replace('mode-mobile', 'mode-desktop');
+                    i.className = 'fas fa-desktop';
+                } else {
+                    b.classList.replace('mode-desktop', 'mode-mobile');
+                    i.className = 'fas fa-mobile-alt';
+                }
+                // Resize sách khi đổi layout để ko bị che
+                setTimeout(() => { if(S.flip) S.flip.update(); }, 400);
             },
-            fullscreen() {
-                if(!document.fullscreenElement) document.documentElement.requestFullscreen();
-                else document.exitFullscreen();
-            }
+            checkUI() { /* Auto detect if needed, currently manual */ }
         };
 
-        // --- HỆ THỐNG KÉO THẢ UI (NEW) ---
-        const Drag = {
-            make(el) {
-                let isDown = false;
-                let startX, startY, initialLeft, initialTop;
-
-                el.addEventListener('mousedown', (e) => {
-                    // Không kéo nếu bấm vào nút con
-                    if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I' || e.target.classList.contains('color-dot')) return;
-                    
-                    isDown = true;
-                    el.style.cursor = 'grabbing';
-                    
-                    // Nếu đang dùng transform center, cần reset về absolute left/top để tính toán
-                    const rect = el.getBoundingClientRect();
-                    el.style.transform = 'none'; // Tắt transform center
-                    el.style.left = rect.left + 'px';
-                    el.style.top = rect.top + 'px';
-                    el.style.bottom = 'auto'; 
-                    el.style.right = 'auto';
-                    
-                    if(el.classList.contains('island-side')) el.classList.add('dragging');
-
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    initialLeft = rect.left;
-                    initialTop = rect.top;
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if(!isDown) return;
-                    const dx = e.clientX - startX;
-                    const dy = e.clientY - startY;
-                    el.style.left = (initialLeft + dx) + 'px';
-                    el.style.top = (initialTop + dy) + 'px';
-                });
-
-                window.addEventListener('mouseup', () => {
-                    isDown = false;
-                    el.style.cursor = 'grab';
-                    if(el.classList.contains('island-side')) el.classList.remove('dragging');
-                });
-            }
-        };
-
+        // --- PEN ENGINE (SEAMLESS JUMP) ---
         const Pen = {
-            tool: 'pen', color: '#ff4757', isDrawing: false, lastPoint: null, ctx: null, canvas: null, history: {},
-
+            tool:'pen', color:'#ff4757', ctx:null, can:null, isDown:false, last:{x:0,y:0},
             init() {
-                const layers = document.querySelectorAll('.ink-layer');
-                layers.forEach(can => {
-                    can.addEventListener('pointerdown', e => this.start(e, can));
-                    can.addEventListener('pointermove', e => this.move(e));
-                    can.addEventListener('pointerup', e => this.end(e));
-                    can.addEventListener('pointercancel', e => this.end(e));
-                });
+                // Attach event to wrapper to catch events between pages
+                const st = document.querySelector('.stage');
+                st.addEventListener('pointerdown', e => this.down(e));
+                window.addEventListener('pointermove', e => this.move(e));
+                window.addEventListener('pointerup', () => this.up());
             },
-
-            setTool(t) {
-                this.tool = t;
-                document.querySelectorAll('.tool-opt').forEach(b => b.classList.remove('active'));
-                document.getElementById(`tool-${t}`).classList.add('active');
-                if(t === 'eraser') document.querySelectorAll('.color-dot').forEach(c => c.classList.remove('active'));
+            ui() {
+                document.querySelectorAll('#tools .btn-icon').forEach(b => b.classList.remove('active'));
+                document.getElementById('t-'+this.tool).classList.add('active');
             },
-
-            setColor(c, el) {
-                this.color = c; 
-                if(this.tool === 'eraser') this.setTool('pen');
-                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            setColor(c,el) {
+                this.color=c; this.tool='pen'; this.ui();
+                document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
                 el.classList.add('active');
             },
-
-            toggleEraser() { this.setTool('eraser'); },
-
-            getPos(e, canvas) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+            getHit(e) {
+                // Find ink-layer under cursor
+                const el = document.elementFromPoint(e.clientX, e.clientY);
+                if(el && el.classList.contains('ink-layer')) return el;
+                return null;
             },
-
-            start(e, canvas) {
-                if(State.mode !== 'DRAW') return;
-                e.preventDefault(); canvas.setPointerCapture(e.pointerId);
-
-                this.isDrawing = true; this.canvas = canvas;
-                this.ctx = canvas.getContext('2d');
-                this.lastPoint = this.getPos(e, canvas);
-                this.startPoint = this.lastPoint;
-                this.snapshot = this.ctx.getImageData(0,0,canvas.width, canvas.height);
-
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
-                this.ctx.lineCap = 'round';
-                this.ctx.lineJoin = 'round';
-
-                if(this.tool === 'marker') {
-                    this.ctx.globalCompositeOperation = 'multiply';
-                    this.ctx.strokeStyle = this.color;
-                    this.ctx.lineWidth = 20; 
-                    this.ctx.globalAlpha = 0.5;
-                } else if (this.tool === 'eraser') {
-                    this.ctx.globalCompositeOperation = 'destination-out';
-                    this.ctx.lineWidth = 30;
-                    this.ctx.globalAlpha = 1;
-                } else {
-                    this.ctx.globalCompositeOperation = 'source-over';
-                    this.ctx.strokeStyle = this.color;
-                    this.ctx.lineWidth = 3;
-                    this.ctx.globalAlpha = 1;
-                }
+            down(e) {
+                if(S.mode!=='DRAW') return;
+                const hit = this.getHit(e);
+                if(!hit) return;
                 
-                clearTimeout(this.snapTimer);
+                e.preventDefault();
+                this.isDown = true;
+                this.setupCtx(hit);
+                this.last = this.pos(e, hit);
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.last.x, this.last.y);
+                this.ctx.stroke();
             },
-
             move(e) {
-                if(!this.isDrawing) return;
-                const curr = this.getPos(e, this.canvas);
+                if(!this.isDown || S.mode!=='DRAW') return;
                 
-                const mid = { x: this.lastPoint.x + (curr.x - this.lastPoint.x)/2, y: this.lastPoint.y + (curr.y - this.lastPoint.y)/2 };
-                this.ctx.quadraticCurveTo(this.lastPoint.x, this.lastPoint.y, mid.x, mid.y);
-                this.ctx.stroke();
-                
-                this.lastPoint = curr;
+                let hit = this.getHit(e);
+                // INK JUMPING LOGIC: Nếu trượt sang trang khác -> Đổi context
+                if(hit && hit !== this.can) {
+                    this.ctx.closePath(); // Kết thúc nét cũ
+                    this.setupCtx(hit);   // Sang trang mới
+                    this.last = this.pos(e, hit); // Reset vị trí
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.last.x, this.last.y);
+                }
 
-                clearTimeout(this.snapTimer);
-                this.snapTimer = setTimeout(() => {
-                    if(this.isDrawing) this.snapShape(curr);
-                }, 600);
-            },
-
-            end(e) {
-                this.isDrawing = false;
-                this.ctx.closePath();
-                clearTimeout(this.snapTimer);
-                this.saveHistory(this.canvas);
-            },
-
-            snapShape(endPoint) {
-                this.ctx.putImageData(this.snapshot, 0, 0); 
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.startPoint.x, this.startPoint.y);
-                this.ctx.lineTo(endPoint.x, endPoint.y);
-                this.ctx.stroke();
-                UI.toast("Đã nắn thẳng!");
-            },
-
-            saveHistory(canvas) {
-                const idx = canvas.parentElement.dataset.idx;
-                if(!this.history[idx]) this.history[idx] = [];
-                this.history[idx].push(this.ctx.getImageData(0,0,canvas.width, canvas.height));
-                if(this.history[idx].length > 10) this.history[idx].shift();
-            },
-
-            undo() {
-                if(!this.canvas) return;
-                const idx = this.canvas.parentElement.dataset.idx;
-                const stack = this.history[idx];
-                if(stack && stack.length > 0) {
-                    stack.pop(); 
-                    const prev = stack[stack.length - 1];
-                    const ctx = this.canvas.getContext('2d');
-                    if(prev) ctx.putImageData(prev, 0, 0);
-                    else ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+                if(this.can) {
+                    const curr = this.pos(e, this.can);
+                    // Curve smooth
+                    const mid = {x: (this.last.x+curr.x)/2, y: (this.last.y+curr.y)/2};
+                    this.ctx.quadraticCurveTo(this.last.x, this.last.y, mid.x, mid.y);
+                    this.ctx.stroke();
+                    this.last = curr;
                 }
             },
-            
+            up() { this.isDown=false; if(this.ctx) this.ctx.closePath(); },
+            setupCtx(c) {
+                this.can = c; this.ctx = c.getContext('2d');
+                this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
+                if(this.tool==='eraser') {
+                    this.ctx.globalCompositeOperation='destination-out'; this.ctx.lineWidth=30;
+                } else if(this.tool==='marker') {
+                    this.ctx.globalCompositeOperation='multiply'; this.ctx.strokeStyle=this.color; 
+                    this.ctx.lineWidth=20; this.ctx.globalAlpha=0.5;
+                } else {
+                    this.ctx.globalCompositeOperation='source-over'; this.ctx.strokeStyle=this.color; 
+                    this.ctx.lineWidth=3; this.ctx.globalAlpha=1;
+                }
+            },
+            pos(e, c) {
+                const r = c.getBoundingClientRect();
+                return { x: (e.clientX - r.left)*(c.width/r.width), y: (e.clientY - r.top)*(c.height/r.height) };
+            },
             clear() {
-                if(this.canvas) {
-                    const ctx = this.canvas.getContext('2d');
-                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                    this.saveHistory(this.canvas);
+                if(this.can) {
+                    const ctx = this.can.getContext('2d');
+                    ctx.clearRect(0,0,this.can.width, this.can.height);
                 }
             }
         };
 
         const Zoom = {
-            val: 1, pan: {x:0, y:0}, isDrag: false, start: {x:0,y:0},
-
+            v:1, pan:{x:0,y:0}, isD:false, start:{x:0,y:0},
             init() {
-                const ov = document.getElementById('pan-overlay');
-                ov.addEventListener('mousedown', e => {
-                    this.isDrag=true; this.start={x:e.clientX-this.pan.x, y:e.clientY-this.pan.y};
-                    ov.style.cursor='grabbing';
-                });
-                window.addEventListener('mousemove', e => {
-                    if(this.isDrag) {
-                        e.preventDefault();
-                        this.pan.x = e.clientX - this.start.x;
-                        this.pan.y = e.clientY - this.start.y;
-                        this.update();
-                    }
-                    if(Loupe.active) Loupe.render(e);
-                });
-                window.addEventListener('mouseup', () => {this.isDrag=false; ov.style.cursor='grab'});
+                const o = document.getElementById('pan-ol');
+                o.onpointerdown=e=>{this.isD=true; this.start={x:e.clientX-this.pan.x, y:e.clientY-this.pan.y}; o.style.cursor='grabbing'};
+                window.onpointermove=e=>{
+                    if(this.isD){ e.preventDefault(); this.pan={x:e.clientX-this.start.x, y:e.clientY-this.start.y}; this.upd(); }
+                    if(Loupe.on) Loupe.draw(e);
+                };
+                window.onpointerup=()=>{this.isD=false; o.style.cursor='grab'};
             },
-
-            in() { if(this.val<3) {this.val+=0.5; this.update()} },
-            out() { if(this.val>1) {this.val-=0.5; this.update()} },
-            
-            update() {
-                document.getElementById('zoom-val').innerText = (this.val*100)+'%';
-                const el = document.getElementById('viewport');
-                const ov = document.getElementById('pan-overlay');
-                
-                el.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.val})`;
-                
-                if(this.val > 1) {
-                    if(State.mode === 'READ') {
-                        ov.style.display = 'block';
-                        if(State.flip) State.flip.update({useMouseEvents: false});
-                    }
-                } else {
-                    ov.style.display = 'none';
-                    this.pan = {x:0, y:0};
-                    el.style.transform = `scale(1)`;
-                    if(State.mode === 'READ' && State.flip) State.flip.update({useMouseEvents: true});
-                }
+            act(d) { if((d>0 && this.v<3) || (d<0 && this.v>1)) { this.v+=d*0.5; this.upd(); } },
+            upd() {
+                const vp = document.getElementById('viewport');
+                vp.style.transform = `translate(${this.pan.x}px,${this.pan.y}px) scale(${this.v})`;
+                const p = document.getElementById('pan-ol');
+                if(this.v>1 && S.mode==='READ') { p.style.display='block'; if(S.flip) S.flip.update({useMouseEvents:false}); }
+                else { p.style.display='none'; this.pan={x:0,y:0}; vp.style.transform='scale(1)'; if(S.mode==='READ' && S.flip) S.flip.update({useMouseEvents:true}); }
             }
         };
 
-        // --- KÍNH LÚP (FIX LỆCH) ---
         const Loupe = {
-            active: false,
-            toggle() {
-                this.active = !this.active;
-                document.getElementById('btn-loupe').classList.toggle('active', this.active);
-                document.getElementById('spyglass').style.display = this.active ? 'block' : 'none';
-            },
-            render(e) {
-                const spy = document.getElementById('spyglass');
-                const ctx = document.getElementById('spy-canvas').getContext('2d');
-                document.getElementById('spy-canvas').width=500;
-                document.getElementById('spy-canvas').height=500;
-
-                // Di chuyển kính theo chuột
-                spy.style.left = (e.clientX + 20) + 'px';
-                spy.style.top = (e.clientY + 20) + 'px';
+            on:false,
+            toggle() { this.on=!this.on; document.getElementById('btn-loupe').classList.toggle('active',this.on); document.getElementById('spy').style.display=this.on?'block':'none'; },
+            draw(e) {
+                const spy=document.getElementById('spy'), ctx=document.getElementById('spy-c').getContext('2d');
+                document.getElementById('spy-c').width=500; document.getElementById('spy-c').height=500;
+                spy.style.left=(e.clientX+20)+'px'; spy.style.top=(e.clientY+20)+'px';
                 
-                // Kỹ thuật Xuyên thấu mới: Dùng elementsFromPoint để tìm canvas kể cả khi bị overlay che
-                spy.style.display='none'; // Ẩn tạm để soi xuống dưới
-                const elements = document.elementsFromPoint(e.clientX, e.clientY);
-                spy.style.display='block';
-
-                // Tìm wrapper trang sách trong danh sách elements
-                const wrap = elements.find(el => el.classList.contains('page-wrapper'));
-
-                if(wrap) {
-                    const pdf = wrap.querySelector('.pdf-layer');
-                    const ink = wrap.querySelector('.ink-layer');
-                    
-                    const rect = pdf.getBoundingClientRect();
-                    
-                    // Tính tọa độ chuột tương đối chuẩn xác
-                    const relX = e.clientX - rect.left;
-                    const relY = e.clientY - rect.top;
-
-                    const rx = pdf.width / rect.width;
-                    const ry = pdf.height / rect.height;
-
-                    const canvasX = relX * rx;
-                    const canvasY = relY * ry;
-
+                spy.style.display='none'; const el=document.elementFromPoint(e.clientX,e.clientY); spy.style.display='block';
+                const w = el?.closest('.page-wrap');
+                if(w) {
+                    const pdf=w.querySelector('.pdf-l'), ink=w.querySelector('.ink-layer');
+                    const r=pdf.getBoundingClientRect();
+                    const x=(e.clientX-r.left)*(pdf.width/r.width), y=(e.clientY-r.top)*(pdf.height/r.height);
                     ctx.fillStyle='#fff'; ctx.fillRect(0,0,500,500);
-                    
-                    try {
-                        ctx.drawImage(pdf, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
-                        ctx.drawImage(ink, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
-                    } catch(err){}
+                    ctx.drawImage(pdf, x-100, y-100, 200, 200, 0,0,500,500);
+                    ctx.drawImage(ink, x-100, y-100, 200, 200, 0,0,500,500);
                 }
             }
         };
-
-        const UI = { toast(m) { const t = document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2000); } };
 
         App.init();
-
     </script>
 </body>
 </html>
