@@ -3,216 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V15 (Cinema Focus)</title>
+    <title>FlipOS V16</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. CORE & THEME --- */
         :root {
-            --bg: #121212; --panel: rgba(20, 20, 23, 0.95);
-            --text: #ececec; --accent: #6c5ce7;
-            --border: rgba(255, 255, 255, 0.15);
-            --shadow: 0 10px 40px rgba(0,0,0,0.7);
-            --blur: blur(20px);
+            --bg-app: #121212;
+            --panel: rgba(30, 30, 35, 0.95);
+            --accent: #6c5ce7;
+            --text: #fff;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 8px 32px rgba(0,0,0,0.6);
+            --blur: blur(16px);
         }
         [data-theme="light"] {
-            --bg: #f4f5f7; --panel: rgba(255, 255, 255, 0.95);
-            --text: #2d3436; --accent: #0984e3; --border: rgba(0, 0, 0, 0.1);
+            --bg-app: #f0f2f5;
+            --panel: rgba(255, 255, 255, 0.95);
+            --text: #2d3436;
+            --accent: #0984e3;
+            --border: rgba(0,0,0,0.1);
         }
-        * { margin:0; padding:0; box-sizing:border-box; outline:none; user-select:none; touch-action:none; }
+
+        * { margin:0; padding:0; box-sizing:border-box; outline:none; -webkit-tap-highlight-color:transparent; }
         
         body {
-            background: var(--bg); color: var(--text);
+            background: var(--bg-app); color: var(--text);
             font-family: 'Inter', sans-serif;
-            height: 100vh; overflow: hidden;
+            height: 100vh; width: 100vw; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
-            transition: 0.3s;
         }
 
-        /* --- 2. DYNAMIC ISLANDS (UI) --- */
+        #ui-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 5000;
+        }
+
         .island {
-            position: fixed; z-index: 2000; /* Tăng Z-index để chắc chắn bấm được */
+            position: absolute;
             background: var(--panel); backdrop-filter: var(--blur);
             border: 1px solid var(--border); box-shadow: var(--shadow);
-            transition: all 0.3s ease-in-out;
+            pointer-events: auto;
             display: flex; align-items: center; gap: 10px;
-            opacity: 1; transform: translate(0, 0); /* Trạng thái bình thường */
+            transition: opacity 0.3s;
+            cursor: grab;
         }
+        .island:active { cursor: grabbing; }
 
-        /* --- CLASS ĐỂ ẨN UI (CINEMA MODE) --- */
-        body.ui-hidden .island, 
-        body.ui-hidden #ui-switcher {
-            opacity: 0; pointer-events: none;
-            transform: scale(0.9); /* Hiệu ứng thu nhỏ khi ẩn */
-        }
-
-        /* --- UI MODE: MOBILE --- */
-        body.mode-mobile .island-top {
+        .island-top {
             top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 8px 20px; border-radius: 50px; flex-direction: row;
-        }
-        body.mode-mobile .island-side {
-            bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-            padding: 10px 20px; border-radius: 20px; flex-direction: row;
-            opacity: 0; pointer-events: none;
-        }
-        body.mode-mobile .island-side.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
-        
-        body.mode-mobile .island-bottom {
-            bottom: 30px; left: 50%; transform: translateX(-50%);
-            padding: 10px 25px; border-radius: 24px; flex-direction: row;
+            padding: 8px 12px; border-radius: 50px;
         }
 
-        /* --- UI MODE: DESKTOP --- */
-        body.mode-desktop .island-top {
-            top: 50%; left: 20px; transform: translateY(-50%);
-            padding: 20px 8px; border-radius: 24px; flex-direction: column;
+        .island-bottom {
+            bottom: 30px; left: 50%; transform: translateX(-50%);
+            padding: 10px 20px; border-radius: 24px;
         }
-        body.mode-desktop .island-side {
-            top: 50%; left: 90px; transform: translateY(-50%) translateX(-20px);
-            padding: 15px 10px; border-radius: 20px; flex-direction: column;
-            opacity: 0; pointer-events: none;
+
+        .island-draw {
+            top: 100px; right: 20px; 
+            padding: 15px; border-radius: 20px;
+            flex-direction: column; display: none;
         }
-        body.mode-desktop .island-side.visible { opacity: 1; transform: translateY(-50%) translateX(0); pointer-events: all; }
+        .island-draw.visible { display: flex; animation: slideIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
         body.mode-desktop .island-bottom {
-            top: 50%; right: 20px; transform: translateY(-50%);
-            padding: 20px 10px; border-radius: 24px; flex-direction: column; bottom: auto; left: auto;
-        }
-
-        /* Khi UI ẩn, trả lại transform gốc cho Mobile/Desktop để animation đúng */
-        body.ui-hidden.mode-mobile .island-top { transform: translateX(-50%) scale(0.9); }
-        body.ui-hidden.mode-mobile .island-bottom { transform: translateX(-50%) scale(0.9); }
-        body.ui-hidden.mode-desktop .island-top { transform: translateY(-50%) scale(0.9); }
-        body.ui-hidden.mode-desktop .island-bottom { transform: translateY(-50%) scale(0.9); }
-
-
-        /* Adjust Stage Padding */
-        body.mode-desktop .stage { padding: 0 100px; } 
-        body.mode-mobile .stage { padding: 80px 0; }
-
-        /* --- COMPONENTS --- */
-        .btn-mode {
-            padding: 8px 16px; border-radius: 16px; cursor: pointer; font-weight: 700;
-            color: var(--text); background: transparent; opacity: 0.5; transition: 0.2s; border: none;
-            white-space: nowrap;
-        }
-        .btn-mode.active { background: var(--accent); color: #fff; opacity: 1; }
-        body.mode-desktop .btn-mode { writing-mode: vertical-rl; padding: 16px 8px; }
-
-        .btn-icon {
-            width: 44px; height: 44px; border-radius: 12px;
-            border: 1px solid transparent; background: rgba(128,128,128,0.1);
-            color: var(--text); font-size: 1.2rem; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; transition: 0.2s;
-        }
-        .btn-icon:hover { background: var(--accent); color: #fff; transform: scale(1.1); }
-        .btn-icon.active { background: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent); }
-
-        .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-        .color-dot.active { border-color: #fff; transform: scale(1.2); }
-
-        .divider { width: 1px; height: 20px; background: rgba(128,128,128,0.3); }
-        body.mode-desktop .divider { width: 20px; height: 1px; }
-
-        #ui-switcher {
-            position: fixed; bottom: 20px; right: 20px; z-index: 3000;
-            width: 55px; height: 55px; border-radius: 50%;
-            background: var(--panel); border: 2px solid var(--accent);
-            color: var(--accent); font-size: 1.4rem; cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: 0.3s;
-        }
-        #ui-switcher:hover { transform: rotate(180deg); background: var(--accent); color: #fff; }
-
-        /* --- STAGE --- */
-        .stage {
-            width: 100%; height: 100%; position: relative;
-            background-image: radial-gradient(rgba(128,128,128,0.15) 1px, transparent 1px);
-            background-size: 30px 30px; transition: padding 0.4s;
-            display: flex; justify-content: center; align-items: center;
-            cursor: default; /* Mặc định */
+            bottom: auto; top: 50%; right: 20px; left: auto;
+            transform: translateY(-50%); flex-direction: column;
+            padding: 20px 10px;
         }
         
-        .viewport { transition: transform 0.1s linear; transform-style: preserve-3d; }
-        .page-wrap { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
-        canvas { position: absolute; top:0; left:0; width:100%; height:100%; }
-        .ink-layer { z-index: 10; cursor: crosshair; }
+        body.mode-mobile .island-bottom {
+            flex-direction: row;
+        }
 
-        /* --- OVERLAYS --- */
-        #pan-ol { position: absolute; top:0; left:0; width:100%; height:100%; z-index:500; display:none; cursor:grab; }
-        #pan-ol:active { cursor: grabbing; }
+        .btn {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: rgba(128,128,128,0.1); border: 1px solid transparent;
+            color: var(--text); font-size: 1.1rem; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            transition: 0.2s;
+        }
+        .btn:hover { background: var(--accent); color: white; transform: scale(1.05); }
+        .btn.active { background: var(--accent); color: white; box-shadow: 0 0 15px var(--accent); }
+
+        .btn-text {
+            padding: 8px 16px; border-radius: 20px; background: transparent;
+            color: var(--text); font-weight: 700; border: none; cursor: pointer;
+            opacity: 0.6; transition: 0.2s; white-space: nowrap;
+        }
+        .btn-text.active { opacity: 1; background: var(--accent); color: white; }
+
+        .divider { width: 1px; height: 20px; background: rgba(128,128,128,0.3); }
+        body.mode-desktop .island-bottom .divider { width: 20px; height: 1px; }
+
+        .color-dot {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+        }
+        .color-dot.active { border-color: #fff; transform: scale(1.2); }
+
+        #mode-switch {
+            position: fixed; bottom: 20px; left: 20px; z-index: 6000;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: var(--panel); border: 2px solid var(--accent);
+            color: var(--accent); display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: var(--shadow); transition: 0.3s;
+        }
+        #mode-switch:hover { transform: rotate(90deg); background: var(--accent); color: white; }
+
+        #stage {
+            width: 100%; height: 100%; position: relative;
+            background-image: radial-gradient(rgba(128,128,128,0.2) 1px, transparent 1px);
+            background-size: 30px 30px;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden;
+        }
+
+        #zoom-container {
+            transition: transform 0.1s linear;
+            transform-style: preserve-3d; will-change: transform;
+        }
+
+        .page-wrap { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .pdf-layer { z-index: 1; }
+        .ink-layer { z-index: 10; cursor: crosshair; touch-action: none; }
+
+        #pan-surface {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 4000; display: none; cursor: grab;
+        }
+        #pan-surface.grabbing { cursor: grabbing; }
+
+        .upload-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .upload-box {
+            padding: 40px; border: 2px dashed #444; border-radius: 30px;
+            text-align: center; cursor: pointer; transition: 0.3s;
+        }
+        .upload-box:hover { border-color: var(--accent); transform: scale(1.02); }
+
+        .toast {
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 10px 20px; border-radius: 30px;
+            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 7000; font-weight: 600;
+        }
+        .toast.show { opacity: 1; transform: translateY(10px); }
 
         .spyglass {
-            position: absolute; width:220px; height:220px; border-radius:50%; border:4px solid #fff;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.6); overflow: hidden; pointer-events: none; z-index: 9999;
+            position: absolute; width: 220px; height: 220px;
+            border-radius: 50%; border: 4px solid #fff;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.6);
+            overflow: hidden; pointer-events: none; z-index: 8000;
             display: none; background: #fff;
         }
 
-        /* --- UPLOAD --- */
-        .upload-modal {
-            position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:5000;
-            display:flex; flex-direction:column; justify-content:center; align-items:center;
-        }
-        .upload-box {
-            padding:40px; border:2px dashed #444; border-radius:30px; text-align:center; cursor:pointer;
-        }
-        .upload-box:hover { border-color:var(--accent); }
+        @keyframes slideIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
     </style>
 </head>
 <body class="mode-mobile" data-theme="dark">
 
-    <div id="ui-switcher" onclick="App.toggleUIMode()" title="Chuyển giao diện PC/Mobile">
-        <i class="fas fa-mobile-alt" id="ui-icon"></i>
-    </div>
-
-    <div class="island island-top">
-        <button class="btn-mode active" id="btn-read" onclick="App.setMode('READ')">ĐỌC</button>
-        <div class="divider"></div>
-        <button class="btn-mode" id="btn-draw" onclick="App.setMode('DRAW')">VẼ</button>
-        <div class="divider"></div>
-        <i class="fas fa-moon btn-icon" onclick="App.toggleTheme()" style="border:none; width:30px;"></i>
-    </div>
-
-    <div class="island island-side" id="tools">
-        <div class="btn-icon active" id="t-pen" onclick="Pen.tool='pen'; Pen.ui()"><i class="fas fa-pen"></i></div>
-        <div class="btn-icon" id="t-marker" onclick="Pen.tool='marker'; Pen.ui()"><i class="fas fa-highlighter"></i></div>
-        <div class="btn-icon" id="t-eraser" onclick="Pen.tool='eraser'; Pen.ui()"><i class="fas fa-eraser"></i></div>
-        <div class="divider"></div>
-        <div class="color-dot active" style="background:#ff4757" onclick="Pen.setColor('#ff4757',this)"></div>
-        <div class="color-dot" style="background:#2ed573" onclick="Pen.setColor('#2ed573',this)"></div>
-        <div class="color-dot" style="background:#3742fa" onclick="Pen.setColor('#3742fa',this)"></div>
-        <div class="divider"></div>
-        <div class="btn-icon" onclick="Pen.clear()"><i class="fas fa-trash"></i></div>
-    </div>
-
-    <div class="island island-bottom">
-        <div class="btn-icon" onclick="App.flip('prev')"><i class="fas fa-chevron-left"></i></div>
-        <span id="pg-num" style="font-weight:800; font-variant-numeric:tabular-nums; min-width: 50px; text-align: center;">--</span>
-        <div class="btn-icon" onclick="App.flip('next')"><i class="fas fa-chevron-right"></i></div>
-        <div class="divider"></div>
-        <div class="btn-icon" onclick="Zoom.act(-1)" title="Thu nhỏ"><i class="fas fa-minus"></i></div>
-        <span id="zoom-disp" style="font-weight:700; min-width: 50px; text-align: center;">100%</span>
-        <div class="btn-icon" onclick="Zoom.act(1)" title="Phóng to"><i class="fas fa-plus"></i></div>
-        <div class="divider"></div>
-        <div class="btn-icon" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></div>
-    </div>
-
-    <div class="stage" onclick="App.toggleFocusMode(event)">
-        <div class="viewport" id="viewport"><div id="book"></div></div>
-        <div id="pan-ol"></div> <div class="spyglass" id="spy"><canvas id="spy-c"></canvas></div>
-    </div>
-
     <div class="upload-modal" id="modal">
-        <div class="upload-box" onclick="document.getElementById('inp').click()">
-            <i class="fas fa-meteor" style="font-size:3rem; color:var(--accent); margin-bottom:15px;"></i>
-            <h1>FlipOS V15</h1>
-            <p style="color:#888">Cinema Mode & Zoom Fix</p>
+        <div class="upload-box" onclick="document.getElementById('file-in').click()">
+            <i class="fas fa-layer-group" style="font-size: 4rem; color: var(--accent); margin-bottom: 20px;"></i>
+            <h1>FlipOS V16</h1>
+            <p style="color: #888;">by Dang Duc Dai</p>
         </div>
-        <input type="file" id="inp" hidden accept="application/pdf">
+        <input type="file" id="file-in" accept="application/pdf" hidden>
     </div>
 
+    <div id="mode-switch" onclick="UI.toggleLayout()" title="Chuyển Mobile/PC">
+        <i class="fas fa-mobile-alt" id="icon-mode"></i>
+    </div>
+
+    <div id="ui-layer">
+        
+        <div class="island island-top" id="island-top">
+            <button class="btn-text active" id="mode-read" onclick="App.setMode('READ')">ĐỌC</button>
+            <div class="divider"></div>
+            <button class="btn-text" id="mode-draw" onclick="App.setMode('DRAW')">VẼ</button>
+            <div class="divider"></div>
+            <button class="btn" onclick="UI.theme()"><i class="fas fa-adjust"></i></button>
+        </div>
+
+        <div class="island island-draw" id="island-draw">
+            <div class="btn active" id="tool-pen" onclick="Pen.setTool('pen')"><i class="fas fa-pen"></i></div>
+            <div class="btn" id="tool-marker" onclick="Pen.setTool('marker')"><i class="fas fa-highlighter"></i></div>
+            <div class="btn" id="tool-eraser" onclick="Pen.setTool('eraser')"><i class="fas fa-eraser"></i></div>
+            <div class="divider" style="width: 100%; height: 1px; margin: 5px 0;"></div>
+            <div class="color-dot active" style="background:#ff4757" onclick="Pen.setColor('#ff4757',this)"></div>
+            <div class="color-dot" style="background:#2ed573" onclick="Pen.setColor('#2ed573',this)"></div>
+            <div class="color-dot" style="background:#3742fa" onclick="Pen.setColor('#3742fa',this)"></div>
+            <div class="color-dot" style="background:#ffa502" onclick="Pen.setColor('#ffa502',this)"></div>
+            <div class="color-dot" style="background:#000; border:1px solid #555" onclick="Pen.setColor('#000000',this)"></div>
+            <div class="divider" style="width: 100%; height: 1px; margin: 5px 0;"></div>
+            <div class="btn" onclick="Pen.undo()"><i class="fas fa-undo"></i></div>
+            <div class="btn" onclick="Pen.clear()"><i class="fas fa-trash"></i></div>
+        </div>
+
+        <div class="island island-bottom" id="island-bottom">
+            <button class="btn" onclick="App.nav('prev')"><i class="fas fa-chevron-left"></i></button>
+            <span id="page-num" style="font-weight:800; min-width:60px; text-align:center;">--/--</span>
+            <button class="btn" onclick="App.nav('next')"><i class="fas fa-chevron-right"></i></button>
+            
+            <div class="divider"></div>
+            
+            <button class="btn" onclick="Zoom.act(-1)"><i class="fas fa-minus"></i></button>
+            <span id="zoom-txt" style="font-weight:700; min-width:50px; text-align:center;">100%</span>
+            <button class="btn" onclick="Zoom.act(1)"><i class="fas fa-plus"></i></button>
+            
+            <div class="divider"></div>
+            
+            <button class="btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
+            <button class="btn" onclick="UI.fullscreen()"><i class="fas fa-expand"></i></button>
+        </div>
+    </div>
+
+    <div id="stage">
+        <div id="zoom-container">
+            <div id="book"></div>
+        </div>
+        <div id="pan-surface"></div>
+        <div class="spyglass" id="spy"><canvas id="spy-c"></canvas></div>
+    </div>
+
+    <div class="toast" id="toast">Ready</div>
     <audio id="sfx" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -221,229 +240,374 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const S = { pdf:null, flip:null, mode:'READ', zoom:1 };
+        const S = { pdf: null, flip: null, mode: 'READ', zoom: 1 };
 
         const App = {
             init() {
-                document.getElementById('inp').onchange = this.load;
-                window.onresize = () => this.checkUI();
+                UI.drag(document.getElementById('island-top'));
+                UI.drag(document.getElementById('island-bottom'));
+                UI.drag(document.getElementById('island-draw'));
+
+                document.getElementById('file-in').addEventListener('change', this.load);
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft') App.nav('prev');
+                    if (e.key === 'ArrowRight') App.nav('next');
+                    if (e.ctrlKey && e.key === 'z') Pen.undo();
+                    if (e.key === '+') Zoom.act(1);
+                    if (e.key === '-') Zoom.act(-1);
+                });
             },
+
             async load(e) {
-                if(!e.target.files[0]) return;
-                document.querySelector('.upload-box').innerHTML = 'Loading System...';
-                const ab = await e.target.files[0].arrayBuffer();
+                const f = e.target.files[0];
+                if (!f) return;
+                document.querySelector('.upload-box').innerHTML = '<i class="fas fa-spin fa-spinner"></i> Đang tải...';
+                
+                const ab = await f.arrayBuffer();
                 S.pdf = await pdfjsLib.getDocument(ab).promise;
                 await App.render();
             },
+
             async render() {
-                const b = document.getElementById('book'); b.innerHTML='';
-                for(let i=1; i<=S.pdf.numPages; i++) {
-                    const p = await S.pdf.getPage(i);
-                    const v = p.getViewport({scale:1.5});
-                    const w = document.createElement('div'); w.className='page-wrap';
+                const book = document.getElementById('book'); book.innerHTML = '';
+                
+                for (let i = 1; i <= S.pdf.numPages; i++) {
+                    const page = await S.pdf.getPage(i);
+                    const v = page.getViewport({ scale: 1.5 });
                     
-                    const pc = document.createElement('canvas'); pc.className='pdf-l'; pc.width=v.width; pc.height=v.height;
-                    await p.render({canvasContext:pc.getContext('2d'), viewport:v}).promise;
-                    
-                    const ic = document.createElement('canvas'); ic.className='ink-layer'; ic.width=v.width; ic.height=v.height;
-                    
-                    w.append(pc, ic); b.append(w);
+                    const wrap = document.createElement('div');
+                    wrap.className = 'page-wrap'; wrap.dataset.idx = i;
+
+                    const pc = document.createElement('canvas');
+                    pc.className = 'pdf-layer'; pc.width = v.width; pc.height = v.height;
+                    await page.render({ canvasContext: pc.getContext('2d'), viewport: v }).promise;
+
+                    const ic = document.createElement('canvas');
+                    ic.className = 'ink-layer'; ic.width = v.width; ic.height = v.height;
+
+                    wrap.append(pc, ic); book.append(wrap);
                 }
-                document.getElementById('modal').style.display='none';
-                this.initFlip(); Pen.init(); Zoom.init();
+
+                document.getElementById('modal').style.display = 'none';
+                this.initFlip();
+                Pen.init();
+                Zoom.init();
             },
+
             initFlip() {
                 const w = window.innerWidth;
                 S.flip = new St.PageFlip(document.getElementById('book'), {
-                    width: w<768?380:550, height: w<768?550:750,
-                    size:'stretch', showCover:true, useMouseEvents:true
+                    width: w < 768 ? 380 : 580, height: w < 768 ? 550 : 820,
+                    size: 'stretch', showCover: true, usePortrait: w < 768,
+                    maxShadowOpacity: 0.5, useMouseEvents: true
                 });
+                
                 S.flip.loadFromHTML(document.querySelectorAll('.page-wrap'));
-                S.flip.on('flip', e => {
-                    document.getElementById('pg-num').innerText = (e.data+1)+'/'+S.pdf.numPages;
-                    document.getElementById('sfx').play().catch(()=>{});
+                
+                S.flip.on('flip', (e) => {
+                    document.getElementById('page-num').innerText = `${e.data + 1} / ${S.pdf.numPages}`;
+                    const sfx = document.getElementById('sfx'); sfx.currentTime=0; sfx.play().catch(()=>{});
                 });
             },
+
             setMode(m) {
                 S.mode = m;
-                const r = document.getElementById('btn-read'), d = document.getElementById('btn-draw');
-                const t = document.getElementById('tools'), p = document.getElementById('pan-ol');
-                
-                if(m==='READ') {
-                    r.classList.add('active'); d.classList.remove('active');
-                    t.classList.remove('visible'); p.style.display='none';
-                    if(S.flip) S.flip.update({useMouseEvents:true});
-                } else {
-                    d.classList.add('active'); r.classList.remove('active');
-                    t.classList.add('visible'); p.style.display='none';
-                    if(S.flip) S.flip.update({useMouseEvents:false});
-                }
-            },
-            flip(d) { S.flip?.[d==='prev'?'flipPrev':'flipNext'](); },
-            toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')=='dark'?'light':'dark'); },
-            
-            toggleUIMode() {
-                const b = document.body;
-                const i = document.getElementById('ui-icon');
-                if(b.classList.contains('mode-mobile')) {
-                    b.classList.replace('mode-mobile', 'mode-desktop');
-                    i.className = 'fas fa-desktop';
-                } else {
-                    b.classList.replace('mode-desktop', 'mode-mobile');
-                    i.className = 'fas fa-mobile-alt';
-                }
-                setTimeout(() => { if(S.flip) S.flip.update(); }, 400);
-            },
-            
-            // --- FOCUS MODE (CLICK TO HIDE UI) ---
-            toggleFocusMode(e) {
-                // Chỉ ẩn/hiện nếu click vào nền hoặc layer kéo thả (không phải click vào nút bấm)
-                if(e.target.closest('.btn-icon') || e.target.closest('.island') || e.target.id === 'ui-switcher') return;
-                
-                // Nếu đang kéo (drag) thì không tính là click
-                if(Zoom.isD) return;
+                const topR = document.getElementById('mode-read');
+                const topD = document.getElementById('mode-draw');
+                const drawP = document.getElementById('island-draw');
+                const pan = document.getElementById('pan-surface');
 
-                document.body.classList.toggle('ui-hidden');
-            },
-            checkUI() { /* Auto detect */ }
-        };
-
-        const Pen = {
-            tool:'pen', color:'#ff4757', ctx:null, can:null, isDown:false, last:{x:0,y:0},
-            init() {
-                const st = document.querySelector('.stage');
-                st.addEventListener('pointerdown', e => this.down(e));
-                window.addEventListener('pointermove', e => this.move(e));
-                window.addEventListener('pointerup', () => this.up());
-            },
-            ui() {
-                document.querySelectorAll('#tools .btn-icon').forEach(b => b.classList.remove('active'));
-                document.getElementById('t-'+this.tool).classList.add('active');
-            },
-            setColor(c,el) {
-                this.color=c; this.tool='pen'; this.ui();
-                document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
-                el.classList.add('active');
-            },
-            getHit(e) {
-                const el = document.elementFromPoint(e.clientX, e.clientY);
-                if(el && el.classList.contains('ink-layer')) return el;
-                return null;
-            },
-            down(e) {
-                if(S.mode!=='DRAW') return;
-                const hit = this.getHit(e);
-                if(!hit) return;
-                e.preventDefault();
-                this.isDown = true;
-                this.setupCtx(hit);
-                this.last = this.pos(e, hit);
-                this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y); this.ctx.stroke();
-            },
-            move(e) {
-                if(!this.isDown || S.mode!=='DRAW') return;
-                let hit = this.getHit(e);
-                if(hit && hit !== this.can) {
-                    this.ctx.closePath(); this.setupCtx(hit);
-                    this.last = this.pos(e, hit);
-                    this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
-                }
-                if(this.can) {
-                    const curr = this.pos(e, this.can);
-                    const mid = {x: (this.last.x+curr.x)/2, y: (this.last.y+curr.y)/2};
-                    this.ctx.quadraticCurveTo(this.last.x, this.last.y, mid.x, mid.y);
-                    this.ctx.stroke();
-                    this.last = curr;
-                }
-            },
-            up() { this.isDown=false; if(this.ctx) this.ctx.closePath(); },
-            setupCtx(c) {
-                this.can = c; this.ctx = c.getContext('2d');
-                this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
-                if(this.tool==='eraser') {
-                    this.ctx.globalCompositeOperation='destination-out'; this.ctx.lineWidth=30;
-                } else if(this.tool==='marker') {
-                    this.ctx.globalCompositeOperation='multiply'; this.ctx.strokeStyle=this.color; 
-                    this.ctx.lineWidth=20; this.ctx.globalAlpha=0.5;
+                if (m === 'READ') {
+                    topR.classList.add('active'); topD.classList.remove('active');
+                    drawP.classList.remove('visible');
+                    pan.style.display = 'none';
+                    if (S.flip) S.flip.update({ useMouseEvents: true });
+                    UI.toast("Chế độ Đọc");
                 } else {
-                    this.ctx.globalCompositeOperation='source-over'; this.ctx.strokeStyle=this.color; 
-                    this.ctx.lineWidth=3; this.ctx.globalAlpha=1;
+                    topD.classList.add('active'); topR.classList.remove('active');
+                    drawP.classList.add('visible');
+                    pan.style.display = 'none';
+                    if (S.flip) S.flip.update({ useMouseEvents: false });
+                    UI.toast("Chế độ Vẽ Studio");
                 }
             },
-            pos(e, c) {
-                const r = c.getBoundingClientRect();
-                return { x: (e.clientX - r.left)*(c.width/r.width), y: (e.clientY - r.top)*(c.height/r.height) };
-            },
-            clear() { if(this.can) { const ctx = this.can.getContext('2d'); ctx.clearRect(0,0,this.can.width, this.can.height); } }
+
+            nav(dir) {
+                if (!S.flip) return;
+                dir === 'prev' ? S.flip.flipPrev() : S.flip.flipNext();
+            }
         };
 
         const Zoom = {
-            v:1, pan:{x:0,y:0}, isD:false, start:{x:0,y:0},
+            v: 1, pan: { x: 0, y: 0 }, isDrag: false, start: { x: 0, y: 0 },
+
             init() {
-                const o = document.getElementById('pan-ol');
-                // Sự kiện chuột trên Overlay (để kéo)
-                o.onpointerdown=e=>{
-                    this.isD=true; this.start={x:e.clientX-this.pan.x, y:e.clientY-this.pan.y}; 
-                    o.style.cursor='grabbing';
-                };
-                window.onpointermove=e=>{
-                    if(this.isD){ e.preventDefault(); this.pan={x:e.clientX-this.start.x, y:e.clientY-this.start.y}; this.upd(); }
-                    if(Loupe.on) Loupe.draw(e);
-                };
-                window.onpointerup=()=>{
-                    // Nếu thời gian click ngắn (click) -> Toggle UI. Nếu dài (drag) -> Ko làm gì
-                    this.isD=false; o.style.cursor='grab';
-                };
-                // Sự kiện click trên Overlay để ẩn/hiện UI (chỉ khi không kéo)
-                o.onclick = (e) => {
-                    // Logic này đã được xử lý ở App.toggleFocusMode thông qua bubble event, 
-                    // nhưng ở đây ta chặn drag trigger click
-                }
-            },
-            act(d) { 
-                // Fix logic Zoom cộng trừ
-                if(d > 0 && this.v < 4) this.v += 0.5;
-                else if(d < 0 && this.v > 1) this.v -= 0.5;
-                this.upd(); 
-            },
-            upd() {
-                document.getElementById('zoom-disp').innerText = (this.v*100) + '%';
-                const vp = document.getElementById('viewport');
-                vp.style.transform = `translate(${this.pan.x}px,${this.pan.y}px) scale(${this.v})`;
+                const p = document.getElementById('pan-surface');
                 
-                const p = document.getElementById('pan-ol');
-                // Khi Zoom > 1: Hiện lớp Pan Overlay để kéo
-                if(this.v > 1 && S.mode === 'READ') { 
-                    p.style.display='block'; 
-                    if(S.flip) S.flip.update({useMouseEvents:false}); 
-                }
-                else { 
-                    // Khi Zoom = 1: Ẩn lớp Pan, Reset vị trí
-                    p.style.display='none'; 
-                    this.pan={x:0,y:0}; 
-                    vp.style.transform='scale(1)'; 
-                    if(S.mode === 'READ' && S.flip) S.flip.update({useMouseEvents:true}); 
+                p.addEventListener('mousedown', e => {
+                    this.isDrag = true; 
+                    this.start = { x: e.clientX - this.pan.x, y: e.clientY - this.pan.y };
+                    p.classList.add('grabbing');
+                });
+
+                window.addEventListener('mousemove', e => {
+                    if (this.isDrag) {
+                        e.preventDefault();
+                        this.pan.x = e.clientX - this.start.x;
+                        this.pan.y = e.clientY - this.start.y;
+                        this.apply();
+                    }
+                    if (Loupe.on) Loupe.draw(e);
+                });
+
+                window.addEventListener('mouseup', () => {
+                    this.isDrag = false;
+                    p.classList.remove('grabbing');
+                });
+            },
+
+            act(d) {
+                if (d > 0 && this.v < 4) this.v += 0.5;
+                else if (d < 0 && this.v > 1) this.v -= 0.5;
+                this.apply();
+            },
+
+            apply() {
+                const zc = document.getElementById('zoom-container');
+                const pan = document.getElementById('pan-surface');
+                
+                document.getElementById('zoom-txt').innerText = Math.round(this.v * 100) + '%';
+                zc.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.v})`;
+
+                if (this.v > 1 && S.mode === 'READ') {
+                    pan.style.display = 'block';
+                    if (S.flip) S.flip.update({ useMouseEvents: false });
+                } else {
+                    pan.style.display = 'none';
+                    this.pan = { x: 0, y: 0 };
+                    zc.style.transform = 'scale(1)';
+                    if (S.mode === 'READ' && S.flip) S.flip.update({ useMouseEvents: true });
                 }
             }
         };
 
-        const Loupe = {
-            on:false,
-            toggle() { this.on=!this.on; document.getElementById('btn-loupe').classList.toggle('active',this.on); document.getElementById('spy').style.display=this.on?'block':'none'; },
-            draw(e) {
-                const spy=document.getElementById('spy'), ctx=document.getElementById('spy-c').getContext('2d');
-                document.getElementById('spy-c').width=500; document.getElementById('spy-c').height=500;
-                spy.style.left=(e.clientX+20)+'px'; spy.style.top=(e.clientY+20)+'px';
+        const Pen = {
+            tool: 'pen', color: '#ff4757', ctx: null, can: null, isDown: false,
+            last: { x: 0, y: 0 }, snapTimer: null, history: {}, startP: null, snapshot: null,
+
+            init() {
+                const stage = document.getElementById('stage');
+                stage.addEventListener('pointerdown', e => this.down(e));
+                window.addEventListener('pointermove', e => this.move(e));
+                window.addEventListener('pointerup', () => this.up());
+            },
+
+            setTool(t) {
+                this.tool = t;
+                document.querySelectorAll('#island-draw .btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('tool-' + t).classList.add('active');
+            },
+
+            setColor(c, el) {
+                this.color = c; this.setTool('pen');
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                el.classList.add('active');
+            },
+
+            getHit(e) {
+                const el = document.elementFromPoint(e.clientX, e.clientY);
+                if (el && el.classList.contains('ink-layer')) return el;
+                return null;
+            },
+
+            pos(e, c) {
+                const r = c.getBoundingClientRect();
+                return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+            },
+
+            setupCtx(c) {
+                this.can = c; this.ctx = c.getContext('2d');
+                this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
                 
-                spy.style.display='none'; const el=document.elementFromPoint(e.clientX,e.clientY); spy.style.display='block';
+                if (this.tool === 'marker') {
+                    this.ctx.globalCompositeOperation = 'multiply';
+                    this.ctx.strokeStyle = this.color;
+                    this.ctx.lineWidth = 20; this.ctx.globalAlpha = 0.5;
+                } else if (this.tool === 'eraser') {
+                    this.ctx.globalCompositeOperation = 'destination-out';
+                    this.ctx.lineWidth = 30; this.ctx.globalAlpha = 1;
+                } else {
+                    this.ctx.globalCompositeOperation = 'source-over';
+                    this.ctx.strokeStyle = this.color;
+                    this.ctx.lineWidth = 3; this.ctx.globalAlpha = 1;
+                }
+            },
+
+            down(e) {
+                if (S.mode !== 'DRAW') return;
+                const hit = this.getHit(e);
+                if (!hit) return;
+
+                e.preventDefault();
+                this.isDown = true;
+                this.setupCtx(hit);
+                this.last = this.pos(e, hit);
+                this.startP = this.last;
+                this.snapshot = this.ctx.getImageData(0, 0, hit.width, hit.height);
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.last.x, this.last.y);
+                this.ctx.stroke();
+                
+                clearTimeout(this.snapTimer);
+            },
+
+            move(e) {
+                if (!this.isDown || S.mode !== 'DRAW') return;
+                
+                let hit = this.getHit(e);
+                if (hit && hit !== this.can) {
+                    this.ctx.closePath();
+                    this.setupCtx(hit);
+                    this.last = this.pos(e, hit);
+                    this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
+                }
+
+                if (this.can) {
+                    const curr = this.pos(e, this.can);
+                    const mid = { x: (this.last.x + curr.x) / 2, y: (this.last.y + curr.y) / 2 };
+                    this.ctx.quadraticCurveTo(this.last.x, this.last.y, mid.x, mid.y);
+                    this.ctx.stroke();
+                    this.last = curr;
+
+                    clearTimeout(this.snapTimer);
+                    this.snapTimer = setTimeout(() => this.snap(curr), 600);
+                }
+            },
+
+            up() { 
+                this.isDown = false; 
+                if (this.ctx) this.ctx.closePath(); 
+                clearTimeout(this.snapTimer);
+                if(this.can) this.saveHist(this.can);
+            },
+
+            snap(endP) {
+                if(!this.isDown) return;
+                this.ctx.putImageData(this.snapshot, 0, 0);
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.startP.x, this.startP.y);
+                this.ctx.lineTo(endP.x, endP.y);
+                this.ctx.stroke();
+                UI.toast("Đã nắn thẳng");
+            },
+
+            saveHist(c) {
+                const i = c.parentElement.dataset.idx;
+                if(!this.history[i]) this.history[i] = [];
+                this.history[i].push(this.ctx.getImageData(0,0,c.width,c.height));
+                if(this.history[i].length > 10) this.history[i].shift();
+            },
+
+            undo() {
+                if(!this.can) return;
+                const i = this.can.parentElement.dataset.idx;
+                const h = this.history[i];
+                if(h && h.length>0) {
+                    h.pop();
+                    const prev = h[h.length-1];
+                    if(prev) this.ctx.putImageData(prev,0,0);
+                    else this.ctx.clearRect(0,0,this.can.width,this.can.height);
+                }
+            },
+            
+            clear() {
+                if(this.can) {
+                    this.ctx.clearRect(0,0,this.can.width,this.can.height);
+                    this.saveHist(this.can);
+                }
+            }
+        };
+
+        const UI = {
+            toggleLayout() {
+                document.body.classList.toggle('mode-mobile');
+                document.body.classList.toggle('mode-desktop');
+                const i = document.getElementById('icon-mode');
+                i.className = document.body.classList.contains('mode-mobile') ? 'fas fa-mobile-alt' : 'fas fa-desktop';
+                setTimeout(() => { if(S.flip) S.flip.update(); }, 300);
+            },
+            theme() {
+                const b = document.body;
+                b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark'?'light':'dark');
+            },
+            fullscreen() {
+                if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            },
+            toast(m) {
+                const t = document.getElementById('toast');
+                t.innerText = m; t.classList.add('show');
+                setTimeout(()=>t.classList.remove('show'), 2000);
+            },
+            drag(el) {
+                let isDown = false, offX, offY;
+                el.addEventListener('mousedown', e => {
+                    if(e.target.tagName === 'BUTTON' || e.target.closest('.btn')) return;
+                    isDown=true; 
+                    const r = el.getBoundingClientRect();
+                    offX = e.clientX - r.left; offY = e.clientY - r.top;
+                    el.style.transform = 'none'; 
+                    el.style.left = (e.clientX - offX) + 'px';
+                    el.style.top = (e.clientY - offY) + 'px';
+                    el.style.right = 'auto'; el.style.bottom = 'auto';
+                    el.style.cursor = 'grabbing';
+                });
+                window.addEventListener('mousemove', e => {
+                    if(!isDown) return;
+                    el.style.left = (e.clientX - offX) + 'px';
+                    el.style.top = (e.clientY - offY) + 'px';
+                });
+                window.addEventListener('mouseup', () => { isDown=false; el.style.cursor='grab'; });
+            }
+        };
+
+        const Loupe = {
+            on: false,
+            toggle() { 
+                this.on = !this.on; 
+                document.getElementById('btn-loupe').classList.toggle('active', this.on);
+                document.getElementById('spy').style.display = this.on ? 'block' : 'none';
+            },
+            draw(e) {
+                const spy = document.getElementById('spy');
+                const ctx = document.getElementById('spy-c').getContext('2d');
+                document.getElementById('spy-c').width = 500;
+                document.getElementById('spy-c').height = 500;
+
+                spy.style.left = (e.clientX + 20) + 'px';
+                spy.style.top = (e.clientY + 20) + 'px';
+                
+                spy.style.display = 'none';
+                const el = document.elementFromPoint(e.clientX, e.clientY);
+                spy.style.display = 'block';
+
                 const w = el?.closest('.page-wrap');
-                if(w) {
-                    const pdf=w.querySelector('.pdf-l'), ink=w.querySelector('.ink-layer');
-                    const r=pdf.getBoundingClientRect();
-                    const x=(e.clientX-r.left)*(pdf.width/r.width), y=(e.clientY-r.top)*(pdf.height/r.height);
-                    ctx.fillStyle='#fff'; ctx.fillRect(0,0,500,500);
-                    ctx.drawImage(pdf, x-100, y-100, 200, 200, 0,0,500,500);
-                    ctx.drawImage(ink, x-100, y-100, 200, 200, 0,0,500,500);
+                if (w) {
+                    const pdf = w.querySelector('.pdf-layer');
+                    const ink = w.querySelector('.ink-layer');
+                    const r = pdf.getBoundingClientRect();
+                    const rx = pdf.width / r.width;
+                    const ry = pdf.height / r.height;
+                    const x = (e.clientX - r.left) * rx;
+                    const y = (e.clientY - r.top) * ry;
+
+                    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 500);
+                    try {
+                        ctx.drawImage(pdf, x - 100, y - 100, 200, 200, 0, 0, 500, 500);
+                        ctx.drawImage(ink, x - 100, y - 100, 200, 200, 0, 0, 500, 500);
+                    } catch (err) {}
                 }
             }
         };
