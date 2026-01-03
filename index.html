@@ -2,73 +2,40 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate PDF Flipbook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pro PDF Flipbook V2</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #2b2d42;
-            --panel-color: #1e1e2e;
-            --accent-color: #ff006e;
-            --text-color: #edf2f4;
-            --btn-hover: #3a86ff;
+            --bg-color: #1a1a1a;
+            --stage-bg: #2d2d2d;
+            --panel-color: #333;
+            --text-color: #fff;
+            --accent-color: #ff4757;
+            --icon-color: #fff;
+            --shadow-book: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        [data-theme="light"] {
+            --bg-color: #f0f2f5;
+            --stage-bg: #e1e1e1;
+            --panel-color: #fff;
+            --text-color: #333;
+            --accent-color: #007bff;
+            --icon-color: #333;
+            --shadow-book: 0 10px 30px rgba(0,0,0,0.2);
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text-color);
+            font-family: sans-serif;
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-        #upload-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(43, 45, 66, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.5s;
-        }
-        .upload-box {
-            border: 3px dashed var(--accent-color);
-            padding: 50px;
-            border-radius: 20px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.05);
-            transition: transform 0.3s;
-            cursor: pointer;
-        }
-        .upload-box:hover {
-            transform: scale(1.05);
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .upload-box i { font-size: 4rem; margin-bottom: 20px; color: var(--accent-color); }
-        .upload-box h2 { margin: 0; font-size: 2rem; }
-        .upload-box p { color: #aaa; margin-top: 10px; }
-        #file-input { display: none; }
-        #loading-bar-container {
-            width: 300px;
-            height: 10px;
-            background: #444;
-            border-radius: 5px;
-            margin-top: 20px;
-            display: none;
-            overflow: hidden;
-        }
-        #loading-bar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-color), var(--btn-hover));
-            transition: width 0.2s;
-        }
-        #loading-text { margin-top: 10px; font-size: 0.9rem; color: #ffd700; display: none; }
         .toolbar {
             height: 60px;
             background-color: var(--panel-color);
@@ -76,94 +43,104 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            position: relative;
+            transition: background 0.3s;
         }
-        .toolbar-group { display: flex; gap: 10px; align-items: center; }
+        .brand { font-weight: bold; font-size: 1.2rem; color: var(--accent-color); }
+        .controls { display: flex; gap: 10px; align-items: center; }
         .btn {
             background: transparent;
-            border: 1px solid #444;
-            color: white;
-            padding: 8px 15px;
+            border: 1px solid rgba(128,128,128,0.5);
+            color: var(--icon-color);
+            width: 40px;
+            height: 40px;
             border-radius: 5px;
             cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
             transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
-        .btn:hover { background: var(--btn-hover); border-color: var(--btn-hover); transform: translateY(-2px); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .page-info { font-weight: bold; margin: 0 15px; font-variant-numeric: tabular-nums; }
+        .btn:hover { background: var(--accent-color); border-color: var(--accent-color); color: white; }
+        .page-counter { min-width: 100px; text-align: center; font-variant-numeric: tabular-nums; }
         .stage {
             flex: 1;
+            background-color: var(--stage-bg);
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: auto;
-            padding: 20px;
             position: relative;
-            background-image: radial-gradient(#3e405b 1px, transparent 1px);
-            background-size: 20px 20px;
+            transition: background 0.3s;
+        }
+        .zoom-wrapper {
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: center center;
+            padding: 50px;
         }
         .stf__wrapper {
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        }
-        .book-wrapper {
-            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-book);
         }
         canvas {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             object-fit: contain;
-            filter: contrast(1.05) brightness(0.98); 
+            image-rendering: -webkit-optimize-contrast; 
         }
-        .hard-cover {
-            background: #4a1c1c;
-            border: 2px solid #2e1212;
+        #upload-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            color: white;
         }
+        .upload-btn {
+            padding: 15px 30px; border: 2px dashed var(--accent-color);
+            border-radius: 10px; cursor: pointer; font-size: 1.2rem;
+            transition: 0.3s;
+        }
+        .upload-btn:hover { background: rgba(255,255,255,0.1); scale: 1.05; }
+        #loading-bar { width: 300px; height: 5px; background: #333; margin-top: 20px; border-radius: 3px; overflow: hidden; display: none;}
+        #progress { width: 0%; height: 100%; background: var(--accent-color); transition: width 0.1s; }
     </style>
 </head>
-<body>
-    <div id="upload-overlay">
-        <div class="upload-box" onclick="document.getElementById('file-input').click()">
-            <i class="fas fa-book-open"></i>
-            <h2>MỞ THƯ VIỆN SÁCH</h2>
-            <p>Click để chọn file PDF hoặc Kéo thả vào đây</p>
+<body data-theme="dark">
+
+    <div id="upload-layer">
+        <div class="upload-btn" onclick="document.getElementById('inp-file').click()">
+            <i class="fas fa-file-upload"></i> CHỌN FILE PDF
         </div>
-        <input type="file" id="file-input" accept="application/pdf">
-        <div id="loading-bar-container">
-            <div id="loading-bar"></div>
-        </div>
-        <div id="loading-text">Đang xử lý trang: 0/0</div>
+        <input type="file" id="inp-file" accept="application/pdf" style="display: none;">
+        <div id="loading-bar"><div id="progress"></div></div>
+        <p id="loading-txt" style="margin-top: 10px; display:none;">Đang xử lý...</p>
     </div>
 
     <div class="toolbar">
-        <div class="toolbar-group">
-            <div style="font-weight:bold; color: var(--accent-color); font-size: 1.2rem;">
-                <i class="fas fa-atlas"></i> PDF FLIPBOOK
-            </div>
+        <div class="brand"><i class="fas fa-book-reader"></i> FLIPBOOK PRO</div>
+        
+        <div class="controls">
+            <button class="btn" id="prev-btn" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
+            <span class="page-counter"><span id="pg-curr">0</span> / <span id="pg-total">0</span></span>
+            <button class="btn" id="next-btn" title="Trang sau"><i class="fas fa-chevron-right"></i></button>
         </div>
-        <div class="toolbar-group">
-            <button class="btn" id="btn-prev" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
-            <span class="page-info">Trang <span id="current-page">0</span> / <span id="total-page">0</span></span>
-            <button class="btn" id="btn-next" title="Trang sau"><i class="fas fa-chevron-right"></i></button>
-        </div>
-        <div class="toolbar-group">
-            <button class="btn" id="btn-zoom-out"><i class="fas fa-search-minus"></i></button>
-            <button class="btn" id="btn-zoom-in"><i class="fas fa-search-plus"></i></button>
-            <button class="btn" id="btn-sound" onclick="toggleSound()"><i class="fas fa-volume-up"></i></button>
-            <button class="btn" id="btn-reset" onclick="location.reload()" title="Mở file khác"><i class="fas fa-redo"></i></button>
+
+        <div class="controls">
+            <button class="btn" onclick="toggleTheme()" title="Sáng/Tối"><i class="fas fa-adjust"></i></button>
+            <button class="btn" onclick="zoomOut()" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
+            <button class="btn" onclick="zoomIn()" title="Phóng to"><i class="fas fa-plus"></i></button>
+            <button class="btn" onclick="toggleSound()" id="sound-btn" title="Âm thanh"><i class="fas fa-volume-up"></i></button>
+            <button class="btn" onclick="toggleFullscreen()" title="Toàn màn hình"><i class="fas fa-expand"></i></button>
+            <button class="btn" onclick="location.reload()" title="Reset"><i class="fas fa-redo"></i></button>
         </div>
     </div>
 
-    <div class="stage">
-        <div class="book-wrapper" id="book-wrapper">
+    <div class="stage" id="stage">
+        <div class="zoom-wrapper" id="zoom-wrapper">
             <div id="book"></div>
         </div>
     </div>
 
-    <audio id="page-flip-sound" src="https://cdn.pixabay.com/audio/2022/03/10/audio_5b35735071.mp3"></audio>
+    <audio id="snd-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
@@ -171,187 +148,137 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const fileInput = document.getElementById('file-input');
-        const uploadOverlay = document.getElementById('upload-overlay');
-        const bookElement = document.getElementById('book');
-        const loadingBar = document.getElementById('loading-bar');
-        const loadingText = document.getElementById('loading-text');
-        const loadingContainer = document.getElementById('loading-bar-container');
-        const bookWrapper = document.getElementById('book-wrapper');
-        
-        let pageFlip = null;
         let pdfDoc = null;
+        let pageFlip = null;
         let currentZoom = 1;
-        let isSoundOn = true;
+        let isSound = true;
+        const bookEl = document.getElementById('book');
+        const zoomWrapper = document.getElementById('zoom-wrapper');
 
-        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        document.getElementById('inp-file').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        uploadOverlay.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            document.querySelector('.upload-box').style.borderColor = '#3a86ff';
-        });
-
-        uploadOverlay.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            document.querySelector('.upload-box').style.borderColor = '#ff006e';
-        });
-
-        uploadOverlay.addEventListener('drop', (e) => {
-            e.preventDefault();
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        async function handleFile(file) {
-            if (!file || file.type !== 'application/pdf') {
-                alert('Vui lòng chọn đúng file PDF!');
-                return;
-            }
-
-            document.querySelector('.upload-box').style.display = 'none';
-            loadingContainer.style.display = 'block';
-            loadingText.style.display = 'block';
+            document.querySelector('.upload-btn').style.display = 'none';
+            document.getElementById('loading-bar').style.display = 'block';
+            document.getElementById('loading-txt').style.display = 'block';
 
             const reader = new FileReader();
             reader.readAsArrayBuffer(file);
+            reader.onload = async (ev) => {
+                const typedarray = new Uint8Array(ev.target.result);
+                pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
+                document.getElementById('pg-total').innerText = pdfDoc.numPages;
 
-            reader.onload = async function() {
-                try {
-                    const typedarray = new Uint8Array(this.result);
-                    pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
-                    
-                    const totalPages = pdfDoc.numPages;
-                    document.getElementById('total-page').innerText = totalPages;
-
-                    bookElement.innerHTML = ''; 
-                    
-                    for (let i = 1; i <= totalPages; i++) {
-                        await renderPage(i);
-                        const percent = Math.round((i / totalPages) * 100);
-                        loadingBar.style.width = percent + '%';
-                        loadingText.innerText = `Đang vẽ trang: ${i} / ${totalPages} (${percent}%)`;
-                    }
-
-                    initFlipBook();
-
-                    setTimeout(() => {
-                        uploadOverlay.style.opacity = 0;
-                        setTimeout(() => uploadOverlay.style.display = 'none', 500);
-                    }, 500);
-
-                } catch (error) {
-                    console.error(error);
-                    alert('Lỗi khi đọc file PDF! Có thể file bị hỏng hoặc có mật khẩu.');
-                    location.reload();
-                }
+                await renderAllPages();
             };
-        }
+        });
 
-        async function renderPage(pageNum) {
-            const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 2.0 }); 
+        async function renderAllPages() {
+            bookEl.innerHTML = '';
+            const total = pdfDoc.numPages;
             
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            canvas.classList.add('page-canvas');
+            for (let i = 1; i <= total; i++) {
+                const page = await pdfDoc.getPage(i);
+                
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { alpha: false }); 
 
-            if(pageNum === 1 || pageNum === pdfDoc.numPages) {
-                canvas.classList.add('hard-cover');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                canvas.className = 'my-page'; 
+                
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                bookEl.appendChild(canvas);
+
+                document.getElementById('progress').style.width = `${(i/total)*100}%`;
+                document.getElementById('loading-txt').innerText = `Đang tạo trang ${i}/${total}`;
             }
 
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-
-            bookElement.appendChild(canvas);
+            document.getElementById('upload-layer').style.display = 'none';
+            initBook();
         }
 
-        function initFlipBook() {
-            const width = window.innerWidth < 768 ? 300 : 550;
-            const height = window.innerWidth < 768 ? 420 : 750;
+        function initBook() {
+            const width = window.innerWidth;
+            const isMobile = width < 768;
 
-            pageFlip = new St.PageFlip(bookElement, {
-                width: width, 
-                height: height,
-                size: "stretch",
-                minWidth: 300,
-                maxWidth: 1000,
-                minHeight: 400,
-                maxHeight: 1200,
-                maxShadowOpacity: 0.5,
+            pageFlip = new St.PageFlip(bookEl, {
+                width: isMobile ? 350 : 550,
+                height: isMobile ? 500 : 750,
                 showCover: true,
-                mobileScrollSupport: false,
-                useMouseEvents: true
+                usePortrait: isMobile,
+                startPage: 0,
+                flippingTime: 1000,
+                useMouseEvents: true,
+                maxShadowOpacity: 0.5
             });
 
-            pageFlip.loadFromHTML(document.querySelectorAll('.page-canvas'));
+            pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
 
             pageFlip.on('flip', (e) => {
-                document.getElementById('current-page').innerText = e.data + 1;
+                let currentPage = e.data + 1;
+                document.getElementById('pg-curr').innerText = currentPage;
                 playSound();
             });
 
-            document.getElementById('current-page').innerText = 1;
+            document.getElementById('pg-curr').innerText = 1;
         }
 
-        document.getElementById('btn-prev').onclick = () => pageFlip.flipPrev();
-        document.getElementById('btn-next').onclick = () => pageFlip.flipNext();
-
-        document.addEventListener('keydown', (e) => {
-            if (uploadOverlay.style.display !== 'none') return;
-            if (e.code === 'ArrowLeft') pageFlip.flipPrev();
-            if (e.code === 'ArrowRight') pageFlip.flipNext();
-        });
-
         function playSound() {
-            if (!isSoundOn) return;
-            const audio = document.getElementById('page-flip-sound');
+            if (!isSound) return;
+            const audio = document.getElementById('snd-flip');
             audio.currentTime = 0;
-            audio.play().catch(e => console.log("Audio play blocked"));
+            audio.play().catch(err => console.log('Tương tác với trang web để nghe tiếng!'));
         }
 
         function toggleSound() {
-            isSoundOn = !isSoundOn;
-            const btn = document.getElementById('btn-sound');
-            btn.innerHTML = isSoundOn ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
-            btn.style.color = isSoundOn ? 'white' : '#aaa';
+            isSound = !isSound;
+            const btn = document.getElementById('sound-btn');
+            btn.innerHTML = isSound ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+            btn.style.opacity = isSound ? 1 : 0.5;
         }
 
-        const btnZoomIn = document.getElementById('btn-zoom-in');
-        const btnZoomOut = document.getElementById('btn-zoom-out');
-
-        btnZoomIn.onclick = () => {
-            if (currentZoom < 2.0) {
-                currentZoom += 0.2;
-                updateZoom();
-            }
-        };
-
-        btnZoomOut.onclick = () => {
-            if (currentZoom > 0.6) {
-                currentZoom -= 0.2;
-                updateZoom();
-            }
-        };
-
-        function updateZoom() {
-            bookWrapper.style.transform = `scale(${currentZoom})`;
-            btnZoomIn.disabled = currentZoom >= 2.0;
-            btnZoomOut.disabled = currentZoom <= 0.6;
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
         }
 
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if(pdfDoc) {
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
                 }
-            }, 500);
+            }
+        }
+
+        function zoomIn() {
+            if (currentZoom < 3) {
+                currentZoom += 0.25;
+                updateZoom();
+            }
+        }
+        function zoomOut() {
+            if (currentZoom > 0.5) {
+                currentZoom -= 0.25;
+                updateZoom();
+            }
+        }
+        function updateZoom() {
+            zoomWrapper.style.transform = `scale(${currentZoom})`;
+        }
+
+        document.getElementById('prev-btn').onclick = () => pageFlip.flipPrev();
+        document.getElementById('next-btn').onclick = () => pageFlip.flipNext();
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowLeft') pageFlip.flipPrev();
+            if (e.code === 'ArrowRight') pageFlip.flipNext();
         });
     </script>
 </body>
