@@ -3,199 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V12 (Final)</title>
+    <title>FlipOS V18 (Studio Layout)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-app: #0f0f11;
-            --bg-panel: rgba(30, 30, 35, 0.85);
-            --text-main: #ececec;
-            --accent: #6c5ce7;
-            --border: rgba(255, 255, 255, 0.1);
-            --shadow: 0 10px 40px rgba(0,0,0,0.5);
-            --blur: blur(12px);
+            --bg-body: #1e1e1e;
+            --bg-panel: #252526;
+            --accent: #007acc;
+            --text: #cccccc;
+            --border: #333333;
+            --hover: #2a2d2e;
         }
-
         [data-theme="light"] {
-            --bg-app: #f4f5f7;
-            --bg-panel: rgba(255, 255, 255, 0.85);
-            --text-main: #2d3436;
-            --accent: #0984e3;
-            --border: rgba(0, 0, 0, 0.1);
+            --bg-body: #f3f3f3;
+            --bg-panel: #ffffff;
+            --text: #333;
+            --accent: #0078d4;
+            --border: #e5e5e5;
+            --hover: #f0f0f0;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; touch-action: none; user-select: none; }
+        * { margin:0; padding:0; box-sizing:border-box; outline:none; -webkit-tap-highlight-color:transparent; user-select: none; }
         
         body {
-            background: var(--bg-app); color: var(--text-main);
+            background: var(--bg-body); color: var(--text);
             font-family: 'Inter', sans-serif;
             height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            /* CHIA MÀN HÌNH: Trái (60px) - Giữa (Tự động) - Phải (60px) */
+            grid-template-columns: 60px 1fr 60px;
+            grid-template-areas: "left stage right";
+        }
+
+        /* --- SIDEBARS --- */
+        .sidebar {
+            background: var(--bg-panel); 
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 15px 0; gap: 15px; z-index: 100;
+        }
+
+        #panel-left { grid-area: left; border-right: 1px solid var(--border); border-left: none; }
+        #panel-right { grid-area: right; border-left: 1px solid var(--border); border-right: none; }
+
+        /* --- STAGE (SÁCH) --- */
+        #stage-area {
+            grid-area: stage;
+            position: relative; overflow: hidden;
+            background-image: radial-gradient(rgba(128,128,128,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- UI ISLANDS --- */
-        .island-top {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 6px 8px; border-radius: 50px;
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; align-items: center; gap: 10px; z-index: 1000;
+        #book-transform {
+            transition: transform 0.1s linear;
+            transform-origin: center center;
+            will-change: transform;
         }
 
-        .mode-btn {
-            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
-            color: var(--text-main); border: none; background: transparent; opacity: 0.5; transition: 0.2s;
-        }
-        .mode-btn.active { background: var(--accent); color: white; opacity: 1; }
-
-        .island-bottom {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 10px 24px; border-radius: 24px;
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; align-items: center; gap: 15px; z-index: 1000;
-        }
-
-        .icon-btn {
-            width: 40px; height: 40px; border-radius: 12px;
-            border: 1px solid transparent; background: rgba(128,128,128,0.1);
-            color: var(--text-main); font-size: 1.1rem; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; transition: 0.2s;
-        }
-        .icon-btn:hover { background: var(--accent); color: white; transform: translateY(-3px); }
-        .icon-btn.active { background: var(--accent); color: white; }
-
-        /* --- TOOL PALETTE (SIDEBAR) --- */
-        .island-side {
-            position: fixed; right: 20px; top: 50%; transform: translateY(-50%) translateX(150%);
-            background: var(--bg-panel); backdrop-filter: var(--blur);
-            padding: 15px; border-radius: 20px;
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-            display: flex; flex-direction: column; gap: 12px; z-index: 900;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .island-side.visible { transform: translateY(-50%) translateX(0); }
-
-        .tool-opt {
-            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+        /* --- COMPONENTS --- */
+        .btn {
+            width: 40px; height: 40px; border-radius: 8px;
+            color: var(--text); background: transparent;
+            border: none; cursor: pointer; font-size: 1.1rem;
             display: flex; justify-content: center; align-items: center;
-            font-size: 1.2rem; color: var(--text-main); opacity: 0.6; transition: 0.2s;
+            transition: 0.2s; position: relative;
         }
-        .tool-opt:hover { opacity: 1; background: rgba(255,255,255,0.1); }
-        .tool-opt.active { opacity: 1; background: var(--accent); color: white; box-shadow: 0 4px 10px var(--accent); }
+        .btn:hover { background: var(--hover); color: #fff; }
+        .btn.active { background: var(--accent); color: #fff; }
+        
+        /* Mode Switcher Style */
+        .mode-group {
+            display: flex; flex-direction: column; gap: 5px; background: rgba(0,0,0,0.2);
+            padding: 5px; border-radius: 10px; margin-bottom: 10px;
+        }
+        .mode-item {
+            width: 30px; height: 30px; border-radius: 6px; display: flex; 
+            justify-content: center; align-items: center; cursor: pointer; font-size: 0.9rem;
+            opacity: 0.5; transition: 0.2s;
+        }
+        .mode-item.active { background: var(--accent); color: white; opacity: 1; }
+
+        .divider { width: 60%; height: 1px; background: var(--border); margin: 5px 0; }
 
         .color-dot {
-            width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+            width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
         }
-        .color-dot.active { border-color: #fff; transform: scale(1.2); }
+        .color-dot.active { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 5px var(--accent); }
 
-        /* --- WORKSPACE --- */
-        .stage {
-            width: 100%; height: 100%; position: relative;
-            background-image: radial-gradient(rgba(128,128,128,0.15) 1px, transparent 1px);
-            background-size: 30px 30px;
-            display: flex; justify-content: center; align-items: center;
-        }
+        .zoom-display { font-size: 0.7rem; font-weight: bold; color: var(--accent); }
 
-        .viewport-layer { transition: transform 0.1s linear; transform-style: preserve-3d; will-change: transform; }
-        .page-wrapper { position: relative; background: #fff; overflow: hidden; backface-visibility: hidden; }
-        
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .pdf-layer { z-index: 1; pointer-events: none; }
-        .ink-layer { z-index: 10; touch-action: none; }
+        /* --- LAYERS --- */
+        .page-wrap { position: relative; background: #fff; overflow: hidden; }
+        canvas { position: absolute; top:0; left:0; width:100%; height:100%; }
+        .pdf-layer { z-index: 1; }
+        .ink-layer { z-index: 10; cursor: crosshair; touch-action: none; }
 
         /* --- OVERLAYS --- */
-        #pan-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 500; display: none; cursor: grab;
+        #pan-mask {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            z-index: 50; display: none; cursor: grab;
         }
-        #pan-overlay.grabbing { cursor: grabbing; }
+        #pan-mask.grabbing { cursor: grabbing; }
 
         .spyglass {
-            position: absolute; width: 220px; height: 220px;
-            border-radius: 50%; border: 4px solid #fff;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            position: absolute; width: 200px; height: 200px; border-radius: 50%;
+            border: 4px solid #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.5);
             overflow: hidden; pointer-events: none; z-index: 9999;
             display: none; background: #fff;
         }
 
-        /* --- START SCREEN --- */
-        .upload-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 5000;
+        /* --- UPLOAD --- */
+        #upload-layer {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .upload-btn {
-            background: #1e1e24; padding: 40px 60px; border-radius: 30px;
-            text-align: center; border: 2px dashed #444; cursor: pointer; transition: 0.3s;
+            padding: 40px; border: 2px dashed #555; border-radius: 20px;
+            color: #888; cursor: pointer; text-align: center; transition: 0.3s;
         }
-        .upload-btn:hover { border-color: var(--accent); transform: scale(1.02); }
+        .upload-btn:hover { border-color: var(--accent); color: #fff; }
 
         .toast {
-            position: fixed; top: 90px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; padding: 10px 20px; border-radius: 30px;
-            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 8px 16px; border-radius: 20px;
+            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 8000; font-size: 0.9rem;
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div class="upload-modal" id="modal">
-        <div class="upload-btn" onclick="document.getElementById('file-in').click()">
-            <i class="fas fa-book-reader" style="font-size: 3rem; color: var(--accent); margin-bottom: 20px;"></i>
-            <h1 style="color: #fff; font-size: 2rem;">FlipOS</h1>
-            <p style="color: #888; margin-top: 10px;">by Dang Duc Dai</p>
+    <div id="upload-layer">
+        <div class="upload-btn" onclick="document.getElementById('inp').click()">
+            <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 10px;"></i>
+            <h2>MỞ FILE PDF</h2>
+            <p>Giao diện Studio - Không che lấp</p>
         </div>
-        <input type="file" id="file-in" accept="application/pdf" style="display: none;">
+        <input type="file" id="inp" hidden accept="application/pdf">
     </div>
 
-    <div class="island-top">
-        <button class="mode-btn active" onclick="App.setMode('READ')" id="btn-read"><i class="fas fa-book-open"></i> ĐỌC</button>
-        <div style="width:1px; height:15px; background:rgba(255,255,255,0.2)"></div>
-        <button class="mode-btn" onclick="App.setMode('DRAW')" id="btn-draw"><i class="fas fa-pen-nib"></i> VẼ</button>
-        <i class="fas fa-moon" style="cursor:pointer; margin-left:10px; opacity:0.7" onclick="App.toggleTheme()"></i>
+    <div class="sidebar" id="panel-left">
+        <div class="mode-group">
+            <div class="mode-item active" id="m-read" onclick="App.setMode('READ')" title="Đọc"><i class="fas fa-eye"></i></div>
+            <div class="mode-item" id="m-draw" onclick="App.setMode('DRAW')" title="Vẽ"><i class="fas fa-pen"></i></div>
+        </div>
+        
+        <div class="divider"></div>
+
+        <button class="btn" id="t-pen" onclick="Pen.set('pen')"><i class="fas fa-pen-nib"></i></button>
+        <button class="btn" id="t-high" onclick="Pen.set('marker')"><i class="fas fa-highlighter"></i></button>
+        <button class="btn" id="t-erase" onclick="Pen.set('eraser')"><i class="fas fa-eraser"></i></button>
+        
+        <div class="divider"></div>
+
+        <div class="color-dot active" style="background:#ff4757" onclick="Pen.col('#ff4757',this)"></div>
+        <div class="color-dot" style="background:#2ed573" onclick="Pen.col('#2ed573',this)"></div>
+        <div class="color-dot" style="background:#2f3542" style="border:1px solid #777" onclick="Pen.col('#2f3542',this)"></div>
+        
+        <div class="divider"></div>
+        
+        <button class="btn" onclick="Pen.undo()" title="Undo"><i class="fas fa-undo"></i></button>
+        <button class="btn" onclick="Pen.clear()" title="Clear Page"><i class="fas fa-trash"></i></button>
     </div>
 
-    <div class="island-side" id="draw-tools">
-        <div class="tool-opt active" id="tool-pen" onclick="Pen.setTool('pen')" title="Bút mực"><i class="fas fa-pen"></i></div>
-        <div class="tool-opt" id="tool-marker" onclick="Pen.setTool('marker')" title="Highlight"><i class="fas fa-highlighter"></i></div>
-        <div class="tool-opt" id="tool-eraser" onclick="Pen.setTool('eraser')" title="Tẩy"><i class="fas fa-eraser"></i></div>
-        <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
-        <div class="color-dot active" style="background:#ff4757" onclick="Pen.setColor('#ff4757', this)"></div>
-        <div class="color-dot" style="background:#2ed573" onclick="Pen.setColor('#2ed573', this)"></div>
-        <div class="color-dot" style="background:#3742fa" onclick="Pen.setColor('#3742fa', this)"></div>
-        <div class="color-dot" style="background:#ffa502" onclick="Pen.setColor('#ffa502', this)"></div>
-        <div style="height:1px; background:rgba(255,255,255,0.1)"></div>
-        <div class="tool-opt" onclick="Pen.undo()"><i class="fas fa-undo"></i></div>
-        <div class="tool-opt" onclick="Pen.clear()"><i class="fas fa-trash"></i></div>
-    </div>
-
-    <div class="island-bottom">
-        <button class="icon-btn" onclick="App.prev()"><i class="fas fa-chevron-left"></i></button>
-        <span id="page-num" style="font-variant-numeric: tabular-nums; width:60px; text-align:center;">---</span>
-        <button class="icon-btn" onclick="App.next()"><i class="fas fa-chevron-right"></i></button>
-        <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
-        <button class="icon-btn" onclick="Zoom.out()"><i class="fas fa-minus"></i></button>
-        <span id="zoom-val" style="font-weight:600; font-size:0.9rem;">100%</span>
-        <button class="icon-btn" onclick="Zoom.in()"><i class="fas fa-plus"></i></button>
-        <div style="width:1px; height:20px; background:rgba(255,255,255,0.2)"></div>
-        <button class="icon-btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
-        <button class="icon-btn" onclick="App.fullscreen()"><i class="fas fa-expand"></i></button>
-    </div>
-
-    <div class="stage">
-        <div class="viewport-layer" id="viewport">
+    <div id="stage-area">
+        <div id="book-transform">
             <div id="book"></div>
         </div>
-        <div id="pan-overlay"></div>
-        <div class="spyglass" id="spyglass"><canvas id="spy-canvas"></canvas></div>
+        <div id="pan-mask"></div>
+        <div class="spyglass" id="spy"><canvas id="spy-c"></canvas></div>
     </div>
 
-    <div class="toast" id="toast">Thông báo</div>
-    <audio id="snd-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
+    <div class="sidebar" id="panel-right">
+        <button class="btn" onclick="App.theme()"><i class="fas fa-adjust"></i></button>
+        <div class="divider"></div>
+        
+        <button class="btn" onclick="Zoom.do(1)"><i class="fas fa-plus"></i></button>
+        <span class="zoom-display" id="z-val">100%</span>
+        <button class="btn" onclick="Zoom.do(-1)"><i class="fas fa-minus"></i></button>
+        
+        <div class="divider"></div>
+
+        <button class="btn" onclick="App.flip('prev')"><i class="fas fa-chevron-up"></i></button>
+        <span id="pg-txt" style="font-size:0.8rem; font-weight:bold">--</span>
+        <button class="btn" onclick="App.flip('next')"><i class="fas fa-chevron-down"></i></button>
+        
+        <div class="divider"></div>
+        
+        <button class="btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
+        <button class="btn" onclick="App.full()"><i class="fas fa-expand"></i></button>
+    </div>
+
+    <div class="toast" id="toast">Ready</div>
+    <audio id="sfx" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
@@ -203,367 +208,194 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const State = { mode: 'READ', zoom: 1, pdf: null, flip: null };
+        const S = { pdf:null, flip:null, mode:'READ', zoom:1 };
 
         const App = {
             init() {
-                document.getElementById('file-in').addEventListener('change', this.load);
-                document.addEventListener('keydown', e => {
-                    if(e.ctrlKey && e.key === 'z') Pen.undo();
-                    if(e.key === 'ArrowLeft') this.prev();
-                    if(e.key === 'ArrowRight') this.next();
-                });
-            },
-
-            async load(e) {
-                const file = e.target.files[0];
-                if(!file) return;
-                document.querySelector('.upload-btn').innerHTML = 'Đang tải dữ liệu...';
-                
-                const reader = new FileReader();
-                reader.readAsArrayBuffer(file);
-                reader.onload = async (ev) => {
-                    const data = new Uint8Array(ev.target.result);
-                    State.pdf = await pdfjsLib.getDocument(data).promise;
-                    await App.render();
+                document.getElementById('inp').onchange = this.load;
+                window.onkeydown = e => {
+                    if(e.key==='ArrowLeft') this.flip('prev');
+                    if(e.key==='ArrowRight') this.flip('next');
+                    if(e.ctrlKey && e.key==='z') Pen.undo();
                 };
             },
-
+            async load(e) {
+                if(!e.target.files[0]) return;
+                const ab = await e.target.files[0].arrayBuffer();
+                S.pdf = await pdfjsLib.getDocument(ab).promise;
+                App.render();
+            },
             async render() {
-                const container = document.getElementById('book');
-                container.innerHTML = '';
-                const total = State.pdf.numPages;
-
-                for(let i=1; i<=total; i++) {
-                    const page = await State.pdf.getPage(i);
-                    const viewport = page.getViewport({scale: 1.5});
+                const b = document.getElementById('book'); b.innerHTML='';
+                for(let i=1; i<=S.pdf.numPages; i++){
+                    const p = await S.pdf.getPage(i);
+                    const v = p.getViewport({scale:1.5});
+                    const w = document.createElement('div'); w.className='page-wrap'; w.dataset.idx=i;
                     
-                    const wrap = document.createElement('div');
-                    wrap.className = 'page-wrapper';
-                    wrap.dataset.idx = i;
-
-                    const pdfCan = document.createElement('canvas');
-                    pdfCan.className = 'pdf-layer';
-                    pdfCan.width = viewport.width; pdfCan.height = viewport.height;
-                    const ctx = pdfCan.getContext('2d', {alpha: false});
-                    await page.render({canvasContext: ctx, viewport}).promise;
-
-                    const inkCan = document.createElement('canvas');
-                    inkCan.className = 'ink-layer';
-                    inkCan.width = viewport.width; inkCan.height = viewport.height;
+                    const pc = document.createElement('canvas'); pc.className='pdf-layer'; pc.width=v.width; pc.height=v.height;
+                    await p.render({canvasContext:pc.getContext('2d'), viewport:v}).promise;
                     
-                    wrap.appendChild(pdfCan);
-                    wrap.appendChild(inkCan);
-                    container.appendChild(wrap);
+                    const ic = document.createElement('canvas'); ic.className='ink-layer'; ic.width=v.width; ic.height=v.height;
+                    w.append(pc,ic); b.append(w);
                 }
-
-                document.getElementById('modal').style.display='none';
-                this.initFlip();
-                Pen.init();
-                Zoom.init();
+                document.getElementById('upload-layer').style.display='none';
+                this.initFlip(); Pen.init(); Zoom.init();
             },
-
             initFlip() {
-                const isMobile = window.innerWidth < 768;
-                State.flip = new St.PageFlip(document.getElementById('book'), {
-                    width: isMobile ? 380 : 580, height: isMobile ? 550 : 820,
-                    size: "stretch", showCover: true, usePortrait: isMobile,
-                    minWidth: 300, maxWidth: 1000,
-                    useMouseEvents: true
+                const w = document.getElementById('stage-area').clientWidth;
+                S.flip = new St.PageFlip(document.getElementById('book'), {
+                    width: w<600?350:550, height: w<600?500:750,
+                    size:'stretch', showCover:true, useMouseEvents:true 
                 });
-                State.flip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
-                State.flip.on('flip', (e) => {
-                    document.getElementById('page-num').innerText = `${e.data+1}/${State.pdf.numPages}`;
-                    const snd = document.getElementById('snd-flip'); snd.currentTime=0; snd.play().catch(()=>{});
+                S.flip.loadFromHTML(document.querySelectorAll('.page-wrap'));
+                S.flip.on('flip', e=>{
+                    document.getElementById('pg-txt').innerText = (e.data+1)+'/'+S.pdf.numPages;
+                    document.getElementById('sfx').currentTime=0; document.getElementById('sfx').play().catch(()=>{});
                 });
             },
-
+            flip(d) { S.flip?.[d==='prev'?'flipPrev':'flipNext'](); },
             setMode(m) {
-                State.mode = m;
-                const tools = document.getElementById('draw-tools');
-                const btnR = document.getElementById('btn-read');
-                const btnD = document.getElementById('btn-draw');
-                const panOv = document.getElementById('pan-overlay');
-
-                if(m === 'READ') {
-                    tools.classList.remove('visible');
-                    btnR.classList.add('active'); btnD.classList.remove('active');
-                    if(State.flip) State.flip.update({useMouseEvents: true});
-                    UI.toast("Chế độ Đọc");
-                    panOv.style.display = 'none';
+                S.mode=m;
+                document.getElementById('m-read').classList.toggle('active', m==='READ');
+                document.getElementById('m-draw').classList.toggle('active', m==='DRAW');
+                document.getElementById('pan-mask').style.display = 'none';
+                
+                if(m==='READ') {
+                    if(S.flip) S.flip.update({useMouseEvents:true});
+                    UI.msg("Chế độ Đọc");
                 } else {
-                    tools.classList.add('visible');
-                    btnD.classList.add('active'); btnR.classList.remove('active');
-                    if(State.flip) State.flip.update({useMouseEvents: false}); 
-                    UI.toast("Chế độ Vẽ Studio");
+                    if(S.flip) S.flip.update({useMouseEvents:false});
+                    UI.msg("Chế độ Vẽ");
                 }
             },
-
-            prev() { State.flip?.flipPrev(); },
-            next() { State.flip?.flipNext(); },
-            toggleTheme() {
-                const isDark = document.body.getAttribute('data-theme') === 'dark';
-                document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            },
-            fullscreen() {
-                if(!document.fullscreenElement) document.documentElement.requestFullscreen();
-                else document.exitFullscreen();
-            }
+            theme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')=='dark'?'light':'dark'); },
+            full() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
         };
 
-        // --- CÔNG CỤ VẼ & HIGHLIGHT ---
         const Pen = {
-            tool: 'pen', color: '#ff4757', isDrawing: false, lastPoint: null, ctx: null, canvas: null, history: {},
-
+            tool:'pen', color:'#ff4757', ctx:null, can:null, isDown:false, last:{x:0,y:0}, history:{},
             init() {
-                const layers = document.querySelectorAll('.ink-layer');
-                layers.forEach(can => {
-                    can.addEventListener('pointerdown', e => this.start(e, can));
-                    can.addEventListener('pointermove', e => this.move(e));
-                    can.addEventListener('pointerup', e => this.end(e));
-                    can.addEventListener('pointercancel', e => this.end(e));
-                });
+                const s = document.getElementById('stage-area');
+                s.onpointerdown = e => this.down(e);
+                window.onpointermove = e => this.move(e);
+                window.onpointerup = () => this.up();
             },
-
-            setTool(t) {
-                this.tool = t;
-                document.querySelectorAll('.tool-opt').forEach(b => b.classList.remove('active'));
-                document.getElementById(`tool-${t}`).classList.add('active');
-                
-                // Reset active color visual
-                if(t === 'eraser') document.querySelectorAll('.color-dot').forEach(c => c.classList.remove('active'));
-                else {
-                    // Re-active color if switching back to pen/marker
-                    // Logic đơn giản: để user tự chọn lại màu hoặc giữ màu cũ
-                }
+            set(t) {
+                this.tool=t;
+                ['pen','high','erase'].forEach(id => document.getElementById('t-'+id).classList.remove('active'));
+                document.getElementById('t-'+(t==='marker'?'high':(t==='eraser'?'erase':'pen'))).classList.add('active');
             },
-
-            setColor(c, el) {
-                this.color = c; 
-                // Nếu đang là tẩy thì chuyển về pen
-                if(this.tool === 'eraser') this.setTool('pen');
-                
-                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            col(c,el) {
+                this.color=c; this.set('pen');
+                document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
                 el.classList.add('active');
             },
-
-            toggleEraser() { this.setTool('eraser'); },
-
-            getPos(e, canvas) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+            getHit(e) {
+                const el = document.elementFromPoint(e.clientX, e.clientY);
+                return el?.classList.contains('ink-layer') ? el : null;
             },
-
-            start(e, canvas) {
-                if(State.mode !== 'DRAW') return;
-                e.preventDefault(); canvas.setPointerCapture(e.pointerId);
-
-                this.isDrawing = true; this.canvas = canvas;
-                this.ctx = canvas.getContext('2d');
-                this.lastPoint = this.getPos(e, canvas);
-
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
-                this.ctx.lineCap = 'round';
-                this.ctx.lineJoin = 'round';
-
-                if(this.tool === 'marker') {
-                    // HIGHLIGHTER LOGIC: Multiply mode để trong suốt
-                    this.ctx.globalCompositeOperation = 'multiply';
-                    this.ctx.strokeStyle = this.color;
-                    this.ctx.lineWidth = 20; 
-                    // Mẹo: Marker nên hơi mờ
-                    this.ctx.globalAlpha = 0.5;
-                } else if (this.tool === 'eraser') {
-                    this.ctx.globalCompositeOperation = 'destination-out';
-                    this.ctx.lineWidth = 30;
-                    this.ctx.globalAlpha = 1;
-                } else {
-                    // Pen
-                    this.ctx.globalCompositeOperation = 'source-over';
-                    this.ctx.strokeStyle = this.color;
-                    this.ctx.lineWidth = 3;
-                    this.ctx.globalAlpha = 1;
-                }
+            down(e) {
+                if(document.getElementById('pan-mask').style.display === 'block') return;
+                const hit = this.getHit(e);
+                if(!hit || S.mode!=='DRAW') return;
+                e.preventDefault(); 
+                this.isDown=true; this.can=hit; this.ctx=hit.getContext('2d');
+                this.setupCtx();
+                const r = hit.getBoundingClientRect();
+                this.last = { x:(e.clientX-r.left)*(hit.width/r.width), y:(e.clientY-r.top)*(hit.height/r.height) };
                 
-                // Shape Snap Start
-                this.snapshot = this.ctx.getImageData(0,0,canvas.width, canvas.height);
-                this.startPoint = this.lastPoint;
-                clearTimeout(this.snapTimer);
+                this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y); this.ctx.stroke();
             },
-
             move(e) {
-                if(!this.isDrawing) return;
-                const curr = this.getPos(e, this.canvas);
-                
-                // Vẽ mượt
-                const mid = { x: this.lastPoint.x + (curr.x - this.lastPoint.x)/2, y: this.lastPoint.y + (curr.y - this.lastPoint.y)/2 };
-                this.ctx.quadraticCurveTo(this.lastPoint.x, this.lastPoint.y, mid.x, mid.y);
-                this.ctx.stroke();
-                
-                this.lastPoint = curr;
-
-                // Shape Snap Logic
-                clearTimeout(this.snapTimer);
-                this.snapTimer = setTimeout(() => {
-                    if(this.isDrawing) this.snapShape(curr);
-                }, 600);
+                if(!this.isDown) return;
+                const hit = this.getHit(e);
+                if(hit && hit !== this.can) {
+                    this.ctx.closePath(); this.can=hit; this.ctx=hit.getContext('2d');
+                    this.setupCtx();
+                    const r = hit.getBoundingClientRect();
+                    this.last = { x:(e.clientX-r.left)*(hit.width/r.width), y:(e.clientY-r.top)*(hit.height/r.height) };
+                    this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
+                }
+                if(this.can) {
+                    const r = this.can.getBoundingClientRect();
+                    const curr = { x:(e.clientX-r.left)*(this.can.width/r.width), y:(e.clientY-r.top)*(this.can.height/r.height) };
+                    this.ctx.quadraticCurveTo(this.last.x, this.last.y, (this.last.x+curr.x)/2, (this.last.y+curr.y)/2);
+                    this.ctx.stroke();
+                    this.last = curr;
+                }
             },
-
-            end(e) {
-                this.isDrawing = false;
-                this.ctx.closePath();
-                clearTimeout(this.snapTimer);
-                this.saveHistory(this.canvas);
+            up() { this.isDown=false; if(this.ctx) { this.ctx.closePath(); this.save(this.can); } },
+            setupCtx() {
+                this.ctx.lineCap='round'; this.ctx.lineJoin='round';
+                if(this.tool==='marker') {
+                    this.ctx.globalCompositeOperation='multiply'; this.ctx.strokeStyle=this.color; this.ctx.lineWidth=20; this.ctx.globalAlpha=0.5;
+                } else if(this.tool==='eraser') {
+                    this.ctx.globalCompositeOperation='destination-out'; this.ctx.lineWidth=30; this.ctx.globalAlpha=1;
+                } else {
+                    this.ctx.globalCompositeOperation='source-over'; this.ctx.strokeStyle=this.color; this.ctx.lineWidth=3; this.ctx.globalAlpha=1;
+                }
             },
-
-            snapShape(endPoint) {
-                this.ctx.putImageData(this.snapshot, 0, 0); // Restore
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.startPoint.x, this.startPoint.y);
-                this.ctx.lineTo(endPoint.x, endPoint.y);
-                this.ctx.stroke();
-                UI.toast("Đã nắn thẳng!");
-                if(navigator.vibrate) navigator.vibrate(50);
+            save(c) {
+                const i = c.parentElement.dataset.idx;
+                if(!this.history[i]) this.history[i]=[];
+                this.history[i].push(this.ctx.getImageData(0,0,c.width,c.height));
+                if(this.history[i].length>10) this.history[i].shift();
             },
-
-            saveHistory(canvas) {
-                const idx = canvas.parentElement.dataset.idx;
-                if(!this.history[idx]) this.history[idx] = [];
-                this.history[idx].push(this.ctx.getImageData(0,0,canvas.width, canvas.height));
-                if(this.history[idx].length > 10) this.history[idx].shift();
-            },
-
             undo() {
-                if(!this.canvas) return;
-                const idx = this.canvas.parentElement.dataset.idx;
-                const stack = this.history[idx];
-                if(stack && stack.length > 0) {
-                    stack.pop(); 
-                    const prev = stack[stack.length - 1];
-                    const ctx = this.canvas.getContext('2d');
-                    if(prev) ctx.putImageData(prev, 0, 0);
-                    else ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
-                }
+                if(!this.can) return;
+                const h = this.history[this.can.parentElement.dataset.idx];
+                if(h?.length) { h.pop(); const p=h[h.length-1]; p ? this.ctx.putImageData(p,0,0) : this.clear(); }
             },
-            
-            clear() {
-                if(this.canvas) {
-                    const ctx = this.canvas.getContext('2d');
-                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                    this.saveHistory(this.canvas);
-                }
-            }
+            clear() { if(this.can) { this.can.getContext('2d').clearRect(0,0,this.can.width,this.can.height); this.save(this.can); } }
         };
 
-        // --- ZOOM & KÍNH LÚP (FIXED OFFSET) ---
         const Zoom = {
-            val: 1, pan: {x:0, y:0}, isDrag: false, start: {x:0,y:0},
-
+            v:1, pan:{x:0,y:0}, isD:false, start:{x:0,y:0},
             init() {
-                const ov = document.getElementById('pan-overlay');
-                ov.addEventListener('mousedown', e => {
-                    this.isDrag=true; this.start={x:e.clientX-this.pan.x, y:e.clientY-this.pan.y};
-                    ov.style.cursor='grabbing';
-                });
-                window.addEventListener('mousemove', e => {
-                    if(this.isDrag) {
-                        e.preventDefault();
-                        this.pan.x = e.clientX - this.start.x;
-                        this.pan.y = e.clientY - this.start.y;
-                        this.update();
-                    }
-                    if(Loupe.active) Loupe.render(e);
-                });
-                window.addEventListener('mouseup', () => {this.isDrag=false; ov.style.cursor='grab'});
+                const m = document.getElementById('pan-mask');
+                m.onmousedown=e=>{this.isD=true; this.start={x:e.clientX-this.pan.x, y:e.clientY-this.pan.y}; m.classList.add('grabbing');};
+                window.onmousemove=e=>{
+                    if(this.isD) { e.preventDefault(); this.pan.x=e.clientX-this.start.x; this.pan.y=e.clientY-this.start.y; this.upd(); }
+                    if(Loupe.on) Loupe.draw(e);
+                };
+                window.onmouseup=()=>{this.isD=false; m.classList.remove('grabbing');};
             },
-
-            in() { if(this.val<3) {this.val+=0.5; this.update()} },
-            out() { if(this.val>1) {this.val-=0.5; this.update()} },
-            
-            update() {
-                document.getElementById('zoom-val').innerText = (this.val*100)+'%';
-                const el = document.getElementById('viewport');
-                const ov = document.getElementById('pan-overlay');
-                
-                el.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.val})`;
-                
-                if(this.val > 1) {
-                    if(State.mode === 'READ') {
-                        ov.style.display = 'block';
-                        if(State.flip) State.flip.update({useMouseEvents: false});
-                    }
-                } else {
-                    ov.style.display = 'none';
-                    this.pan = {x:0, y:0};
-                    el.style.transform = `scale(1)`;
-                    if(State.mode === 'READ' && State.flip) State.flip.update({useMouseEvents: true});
-                }
+            do(d) {
+                if(d>0 && this.v<4) this.v+=0.5; else if(d<0 && this.v>1) this.v-=0.5;
+                this.upd();
+            },
+            upd() {
+                document.getElementById('z-val').innerText=(this.v*100)+'%';
+                const t=document.getElementById('book-transform'), m=document.getElementById('pan-mask');
+                t.style.transform=`translate(${this.pan.x}px,${this.pan.y}px) scale(${this.v})`;
+                if(this.v>1 && S.mode==='READ') { m.style.display='block'; if(S.flip) S.flip.update({useMouseEvents:false}); }
+                else { m.style.display='none'; this.pan={x:0,y:0}; t.style.transform='scale(1)'; if(S.mode==='READ') S.flip.update({useMouseEvents:true}); }
             }
         };
 
         const Loupe = {
-            active: false,
-            toggle() {
-                this.active = !this.active;
-                document.getElementById('btn-loupe').classList.toggle('active', this.active);
-                document.getElementById('spyglass').style.display = this.active ? 'block' : 'none';
-            },
-            render(e) {
-                const spy = document.getElementById('spyglass');
-                const ctx = document.getElementById('spy-canvas').getContext('2d');
-                document.getElementById('spy-canvas').width=500;
-                document.getElementById('spy-canvas').height=500;
-
-                // Fix vị trí kính lúp theo chuột
-                spy.style.left = (e.clientX + 20) + 'px';
-                spy.style.top = (e.clientY + 20) + 'px';
-                
-                // Tìm element bên dưới
-                spy.style.display='none';
-                const el = document.elementFromPoint(e.clientX, e.clientY);
-                spy.style.display='block';
-
-                // Tìm wrapper chứa page
-                const wrap = el ? el.closest('.page-wrapper') : null;
-
-                if(wrap) {
-                    const pdf = wrap.querySelector('.pdf-layer');
-                    const ink = wrap.querySelector('.ink-layer');
-                    
-                    const rect = pdf.getBoundingClientRect();
-                    
-                    // Tính tọa độ chuột tương đối với trang sách
-                    // QUAN TRỌNG: Cần trừ đi rect.left/top
-                    const relX = e.clientX - rect.left;
-                    const relY = e.clientY - rect.top;
-
-                    // Tỉ lệ scale giữa Canvas thực tế và kích thước hiển thị trên màn hình
-                    const rx = pdf.width / rect.width;
-                    const ry = pdf.height / rect.height;
-
-                    // Tọa độ trên Canvas gốc
-                    const canvasX = relX * rx;
-                    const canvasY = relY * ry;
-
-                    ctx.fillStyle='#fff'; ctx.fillRect(0,0,500,500);
-                    
-                    // Vẽ vùng xung quanh chuột (100x100px) lên kính lúp (500x500px -> Zoom 5x)
-                    // Source: canvasX - 100
-                    try {
-                        ctx.drawImage(pdf, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
-                        ctx.drawImage(ink, canvasX-100, canvasY-100, 200, 200, 0, 0, 500, 500);
-                    } catch(err){}
+            on:false,
+            toggle() { this.on=!this.on; document.getElementById('btn-loupe').classList.toggle('active',this.on); document.getElementById('spy').style.display=this.on?'block':'none'; },
+            draw(e) {
+                const s=document.getElementById('spy'), c=document.getElementById('spy-c').getContext('2d');
+                document.getElementById('spy-c').width=500; document.getElementById('spy-c').height=500;
+                s.style.left=(e.clientX+20)+'px'; s.style.top=(e.clientY+20)+'px';
+                s.style.display='none'; const el=document.elementFromPoint(e.clientX,e.clientY); s.style.display='block';
+                const w=el?.closest('.page-wrap');
+                if(w) {
+                    const pdf=w.querySelector('.pdf-layer'), ink=w.querySelector('.ink-layer');
+                    const r=pdf.getBoundingClientRect();
+                    const rx=pdf.width/r.width, ry=pdf.height/r.height;
+                    const x=(e.clientX-r.left)*rx, y=(e.clientY-r.top)*ry;
+                    c.fillStyle='#fff'; c.fillRect(0,0,500,500);
+                    try { c.drawImage(pdf,x-100,y-100,200,200,0,0,500,500); c.drawImage(ink,x-100,y-100,200,200,0,0,500,500); } catch(e){}
                 }
             }
         };
 
-        const UI = { toast(m) { const t = document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2000); } };
+        const UI = { msg(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); } };
 
         App.init();
-
     </script>
 </body>
 </html>
