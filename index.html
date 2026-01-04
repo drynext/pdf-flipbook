@@ -1,671 +1,887 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>FlipOS Enterprise System V19</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root {
-    --system-color-background-primary: #1e1e1e;
-    --system-color-background-panel: #252526;
-    --system-color-accent-main: #007acc;
-    --system-color-text-primary: #cccccc;
-    --system-color-border-subtle: #333333;
-    --system-color-state-hover: #2a2d2e;
-    --system-ui-shadow-composite: 0 10px 40px rgba(0,0,0,0.6);
-    --system-ui-backdrop-blur: blur(15px);
-}
-[data-theme="light"] {
-    --system-color-background-primary: #f3f3f3;
-    --system-color-background-panel: #ffffff;
-    --system-color-text-primary: #333333;
-    --system-color-accent-main: #0078d4;
-    --system-color-border-subtle: #e5e5e5;
-    --system-color-state-hover: #f0f0f0;
-}
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-}
-body {
-    background-color: var(--system-color-background-primary);
-    color: var(--system-color-text-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
-    display: grid;
-    grid-template-columns: 60px 1fr 60px;
-    grid-template-rows: 100vh;
-    grid-template-areas: "sidebar-left-region stage-center-region sidebar-right-region";
-    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.application-sidebar-container {
-    background-color: var(--system-color-background-panel);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 15px;
-    padding-bottom: 15px;
-    gap: 15px;
-    z-index: 1000;
-    height: 100%;
-    overflow-y: auto;
-}
-.application-sidebar-container::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-}
-#application-panel-left {
-    grid-area: sidebar-left-region;
-    border-right: 1px solid var(--system-color-border-subtle);
-}
-#application-panel-right {
-    grid-area: sidebar-right-region;
-    border-left: 1px solid var(--system-color-border-subtle);
-}
-#application-stage-area {
-    grid-area: stage-center-region;
-    position: relative;
-    overflow: hidden;
-    background-image: radial-gradient(rgba(128,128,128,0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: grab;
-}
-#application-stage-area:active {
-    cursor: grabbing;
-}
-#visual-book-transform-layer {
-    transform-origin: center center;
-    will-change: transform;
-    transition: transform 0.1s linear;
-}
-.system-ui-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    color: var(--system-color-text-primary);
-    background-color: transparent;
-    border: 1px solid transparent;
-    cursor: pointer;
-    font-size: 1.1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-}
-.system-ui-button:hover {
-    background-color: var(--system-color-state-hover);
-    color: #ffffff;
-}
-.system-ui-button.state-active {
-    background-color: var(--system-color-accent-main);
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-.system-mode-switcher-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    background-color: rgba(0,0,0,0.15);
-    padding: 6px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    flex-shrink: 0;
-}
-.system-mode-item {
-    width: 30px;
-    height: 30px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    font-size: 0.9rem;
-    opacity: 0.5;
-    transition: all 0.2s ease;
-}
-.system-mode-item.state-active {
-    background-color: var(--system-color-accent-main);
-    color: #ffffff;
-    opacity: 1;
-}
-.system-ui-divider {
-    width: 60%;
-    height: 1px;
-    background-color: var(--system-color-border-subtle);
-    margin: 5px 0;
-    flex-shrink: 0;
-}
-.system-color-indicator {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.system-color-indicator.state-active {
-    border-color: #ffffff;
-    transform: scale(1.25);
-    box-shadow: 0 0 8px var(--system-color-accent-main);
-}
-.system-zoom-display-text {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--system-color-accent-main);
-    user-select: none;
-    letter-spacing: 0.5px;
-}
-.document-page-wrapper {
-    position: relative;
-    background-color: #ffffff;
-    overflow: hidden;
-    box-shadow: 0 0 25px rgba(0,0,0,0.4);
-}
-.canvas-element-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-.layer-type-pdf-raster {
-    z-index: 1;
-}
-.layer-type-digital-ink {
-    z-index: 10;
-    cursor: crosshair;
-    touch-action: none;
-}
-#interaction-pan-mask-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 50;
-    display: none;
-}
-.visual-spyglass-lens {
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    border: 4px solid #ffffff;
-    box-shadow: 0 10px 50px rgba(0,0,0,0.5);
-    overflow: hidden;
-    pointer-events: none;
-    z-index: 9999;
-    display: none;
-    background-color: #ffffff;
-}
-#system-upload-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.92);
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(5px);
-}
-.system-upload-button {
-    padding: 40px 60px;
-    border: 2px dashed #555555;
-    border-radius: 24px;
-    color: #888888;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.3s ease;
-    background-color: rgba(255,255,255,0.02);
-}
-.system-upload-button:hover {
-    border-color: var(--system-color-accent-main);
-    color: #ffffff;
-    background-color: rgba(255,255,255,0.05);
-    transform: translateY(-5px);
-}
-.system-toast-notification {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333333;
-    color: #ffffff;
-    padding: 10px 20px;
-    border-radius: 50px;
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-    pointer-events: none;
-    z-index: 8000;
-    font-size: 0.9rem;
-    font-weight: 600;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-.system-toast-notification.state-visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-15px);
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="FlipOS Enterprise Edition - Advanced PDF Rendering Engine">
+    <meta name="author" content="Dang Duc Dai">
+    <title>FlipOS V20 | Enterprise Architect Edition</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * ==========================================================================
+         * SECTION 1: CORE VARIABLES & RESET
+         * Description: Defining system-wide design tokens for consistency.
+         * ==========================================================================
+         */
+        :root {
+            /* Palette: Deep Space Theme */
+            --sys-color-bg-primary: #050505;
+            --sys-color-bg-secondary: #121212;
+            --sys-color-panel-glass: rgba(20, 20, 25, 0.85);
+            --sys-color-border: rgba(255, 255, 255, 0.08);
+            --sys-color-text-primary: #e0e0e0;
+            --sys-color-text-secondary: #a0a0a0;
+            
+            /* Accent Colors */
+            --sys-color-accent: #6366f1; /* Indigo */
+            --sys-color-accent-hover: #4f46e5;
+            --sys-color-danger: #ef4444;
+            --sys-color-success: #22c55e;
+
+            /* Metrics */
+            --sys-spacing-unit: 8px;
+            --sys-border-radius-sm: 8px;
+            --sys-border-radius-md: 16px;
+            --sys-border-radius-lg: 24px;
+            
+            /* Effects */
+            --sys-shadow-elevation-low: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --sys-shadow-elevation-high: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            --sys-blur-intensity: blur(20px);
+            --sys-transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Light Theme Override */
+        [data-theme="light"] {
+            --sys-color-bg-primary: #f8fafc;
+            --sys-color-bg-secondary: #ffffff;
+            --sys-color-panel-glass: rgba(255, 255, 255, 0.85);
+            --sys-color-border: rgba(0, 0, 0, 0.08);
+            --sys-color-text-primary: #1e293b;
+            --sys-color-text-secondary: #64748b;
+            --sys-color-accent: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        
+        body {
+            background-color: var(--sys-color-bg-primary);
+            color: var(--sys-color-text-primary);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; /* Critical: Prevent scrollbars on body */
+            position: relative;
+        }
+
+        /* * ==========================================================================
+         * SECTION 2: Z-INDEX ARCHITECTURE (The Fix for Overlapping)
+         * Level 0: Background / World
+         * Level 10: Canvas Content
+         * Level 100: Pan Overlay
+         * Level 1000: UI Layer (Fixed, Untouchable by Zoom)
+         * Level 9999: Modals / Popups
+         * ==========================================================================
+         */
+
+        /* The container for the PDF book. This is what gets Scaled/Zoomed */
+        #world-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Grid background for professional look */
+            background-image: 
+                linear-gradient(var(--sys-color-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--sys-color-border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+            overflow: hidden;
+        }
+
+        #world-transform-target {
+            transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: center center;
+            will-change: transform;
+        }
+
+        /* The UI Layer. Position Fixed ensures it NEVER zooms */
+        #hud-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000;
+            pointer-events: none; /* Let clicks pass through empty spaces */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* * ==========================================================================
+         * SECTION 3: COMPONENT STYLING (The "Classy" Look)
+         * ==========================================================================
+         */
+
+        .ui-panel {
+            pointer-events: auto; /* Re-enable clicks for buttons */
+            background: var(--sys-color-panel-glass);
+            backdrop-filter: var(--sys-blur-intensity);
+            border: 1px solid var(--sys-color-border);
+            border-radius: var(--sys-border-radius-lg);
+            box-shadow: var(--sys-shadow-elevation-high);
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Top Bar Configuration */
+        .panel-top {
+            align-self: center;
+            border-radius: 50px;
+            padding: 8px 24px;
+        }
+
+        /* Side Bars Configuration */
+        .panel-side-left {
+            position: absolute; top: 50%; left: 24px;
+            transform: translateY(-50%);
+            flex-direction: column;
+        }
+
+        .panel-side-right {
+            position: absolute; top: 50%; right: 24px;
+            transform: translateY(-50%);
+            flex-direction: column;
+        }
+
+        /* Bottom Bar Configuration */
+        .panel-bottom {
+            align-self: center;
+            margin-bottom: 10px;
+            border-radius: 20px;
+        }
+
+        /* Button Styling - Neo-brutalism Soft */
+        .btn-control {
+            width: 44px; height: 44px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            color: var(--sys-color-text-primary);
+            cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.1rem;
+            transition: var(--sys-transition-fast);
+        }
+        .btn-control:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+        .btn-control.active {
+            background: var(--sys-color-accent);
+            color: white;
+            box-shadow: 0 0 15px var(--sys-color-accent);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .btn-text-mode {
+            padding: 0 20px; height: 40px;
+            border-radius: 20px;
+            font-weight: 700; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            display: flex; align-items: center;
+            background: transparent; color: var(--sys-color-text-secondary);
+            border: 1px solid transparent; cursor: pointer;
+            transition: var(--sys-transition-fast);
+        }
+        .btn-text-mode.active {
+            background: var(--sys-color-accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Dividers */
+        .ui-divider-h { width: 1px; height: 24px; background: var(--sys-color-border); margin: 0 4px; }
+        .ui-divider-v { width: 24px; height: 1px; background: var(--sys-color-border); margin: 4px 0; }
+
+        /* Color Picker Dots */
+        .color-swatch {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 2px solid var(--sys-color-border);
+            cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .color-swatch.active {
+            transform: scale(1.25);
+            border-color: #fff;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        /* * ==========================================================================
+         * SECTION 4: INTERACTIVE ELEMENTS (Upload, Toast, Lens)
+         * ==========================================================================
+         */
+        #upload-overlay-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 5, 0.95);
+            z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .upload-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 60px;
+            border-radius: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.4s;
+            max-width: 500px;
+        }
+        .upload-card:hover {
+            border-color: var(--sys-color-accent);
+            transform: scale(1.02);
+            box-shadow: 0 0 50px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Spyglass (Magnifier) */
+        .tool-spyglass-lens {
+            position: absolute; width: 250px; height: 250px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            overflow: hidden; pointer-events: none; z-index: 5000;
+            display: none; background: #fff;
+        }
+
+        /* Pan Overlay (Invisible layer for dragging) */
+        #interaction-mask {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            z-index: 200; display: none; cursor: grab;
+        }
+        #interaction-mask.grabbing { cursor: grabbing; }
+
+        /* Canvas Layers */
+        .page-container { position: relative; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .layer-pdf { z-index: 1; }
+        .layer-ink { z-index: 5; cursor: crosshair; touch-action: none; }
+
+    </style>
 </head>
 <body data-theme="dark">
-<div id="system-upload-overlay">
-    <div class="system-upload-button" onclick="document.getElementById('input-file-source').click()">
-        <i class="fas fa-book-open" style="font-size: 3.5rem; margin-bottom: 15px;"></i>
-        <h2 style="font-weight: 800; letter-spacing: 1px;">FLIP OS V19</h2>
-        <p style="margin-top: 10px; font-weight: 400;">Enterprise Monolith Architecture</p>
-    </div>
-    <input type="file" id="input-file-source" hidden accept="application/pdf">
-</div>
-<div class="application-sidebar-container" id="application-panel-left">
-    <div class="system-mode-switcher-group">
-        <div class="system-mode-item state-active" id="control-mode-read" onclick="FlipOS_Core_Application.setOperationalMode('READ_ONLY')" title="Reading Mode">
-            <i class="fas fa-eye"></i>
+
+    <div id="upload-overlay-container">
+        <div class="upload-card" onclick="document.getElementById('sys-file-input').click()">
+            <i class="fas fa-microchip" style="font-size: 4rem; color: var(--sys-color-accent); margin-bottom: 24px;"></i>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V20</h1>
+            <p style="color: var(--sys-color-text-secondary); font-family: 'JetBrains Mono';">Enterprise Architect Edition</p>
+            <div style="margin-top: 20px; padding: 10px 20px; background: #333; border-radius: 8px; font-size: 0.8rem; color: #888;">
+                CLICK TO INITIALIZE CORE
+            </div>
         </div>
-        <div class="system-mode-item" id="control-mode-draw" onclick="FlipOS_Core_Application.setOperationalMode('STUDIO_ART')" title="Studio Mode">
-            <i class="fas fa-pen"></i>
+        <input type="file" id="sys-file-input" hidden accept="application/pdf">
+    </div>
+
+    <div id="hud-layer">
+        
+        <div class="ui-panel panel-top">
+            <button class="btn-text-mode active" id="mode-read" onclick="FlipOS_Kernel.setOperationMode('READ')">
+                <i class="fas fa-book-reader" style="margin-right: 8px;"></i> READER
+            </button>
+            <div class="ui-divider-h"></div>
+            <button class="btn-text-mode" id="mode-draw" onclick="FlipOS_Kernel.setOperationMode('DRAW')">
+                <i class="fas fa-pencil-alt" style="margin-right: 8px;"></i> STUDIO
+            </button>
+            <div class="ui-divider-h"></div>
+            <button class="btn-control" onclick="FlipOS_UI.toggleTheme()" title="Toggle Theme">
+                <i class="fas fa-adjust"></i>
+            </button>
+        </div>
+
+        <div class="ui-panel panel-side-left" id="panel-tools">
+            <button class="btn-control active" id="tool-pen" onclick="FlipOS_InkEngine.selectTool('pen')"><i class="fas fa-pen"></i></button>
+            <button class="btn-control" id="tool-marker" onclick="FlipOS_InkEngine.selectTool('marker')"><i class="fas fa-highlighter"></i></button>
+            <button class="btn-control" id="tool-eraser" onclick="FlipOS_InkEngine.selectTool('eraser')"><i class="fas fa-eraser"></i></button>
+            
+            <div class="ui-divider-v"></div>
+            
+            <div class="color-swatch active" style="background:#ff4757" onclick="FlipOS_InkEngine.setColor('#ff4757', this)"></div>
+            <div class="color-swatch" style="background:#2ed573" onclick="FlipOS_InkEngine.setColor('#2ed573', this)"></div>
+            <div class="color-swatch" style="background:#2f3542" style="border-color:#555" onclick="FlipOS_InkEngine.setColor('#2f3542', this)"></div>
+            
+            <div class="ui-divider-v"></div>
+            
+            <button class="btn-control" onclick="FlipOS_InkEngine.undoAction()"><i class="fas fa-undo"></i></button>
+            <button class="btn-control" onclick="FlipOS_InkEngine.clearPage()"><i class="fas fa-trash"></i></button>
+        </div>
+
+        <div class="ui-panel panel-side-right">
+            <button class="btn-control" onclick="FlipOS_Viewport.executeZoom(1)" title="Zoom In"><i class="fas fa-plus"></i></button>
+            <span id="ui-zoom-display" style="font-family:'JetBrains Mono'; font-size:0.8rem; font-weight:bold; color:var(--sys-color-accent)">100%</span>
+            <button class="btn-control" onclick="FlipOS_Viewport.executeZoom(-1)" title="Zoom Out"><i class="fas fa-minus"></i></button>
+            
+            <div class="ui-divider-v"></div>
+            
+            <button class="btn-control" onclick="FlipOS_Viewport.resetViewport()" title="Reset View"><i class="fas fa-compress"></i></button>
+            <button class="btn-control" id="btn-spyglass" onclick="FlipOS_Lens.toggleState()"><i class="fas fa-search"></i></button>
+            <button class="btn-control" onclick="FlipOS_UI.toggleFullscreen()"><i class="fas fa-expand"></i></button>
+        </div>
+
+        <div class="ui-panel panel-bottom">
+            <button class="btn-control" onclick="FlipOS_BookEngine.navigate('PREV')"><i class="fas fa-chevron-left"></i></button>
+            <span id="ui-page-display" style="min-width: 80px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums;">-- / --</span>
+            <button class="btn-control" onclick="FlipOS_BookEngine.navigate('NEXT')"><i class="fas fa-chevron-right"></i></button>
         </div>
     </div>
-    <div class="system-ui-divider"></div>
-    <button class="system-ui-button" id="tool-control-pen" onclick="FlipOS_Ink_Subsystem.setActiveToolType('standard_pen')">
-        <i class="fas fa-pen-nib"></i>
-    </button>
-    <button class="system-ui-button" id="tool-control-highlighter" onclick="FlipOS_Ink_Subsystem.setActiveToolType('marker_highlighter')">
-        <i class="fas fa-highlighter"></i>
-    </button>
-    <button class="system-ui-button" id="tool-control-eraser" onclick="FlipOS_Ink_Subsystem.setActiveToolType('standard_eraser')">
-        <i class="fas fa-eraser"></i>
-    </button>
-    <div class="system-ui-divider"></div>
-    <div class="system-color-indicator state-active" style="background-color:#ff4757" onclick="FlipOS_Ink_Subsystem.setActiveColor('#ff4757', this)"></div>
-    <div class="system-color-indicator" style="background-color:#2ed573" onclick="FlipOS_Ink_Subsystem.setActiveColor('#2ed573', this)"></div>
-    <div class="system-color-indicator" style="background-color:#2f3542; border:1px solid #777" onclick="FlipOS_Ink_Subsystem.setActiveColor('#2f3542', this)"></div>
-    <div class="system-ui-divider"></div>
-    <button class="system-ui-button" onclick="FlipOS_Ink_Subsystem.executeUndoAction()" title="Undo Operation">
-        <i class="fas fa-undo"></i>
-    </button>
-    <button class="system-ui-button" onclick="FlipOS_Ink_Subsystem.executeClearCanvasAction()" title="Clear Active Page">
-        <i class="fas fa-trash"></i>
-    </button>
-</div>
-<div id="application-stage-area" ondblclick="FlipOS_Viewport_Manager.resetViewportMatrix()">
-    <div id="visual-book-transform-layer">
-        <div id="book-component-container"></div>
+
+    <div id="world-layer" ondblclick="FlipOS_Viewport.resetViewport()">
+        <div id="world-transform-target">
+            <div id="book-container"></div>
+        </div>
+        
+        <div id="interaction-mask"></div>
+        
+        <div class="tool-spyglass-lens" id="spyglass-component">
+            <canvas id="spyglass-canvas"></canvas>
+        </div>
     </div>
-    <div id="interaction-pan-mask-layer"></div>
-    <div class="visual-spyglass-lens" id="spyglass-component">
-        <canvas id="spyglass-internal-canvas"></canvas>
-    </div>
-</div>
-<div class="application-sidebar-container" id="application-panel-right">
-    <button class="system-ui-button" onclick="FlipOS_Core_Application.toggleVisualTheme()">
-        <i class="fas fa-adjust"></i>
-    </button>
-    <div class="system-ui-divider"></div>
-    <button class="system-ui-button" onclick="FlipOS_Viewport_Manager.adjustZoomLevel(1)">
-        <i class="fas fa-plus"></i>
-    </button>
-    <span class="system-zoom-display-text" id="display-zoom-value">100%</span>
-    <button class="system-ui-button" onclick="FlipOS_Viewport_Manager.adjustZoomLevel(-1)">
-        <i class="fas fa-minus"></i>
-    </button>
-    <div class="system-ui-divider"></div>
-    <button class="system-ui-button" onclick="FlipOS_Core_Application.navigatePage('PREVIOUS')">
-        <i class="fas fa-chevron-up"></i>
-    </button>
-    <span id="display-page-counter" style="font-size:0.8rem; font-weight:bold; text-align:center;">--</span>
-    <button class="system-ui-button" onclick="FlipOS_Core_Application.navigatePage('NEXT')">
-        <i class="fas fa-chevron-down"></i>
-    </button>
-    <div class="system-ui-divider"></div>
-    <button class="system-ui-button" id="control-btn-loupe" onclick="FlipOS_Magnification_Tool.toggleState()">
-        <i class="fas fa-search"></i>
-    </button>
-    <button class="system-ui-button" onclick="FlipOS_Core_Application.toggleFullscreenMode()">
-        <i class="fas fa-expand"></i>
-    </button>
-</div>
-<div class="system-toast-notification" id="system-toast">System Ready</div>
-<audio id="audio-effect-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
-<script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-    const FLIPOS_GLOBAL_STATE_MANAGER = {
-        pdfDocumentInstance: null,
-        pageFlipInstance: null,
-        operationalMode: 'READ_ONLY',
-        zoomFactorScale: 1
-    };
-    const FlipOS_Core_Application = {
-        initializeApplicationKernel() {
-            document.getElementById('input-file-source').onchange = this.handleFileSelectionEvent;
-            window.onkeydown = (event) => {
-                if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') this.navigatePage('PREVIOUS');
-                if (event.key === 'ArrowDown' || event.key === 'ArrowRight') this.navigatePage('NEXT');
-                if (event.ctrlKey && event.key === 'z') FlipOS_Ink_Subsystem.executeUndoAction();
-                if (event.key === '+' || event.key === '=') FlipOS_Viewport_Manager.adjustZoomLevel(1);
-                if (event.key === '-') FlipOS_Viewport_Manager.adjustZoomLevel(-1);
-            };
-        },
-        async handleFileSelectionEvent(event) {
-            if (!event.target.files[0]) return;
-            const fileArrayBuffer = await event.target.files[0].arrayBuffer();
-            FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance = await pdfjsLib.getDocument(fileArrayBuffer).promise;
-            FlipOS_Core_Application.renderDocumentPages();
-        },
-        async renderDocumentPages() {
-            const containerElement = document.getElementById('book-component-container');
-            containerElement.innerHTML = '';
-            const totalPageCount = FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance.numPages;
-            for (let i = 1; i <= totalPageCount; i++) {
-                const pdfPageObject = await FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance.getPage(i);
-                const viewportConfiguration = pdfPageObject.getViewport({ scale: 1.5 });
-                const pageWrapperDiv = document.createElement('div');
-                pageWrapperDiv.className = 'document-page-wrapper';
-                pageWrapperDiv.dataset.pageIndex = i;
-                const pdfRasterCanvas = document.createElement('canvas');
-                pdfRasterCanvas.className = 'canvas-element-layer layer-type-pdf-raster';
-                pdfRasterCanvas.width = viewportConfiguration.width;
-                pdfRasterCanvas.height = viewportConfiguration.height;
-                await pdfPageObject.render({ canvasContext: pdfRasterCanvas.getContext('2d'), viewport: viewportConfiguration }).promise;
-                const digitalInkCanvas = document.createElement('canvas');
-                digitalInkCanvas.className = 'canvas-element-layer layer-type-digital-ink';
-                digitalInkCanvas.width = viewportConfiguration.width;
-                digitalInkCanvas.height = viewportConfiguration.height;
-                pageWrapperDiv.append(pdfRasterCanvas, digitalInkCanvas);
-                containerElement.append(pageWrapperDiv);
-            }
-            document.getElementById('system-upload-overlay').style.display = 'none';
-            this.initializePageFlipLibrary();
-            FlipOS_Ink_Subsystem.initializeInkEventHandlers();
-            FlipOS_Viewport_Manager.initializeViewportEventHandlers();
-        },
-        initializePageFlipLibrary() {
-            const stageWidth = document.getElementById('application-stage-area').clientWidth;
-            FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance = new St.PageFlip(document.getElementById('book-component-container'), {
-                width: stageWidth < 600 ? 350 : 550,
-                height: stageWidth < 600 ? 500 : 750,
-                size: 'stretch',
-                showCover: true,
-                useMouseEvents: true
-            });
-            FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.loadFromHTML(document.querySelectorAll('.document-page-wrapper'));
-            FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.on('flip', (e) => {
-                const statusString = (e.data + 1) + ' / ' + FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance.numPages;
-                document.getElementById('display-page-counter').innerText = statusString;
-                const audioObj = document.getElementById('audio-effect-flip');
-                audioObj.currentTime = 0;
-                audioObj.play().catch(() => {});
-            });
-        },
-        navigatePage(direction) {
-            const instance = FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance;
-            if (!instance) return;
-            direction === 'PREVIOUS' ? instance.flipPrev() : instance.flipNext();
-        },
-        setOperationalMode(modeIdentifier) {
-            FLIPOS_GLOBAL_STATE_MANAGER.operationalMode = modeIdentifier;
-            document.getElementById('control-mode-read').classList.toggle('state-active', modeIdentifier === 'READ_ONLY');
-            document.getElementById('control-mode-draw').classList.toggle('state-active', modeIdentifier === 'STUDIO_ART');
-            const interactionMask = document.getElementById('interaction-pan-mask-layer');
-            if (modeIdentifier === 'READ_ONLY') {
-                if (FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance) FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: true });
-                if (FLIPOS_GLOBAL_STATE_MANAGER.zoomFactorScale > 1) interactionMask.style.display = 'block';
-                FlipOS_Interface_Utils.displayToastMessage("Switched to Reader Mode");
-            } else {
-                if (FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance) FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: false });
-                interactionMask.style.display = 'none';
-                FlipOS_Interface_Utils.displayToastMessage("Switched to Studio Mode");
-            }
-        },
-        toggleVisualTheme() {
-            const bodyRef = document.body;
-            bodyRef.setAttribute('data-theme', bodyRef.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-        },
-        toggleFullscreenMode() {
-            !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen();
-        }
-    };
-    const FlipOS_Ink_Subsystem = {
-        activeToolType: 'standard_pen',
-        activeColorHex: '#ff4757',
-        renderingContext: null,
-        targetCanvas: null,
-        isPointerDown: false,
-        lastCoordinate: { x: 0, y: 0 },
-        operationHistoryMap: {},
-        initializeInkEventHandlers() {
-            const stageElement = document.getElementById('application-stage-area');
-            stageElement.onpointerdown = (e) => this.handlePointerDown(e);
-            window.onpointermove = (e) => this.handlePointerMove(e);
-            window.onpointerup = () => this.handlePointerUp();
-        },
-        setActiveToolType(toolId) {
-            this.activeToolType = toolId;
-            ['pen', 'highlighter', 'eraser'].forEach(id => document.getElementById('tool-control-' + id).classList.remove('state-active'));
-            document.getElementById('tool-control-' + (toolId === 'marker_highlighter' ? 'highlighter' : (toolId === 'standard_eraser' ? 'eraser' : 'pen'))).classList.add('state-active');
-        },
-        setActiveColor(colorCode, elementRef) {
-            this.activeColorHex = colorCode;
-            this.setActiveToolType('standard_pen');
-            document.querySelectorAll('.system-color-indicator').forEach(d => d.classList.remove('state-active'));
-            elementRef.classList.add('state-active');
-        },
-        identifyHitLayer(event) {
-            const hitElement = document.elementFromPoint(event.clientX, event.clientY);
-            return hitElement?.classList.contains('layer-type-digital-ink') ? hitElement : null;
-        },
-        handlePointerDown(event) {
-            if (document.getElementById('interaction-pan-mask-layer').style.display === 'block') return;
-            const hitLayer = this.identifyHitLayer(event);
-            if (!hitLayer || FLIPOS_GLOBAL_STATE_MANAGER.operationalMode !== 'STUDIO_ART') return;
-            event.preventDefault();
-            this.isPointerDown = true;
-            this.targetCanvas = hitLayer;
-            this.renderingContext = hitLayer.getContext('2d');
-            this.configureDrawingContext();
-            const rect = hitLayer.getBoundingClientRect();
-            this.lastCoordinate = {
-                x: (event.clientX - rect.left) * (hitLayer.width / rect.width),
-                y: (event.clientY - rect.top) * (hitLayer.height / rect.height)
-            };
-            this.renderingContext.beginPath();
-            this.renderingContext.moveTo(this.lastCoordinate.x, this.lastCoordinate.y);
-            this.renderingContext.stroke();
-        },
-        handlePointerMove(event) {
-            if (!this.isPointerDown) return;
-            const hitLayer = this.identifyHitLayer(event);
-            if (hitLayer && hitLayer !== this.targetCanvas) {
-                this.renderingContext.closePath();
-                this.targetCanvas = hitLayer;
-                this.renderingContext = hitLayer.getContext('2d');
-                this.configureDrawingContext();
-                const rect = hitLayer.getBoundingClientRect();
-                this.lastCoordinate = {
-                    x: (event.clientX - rect.left) * (hitLayer.width / rect.width),
-                    y: (event.clientY - rect.top) * (hitLayer.height / rect.height)
-                };
-                this.renderingContext.beginPath();
-                this.renderingContext.moveTo(this.lastCoordinate.x, this.lastCoordinate.y);
-            }
-            if (this.targetCanvas) {
-                const rect = this.targetCanvas.getBoundingClientRect();
-                const currentCoordinate = {
-                    x: (event.clientX - rect.left) * (this.targetCanvas.width / rect.width),
-                    y: (event.clientY - rect.top) * (this.targetCanvas.height / rect.height)
-                };
-                this.renderingContext.quadraticCurveTo(this.lastCoordinate.x, this.lastCoordinate.y, (this.lastCoordinate.x + currentCoordinate.x) / 2, (this.lastCoordinate.y + currentCoordinate.y) / 2);
-                this.renderingContext.stroke();
-                this.lastCoordinate = currentCoordinate;
-            }
-        },
-        handlePointerUp() {
-            this.isPointerDown = false;
-            if (this.renderingContext) {
-                this.renderingContext.closePath();
-                this.pushStateToHistory(this.targetCanvas);
-            }
-        },
-        configureDrawingContext() {
-            this.renderingContext.lineCap = 'round';
-            this.renderingContext.lineJoin = 'round';
-            if (this.activeToolType === 'marker_highlighter') {
-                this.renderingContext.globalCompositeOperation = 'multiply';
-                this.renderingContext.strokeStyle = this.activeColorHex;
-                this.renderingContext.lineWidth = 20;
-                this.renderingContext.globalAlpha = 0.5;
-            } else if (this.activeToolType === 'standard_eraser') {
-                this.renderingContext.globalCompositeOperation = 'destination-out';
-                this.renderingContext.lineWidth = 30;
-                this.renderingContext.globalAlpha = 1;
-            } else {
-                this.renderingContext.globalCompositeOperation = 'source-over';
-                this.renderingContext.strokeStyle = this.activeColorHex;
-                this.renderingContext.lineWidth = 3;
-                this.renderingContext.globalAlpha = 1;
-            }
-        },
-        pushStateToHistory(canvasRef) {
-            const pageId = canvasRef.parentElement.dataset.pageIndex;
-            if (!this.operationHistoryMap[pageId]) this.operationHistoryMap[pageId] = [];
-            this.operationHistoryMap[pageId].push(this.renderingContext.getImageData(0, 0, canvasRef.width, canvasRef.height));
-            if (this.operationHistoryMap[pageId].length > 10) this.operationHistoryMap[pageId].shift();
-        },
-        executeUndoAction() {
-            if (!this.targetCanvas) return;
-            const pageId = this.targetCanvas.parentElement.dataset.pageIndex;
-            const historyStack = this.operationHistoryMap[pageId];
-            if (historyStack?.length) {
-                historyStack.pop();
-                const previousState = historyStack[historyStack.length - 1];
-                previousState ? this.renderingContext.putImageData(previousState, 0, 0) : this.executeClearCanvasAction();
-            }
-        },
-        executeClearCanvasAction() {
-            if (this.targetCanvas) {
-                this.targetCanvas.getContext('2d').clearRect(0, 0, this.targetCanvas.width, this.targetCanvas.height);
-                this.pushStateToHistory(this.targetCanvas);
-            }
-        }
-    };
-    const FlipOS_Viewport_Manager = {
-        currentZoomLevel: 1,
-        panCoordinates: { x: 0, y: 0 },
-        isDraggingViewport: false,
-        dragStartCoordinates: { x: 0, y: 0 },
-        initializeViewportEventHandlers() {
-            const maskLayer = document.getElementById('interaction-pan-mask-layer');
-            maskLayer.onmousedown = (e) => {
-                this.isDraggingViewport = true;
-                this.dragStartCoordinates = { x: e.clientX - this.panCoordinates.x, y: e.clientY - this.panCoordinates.y };
-                maskLayer.style.cursor = 'grabbing';
-            };
-            window.onmousemove = (e) => {
-                if (this.isDraggingViewport) {
-                    e.preventDefault();
-                    this.panCoordinates.x = e.clientX - this.dragStartCoordinates.x;
-                    this.panCoordinates.y = e.clientY - this.dragStartCoordinates.y;
-                    this.applyViewportTransformations();
-                }
-                if (FlipOS_Magnification_Tool.isLensActive) FlipOS_Magnification_Tool.renderLensView(e);
-            };
-            window.onmouseup = () => {
-                this.isDraggingViewport = false;
-                maskLayer.style.cursor = 'grab';
-            };
-        },
-        adjustZoomLevel(delta) {
-            if (delta > 0 && this.currentZoomLevel < 4) this.currentZoomLevel += 0.5;
-            else if (delta < 0 && this.currentZoomLevel > 1) this.currentZoomLevel -= 0.5;
-            this.applyViewportTransformations();
-        },
-        resetViewportMatrix() {
-            this.currentZoomLevel = 1;
-            this.panCoordinates = { x: 0, y: 0 };
-            this.applyViewportTransformations();
-            FlipOS_Interface_Utils.displayToastMessage("Viewport Reset");
-        },
-        applyViewportTransformations() {
-            FLIPOS_GLOBAL_STATE_MANAGER.zoomFactorScale = this.currentZoomLevel;
-            document.getElementById('display-zoom-value').innerText = (this.currentZoomLevel * 100) + '%';
-            const transformLayer = document.getElementById('visual-book-transform-layer');
-            const maskLayer = document.getElementById('interaction-pan-mask-layer');
-            transformLayer.style.transform = `translate(${this.panCoordinates.x}px,${this.panCoordinates.y}px) scale(${this.currentZoomLevel})`;
-            if (this.currentZoomLevel > 1 && FLIPOS_GLOBAL_STATE_MANAGER.operationalMode === 'READ_ONLY') {
-                maskLayer.style.display = 'block';
-                if (FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance) FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: false });
-            } else {
-                maskLayer.style.display = 'none';
-                if (this.currentZoomLevel === 1) {
-                    this.panCoordinates = { x: 0, y: 0 };
-                    transformLayer.style.transform = 'scale(1)';
-                }
-                if (FLIPOS_GLOBAL_STATE_MANAGER.operationalMode === 'READ_ONLY') FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: true });
-            }
-        }
-    };
-    const FlipOS_Magnification_Tool = {
-        isLensActive: false,
-        toggleState() {
-            this.isLensActive = !this.isLensActive;
-            document.getElementById('control-btn-loupe').classList.toggle('state-active', this.isLensActive);
-            document.getElementById('spyglass-component').style.display = this.isLensActive ? 'block' : 'none';
-        },
-        renderLensView(event) {
-            const lensElement = document.getElementById('spyglass-component');
-            const lensContext = document.getElementById('spyglass-internal-canvas').getContext('2d');
-            document.getElementById('spyglass-internal-canvas').width = 500;
-            document.getElementById('spyglass-internal-canvas').height = 500;
-            lensElement.style.left = (event.clientX + 20) + 'px';
-            lensElement.style.top = (event.clientY + 20) + 'px';
-            lensElement.style.display = 'none';
-            const elementUnderCursor = document.elementFromPoint(event.clientX, event.clientY);
-            lensElement.style.display = 'block';
-            const wrapperElement = elementUnderCursor?.closest('.document-page-wrapper');
-            if (wrapperElement) {
-                const pdfLayer = wrapperElement.querySelector('.layer-type-pdf-raster');
-                const inkLayer = wrapperElement.querySelector('.layer-type-digital-ink');
-                const boundingBox = pdfLayer.getBoundingClientRect();
-                const scaleX = pdfLayer.width / boundingBox.width;
-                const scaleY = pdfLayer.height / boundingBox.height;
-                const localX = (event.clientX - boundingBox.left) * scaleX;
-                const localY = (event.clientY - boundingBox.top) * scaleY;
-                lensContext.fillStyle = '#ffffff';
-                lensContext.fillRect(0, 0, 500, 500);
+
+    <audio id="sfx-page-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
+
+    <script>
+        /**
+         * ==========================================================================
+         * FLIP OS KERNEL V20 - ENTERPRISE EDITION
+         * Architecture: Monolithic State Management with Modular Services
+         * Author: Dang Duc Dai
+         * ==========================================================================
+         */
+
+        // Configure PDF.js Worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // --- GLOBAL STATE REGISTRY ---
+        const FlipOS_State = {
+            pdfDocument: null,
+            bookInstance: null,
+            currentMode: 'READ', // Enum: 'READ' | 'DRAW'
+            zoomLevel: 1.0,
+            totalPages: 0,
+            currentPage: 0
+        };
+
+        // --- SERVICE: KERNEL CONTROLLER ---
+        const FlipOS_Kernel = {
+            /**
+             * Initialize the application event listeners and layout
+             */
+            initializeSystem() {
+                console.log("[FlipOS] System Boot Sequence Initiated...");
+                document.getElementById('sys-file-input').addEventListener('change', this.handleFileUpload);
+                
+                // Global Keyboard Shortcuts
+                window.addEventListener('keydown', (e) => {
+                    if(e.key === 'ArrowLeft') FlipOS_BookEngine.navigate('PREV');
+                    if(e.key === 'ArrowRight') FlipOS_BookEngine.navigate('NEXT');
+                    if(e.ctrlKey && e.key === 'z') FlipOS_InkEngine.undoAction();
+                    if(e.key === '+' || e.key === '=') FlipOS_Viewport.executeZoom(1);
+                    if(e.key === '-') FlipOS_Viewport.executeZoom(-1);
+                });
+            },
+
+            /**
+             * Handle PDF file upload and parsing
+             */
+            async handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                document.querySelector('.upload-card').innerHTML = '<i class="fas fa-circle-notch fa-spin" style="font-size:3rem;"></i><br><br>PROCESSING DATA STREAM...';
+                
                 try {
-                    lensContext.drawImage(pdfLayer, localX - 100, localY - 100, 200, 200, 0, 0, 500, 500);
-                    lensContext.drawImage(inkLayer, localX - 100, localY - 100, 200, 200, 0, 0, 500, 500);
-                } catch (e) {}
+                    const arrayBuffer = await file.arrayBuffer();
+                    FlipOS_State.pdfDocument = await pdfjsLib.getDocument(arrayBuffer).promise;
+                    FlipOS_State.totalPages = FlipOS_State.pdfDocument.numPages;
+                    await FlipOS_RenderEngine.generatePages();
+                } catch (error) {
+                    console.error("[FlipOS] Critical Error:", error);
+                    alert("System Failure: Corrupted PDF Data");
+                }
+            },
+
+            /**
+             * Switch between Reading and Studio modes
+             */
+            setOperationMode(mode) {
+                FlipOS_State.currentMode = mode;
+                
+                // UI State Updates
+                document.getElementById('mode-read').classList.toggle('active', mode === 'READ');
+                document.getElementById('mode-draw').classList.toggle('active', mode === 'DRAW');
+                
+                // Layout Logic
+                const mask = document.getElementById('interaction-mask');
+                
+                if (mode === 'READ') {
+                    // Enable book flipping
+                    if (FlipOS_State.bookInstance) FlipOS_State.bookInstance.update({ useMouseEvents: true });
+                    // If zoomed in, enable drag mask
+                    if (FlipOS_State.zoomLevel > 1) mask.style.display = 'block';
+                } else {
+                    // Disable book flipping to allow drawing
+                    if (FlipOS_State.bookInstance) FlipOS_State.bookInstance.update({ useMouseEvents: false });
+                    // Disable drag mask to allow drawing on canvas
+                    mask.style.display = 'none';
+                }
             }
-        }
-    };
-    const FlipOS_Interface_Utils = {
-        displayToastMessage(messageString) {
-            const toastElement = document.getElementById('system-toast');
-            toastElement.innerText = messageString;
-            toastElement.classList.add('state-visible');
-            setTimeout(() => toastElement.classList.remove('state-visible'), 2000);
-        }
-    };
-    FlipOS_Core_Application.initializeApplicationKernel();
-</script>
+        };
+
+        // --- SERVICE: RENDER ENGINE (PDF & CANVAS) ---
+        const FlipOS_RenderEngine = {
+            async generatePages() {
+                const bookContainer = document.getElementById('book-container');
+                bookContainer.innerHTML = ''; // Clear previous
+
+                for (let i = 1; i <= FlipOS_State.totalPages; i++) {
+                    const pdfPage = await FlipOS_State.pdfDocument.getPage(i);
+                    const viewport = pdfPage.getViewport({ scale: 1.5 }); // High-DPI Rendering
+                    
+                    // Create Page Wrapper
+                    const pageWrap = document.createElement('div');
+                    pageWrap.className = 'page-container';
+                    pageWrap.dataset.pageIndex = i;
+
+                    // 1. PDF Raster Layer
+                    const pdfCanvas = document.createElement('canvas');
+                    pdfCanvas.className = 'layer-pdf';
+                    pdfCanvas.width = viewport.width;
+                    pdfCanvas.height = viewport.height;
+                    const pdfCtx = pdfCanvas.getContext('2d', { alpha: false });
+                    
+                    await pdfPage.render({ canvasContext: pdfCtx, viewport: viewport }).promise;
+
+                    // 2. Ink Vector Layer
+                    const inkCanvas = document.createElement('canvas');
+                    inkCanvas.className = 'layer-ink';
+                    inkCanvas.width = viewport.width;
+                    inkCanvas.height = viewport.height;
+
+                    // Assembly
+                    pageWrap.appendChild(pdfCanvas);
+                    pageWrap.appendChild(inkCanvas);
+                    bookContainer.appendChild(pageWrap);
+                }
+
+                // Transition to Main UI
+                document.getElementById('upload-overlay-container').style.display = 'none';
+                FlipOS_BookEngine.initializeBook();
+                FlipOS_InkEngine.initializeListeners();
+                FlipOS_Viewport.initializePanSystem();
+            }
+        };
+
+        // --- SERVICE: BOOK ENGINE (PAGE FLIP) ---
+        const FlipOS_BookEngine = {
+            initializeBook() {
+                const stageWidth = document.getElementById('world-layer').clientWidth;
+                // Responsive calculation
+                const width = stageWidth < 800 ? 400 : 550;
+                const height = stageWidth < 800 ? 600 : 800;
+
+                FlipOS_State.bookInstance = new St.PageFlip(document.getElementById('book-container'), {
+                    width: width,
+                    height: height,
+                    size: 'stretch',
+                    minWidth: 300,
+                    maxWidth: 1000,
+                    minHeight: 400,
+                    maxHeight: 1200,
+                    showCover: true,
+                    maxShadowOpacity: 0.5,
+                    useMouseEvents: true // Enabled by default
+                });
+
+                FlipOS_State.bookInstance.loadFromHTML(document.querySelectorAll('.page-container'));
+
+                // Event Subscription
+                FlipOS_State.bookInstance.on('flip', (e) => {
+                    FlipOS_State.currentPage = e.data + 1;
+                    document.getElementById('ui-page-display').innerText = 
+                        `${FlipOS_State.currentPage} / ${FlipOS_State.totalPages}`;
+                    
+                    // Audio Feedback
+                    const audio = document.getElementById('sfx-page-flip');
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
+                });
+            },
+
+            navigate(direction) {
+                if (!FlipOS_State.bookInstance) return;
+                if (direction === 'PREV') FlipOS_State.bookInstance.flipPrev();
+                if (direction === 'NEXT') FlipOS_State.bookInstance.flipNext();
+            }
+        };
+
+        // --- SERVICE: VIEWPORT MANAGER (ZOOM & PAN) ---
+        const FlipOS_Viewport = {
+            panX: 0, panY: 0,
+            isDragging: false,
+            startX: 0, startY: 0,
+
+            initializePanSystem() {
+                const mask = document.getElementById('interaction-mask');
+                
+                mask.addEventListener('mousedown', (e) => {
+                    this.isDragging = true;
+                    this.startX = e.clientX - this.panX;
+                    this.startY = e.clientY - this.panY;
+                    mask.classList.add('grabbing');
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (this.isDragging) {
+                        e.preventDefault();
+                        this.panX = e.clientX - this.startX;
+                        this.panY = e.clientY - this.startY;
+                        this.applyTransform();
+                    }
+                    if (FlipOS_Lens.isActive) FlipOS_Lens.render(e);
+                });
+
+                window.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                    mask.classList.remove('grabbing');
+                });
+            },
+
+            executeZoom(direction) {
+                const step = 0.5;
+                let newZoom = FlipOS_State.zoomLevel + (direction * step);
+                
+                // Constraints
+                if (newZoom < 1) newZoom = 1;
+                if (newZoom > 4) newZoom = 4;
+                
+                FlipOS_State.zoomLevel = newZoom;
+                this.applyTransform();
+            },
+
+            resetViewport() {
+                FlipOS_State.zoomLevel = 1.0;
+                this.panX = 0;
+                this.panY = 0;
+                this.applyTransform();
+            },
+
+            applyTransform() {
+                const target = document.getElementById('world-transform-target');
+                const mask = document.getElementById('interaction-mask');
+                const display = document.getElementById('ui-zoom-display');
+
+                // Update Display
+                display.innerText = Math.round(FlipOS_State.zoomLevel * 100) + '%';
+
+                // Apply CSS Transform (Hardware Accelerated)
+                target.style.transform = 
+                    `translate(${this.panX}px, ${this.panY}px) scale(${FlipOS_State.zoomLevel})`;
+
+                // Interaction Logic
+                if (FlipOS_State.zoomLevel > 1 && FlipOS_State.currentMode === 'READ') {
+                    mask.style.display = 'block'; // Enable panning
+                    if (FlipOS_State.bookInstance) FlipOS_State.bookInstance.update({ useMouseEvents: false });
+                } else {
+                    mask.style.display = 'none'; // Disable panning
+                    // Auto-center if reset
+                    if (FlipOS_State.zoomLevel === 1) {
+                        this.panX = 0; this.panY = 0;
+                        target.style.transform = 'scale(1)';
+                    }
+                    if (FlipOS_State.currentMode === 'READ' && FlipOS_State.bookInstance) {
+                        FlipOS_State.bookInstance.update({ useMouseEvents: true });
+                    }
+                }
+            }
+        };
+
+        // --- SERVICE: INK ENGINE (DRAWING) ---
+        const FlipOS_InkEngine = {
+            activeTool: 'pen',
+            activeColor: '#ff4757',
+            isDrawing: false,
+            currentCanvas: null,
+            ctx: null,
+            lastPos: { x: 0, y: 0 },
+            historyBuffer: {}, // Stores Undo states per page
+
+            initializeListeners() {
+                const world = document.getElementById('world-layer');
+                // Use pointer events for universal input (Mouse/Touch/Pen)
+                world.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+                window.addEventListener('pointermove', (e) => this.onPointerMove(e));
+                window.addEventListener('pointerup', () => this.onPointerUp());
+            },
+
+            selectTool(toolName) {
+                this.activeTool = toolName;
+                
+                // UI Updates
+                const buttons = ['tool-pen', 'tool-marker', 'tool-eraser'];
+                buttons.forEach(id => document.getElementById(id).classList.remove('active'));
+                
+                const targetId = toolName === 'marker' ? 'tool-marker' : 
+                                 toolName === 'eraser' ? 'tool-eraser' : 'tool-pen';
+                document.getElementById(targetId).classList.add('active');
+            },
+
+            setColor(hexColor, element) {
+                this.activeColor = hexColor;
+                this.selectTool('pen'); // Auto-switch to pen
+                
+                // UI Updates
+                document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+            },
+
+            // --- Drawing Logic ---
+
+            getTargetLayer(e) {
+                // Use elementFromPoint to find the ink-layer canvas under cursor
+                const el = document.elementFromPoint(e.clientX, e.clientY);
+                return el && el.classList.contains('layer-ink') ? el : null;
+            },
+
+            getCanvasCoordinates(e, canvas) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                return {
+                    x: (e.clientX - rect.left) * scaleX,
+                    y: (e.clientY - rect.top) * scaleY
+                };
+            },
+
+            setupContext(ctx) {
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                if (this.activeTool === 'marker') {
+                    ctx.globalCompositeOperation = 'multiply';
+                    ctx.strokeStyle = this.activeColor;
+                    ctx.lineWidth = 20;
+                    ctx.globalAlpha = 0.5;
+                } else if (this.activeTool === 'eraser') {
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.lineWidth = 30;
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.strokeStyle = this.activeColor;
+                    ctx.lineWidth = 3;
+                    ctx.globalAlpha = 1.0;
+                }
+            },
+
+            onPointerDown(e) {
+                // Ignore if in READ mode or Panning
+                if (FlipOS_State.currentMode !== 'DRAW' || 
+                    document.getElementById('interaction-mask').style.display === 'block') return;
+
+                const target = this.getTargetLayer(e);
+                if (!target) return;
+
+                e.preventDefault(); // Prevent scroll
+                this.isDrawing = true;
+                this.currentCanvas = target;
+                this.ctx = target.getContext('2d');
+                
+                this.setupContext(this.ctx);
+                this.lastPos = this.getCanvasCoordinates(e, target);
+                
+                // Initial Dot
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.lastPos.x, this.lastPos.y);
+                this.ctx.stroke();
+
+                // Save state for Undo *before* drawing starts? 
+                // Usually better to save on MouseUp for performance
+            },
+
+            onPointerMove(e) {
+                if (!this.isDrawing) return;
+
+                const target = this.getTargetLayer(e);
+                
+                // Seamless Jumping Logic (Cross-page drawing)
+                if (target && target !== this.currentCanvas) {
+                    this.ctx.closePath();
+                    this.saveHistory(this.currentCanvas); // Save prev page
+                    
+                    this.currentCanvas = target;
+                    this.ctx = target.getContext('2d');
+                    this.setupContext(this.ctx);
+                    this.lastPos = this.getCanvasCoordinates(e, target);
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.lastPos.x, this.lastPos.y);
+                }
+
+                if (this.currentCanvas) {
+                    const currentPos = this.getCanvasCoordinates(e, this.currentCanvas);
+                    
+                    // Quadratic Curve for smoothness
+                    const midPoint = {
+                        x: (this.lastPos.x + currentPos.x) / 2,
+                        y: (this.lastPos.y + currentPos.y) / 2
+                    };
+
+                    this.ctx.quadraticCurveTo(this.lastPos.x, this.lastPos.y, midPoint.x, midPoint.y);
+                    this.ctx.stroke();
+                    
+                    this.lastPos = currentPos;
+                }
+            },
+
+            onPointerUp() {
+                if (this.isDrawing) {
+                    this.isDrawing = false;
+                    if (this.ctx) this.ctx.closePath();
+                    if (this.currentCanvas) this.saveHistory(this.currentCanvas);
+                }
+            },
+
+            // --- History System (Undo) ---
+
+            saveHistory(canvas) {
+                const pageId = canvas.parentElement.dataset.pageIndex;
+                if (!this.historyBuffer[pageId]) this.historyBuffer[pageId] = [];
+                
+                // Save image data
+                const snap = this.ctx.getImageData(0, 0, canvas.width, canvas.height);
+                this.historyBuffer[pageId].push(snap);
+                
+                // Cap history limit
+                if (this.historyBuffer[pageId].length > 15) this.historyBuffer[pageId].shift();
+            },
+
+            undoAction() {
+                if (!this.currentCanvas) return;
+                const pageId = this.currentCanvas.parentElement.dataset.pageIndex;
+                const stack = this.historyBuffer[pageId];
+                
+                if (stack && stack.length > 0) {
+                    stack.pop(); // Remove current state
+                    const prevState = stack[stack.length - 1];
+                    const ctx = this.currentCanvas.getContext('2d');
+                    
+                    if (prevState) {
+                        ctx.putImageData(prevState, 0, 0);
+                    } else {
+                        ctx.clearRect(0, 0, this.currentCanvas.width, this.currentCanvas.height);
+                    }
+                }
+            },
+
+            clearPage() {
+                if (this.currentCanvas) {
+                    const ctx = this.currentCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, this.currentCanvas.width, this.currentCanvas.height);
+                    this.saveHistory(this.currentCanvas);
+                }
+            }
+        };
+
+        // --- SERVICE: LENS ENGINE (SPYGLASS) ---
+        const FlipOS_Lens = {
+            isActive: false,
+            
+            toggleState() {
+                this.isActive = !this.isActive;
+                const btn = document.getElementById('btn-spyglass');
+                const lens = document.getElementById('spyglass-component');
+                
+                if (this.isActive) {
+                    btn.classList.add('active');
+                    lens.style.display = 'block';
+                } else {
+                    btn.classList.remove('active');
+                    lens.style.display = 'none';
+                }
+            },
+
+            render(e) {
+                const lens = document.getElementById('spyglass-component');
+                const lensCtx = document.getElementById('spyglass-canvas').getContext('2d');
+                const size = 500; // Resolution of lens
+                document.getElementById('spyglass-canvas').width = size;
+                document.getElementById('spyglass-canvas').height = size;
+
+                // Move Lens
+                lens.style.left = (e.clientX + 25) + 'px';
+                lens.style.top = (e.clientY + 25) + 'px';
+
+                // Temporarily hide lens to find element underneath
+                lens.style.display = 'none';
+                const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+                lens.style.display = 'block';
+
+                const pageWrapper = elementBelow?.closest('.page-container');
+                
+                if (pageWrapper) {
+                    const pdfCanvas = pageWrapper.querySelector('.layer-pdf');
+                    const inkCanvas = pageWrapper.querySelector('.layer-ink');
+                    const rect = pdfCanvas.getBoundingClientRect();
+
+                    // Calculate relative coordinates
+                    const relX = e.clientX - rect.left;
+                    const relY = e.clientY - rect.top;
+
+                    // Calculate actual canvas coordinates (handling scale)
+                    const scaleX = pdfCanvas.width / rect.width;
+                    const scaleY = pdfCanvas.height / rect.height;
+                    
+                    const srcX = relX * scaleX;
+                    const srcY = relY * scaleY;
+
+                    // Clear lens
+                    lensCtx.fillStyle = '#ffffff';
+                    lensCtx.fillRect(0, 0, size, size);
+
+                    // Draw Composite (PDF + Ink)
+                    // Zoom Factor 2x in lens (source 100px -> dest 200px)
+                    const zoom = 200; 
+                    const region = 100;
+
+                    try {
+                        lensCtx.drawImage(pdfCanvas, srcX - region, srcY - region, region*2, region*2, 0, 0, size, size);
+                        lensCtx.drawImage(inkCanvas, srcX - region, srcY - region, region*2, region*2, 0, 0, size, size);
+                    } catch (err) {
+                        // Handle edge cases where source is out of bounds
+                    }
+                }
+            }
+        };
+
+        // --- SERVICE: UI UTILITIES ---
+        const FlipOS_UI = {
+            toggleTheme() {
+                const body = document.body;
+                const current = body.getAttribute('data-theme');
+                body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+            },
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                }
+            }
+        };
+
+        // --- BOOTSTRAP ---
+        FlipOS_Kernel.initializeSystem();
+
+    </script>
 </body>
 </html>
