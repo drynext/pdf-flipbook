@@ -1,401 +1,671 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V18 (Studio Layout)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-body: #1e1e1e;
-            --bg-panel: #252526;
-            --accent: #007acc;
-            --text: #cccccc;
-            --border: #333333;
-            --hover: #2a2d2e;
-        }
-        [data-theme="light"] {
-            --bg-body: #f3f3f3;
-            --bg-panel: #ffffff;
-            --text: #333;
-            --accent: #0078d4;
-            --border: #e5e5e5;
-            --hover: #f0f0f0;
-        }
-
-        * { margin:0; padding:0; box-sizing:border-box; outline:none; -webkit-tap-highlight-color:transparent; user-select: none; }
-        
-        body {
-            background: var(--bg-body); color: var(--text);
-            font-family: 'Inter', sans-serif;
-            height: 100vh; width: 100vw; overflow: hidden;
-            display: grid;
-            /* CHIA MÀN HÌNH: Trái (60px) - Giữa (Tự động) - Phải (60px) */
-            grid-template-columns: 60px 1fr 60px;
-            grid-template-areas: "left stage right";
-        }
-
-        /* --- SIDEBARS --- */
-        .sidebar {
-            background: var(--bg-panel); 
-            border-left: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; align-items: center;
-            padding: 15px 0; gap: 15px; z-index: 100;
-        }
-
-        #panel-left { grid-area: left; border-right: 1px solid var(--border); border-left: none; }
-        #panel-right { grid-area: right; border-left: 1px solid var(--border); border-right: none; }
-
-        /* --- STAGE (SÁCH) --- */
-        #stage-area {
-            grid-area: stage;
-            position: relative; overflow: hidden;
-            background-image: radial-gradient(rgba(128,128,128,0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        #book-transform {
-            transition: transform 0.1s linear;
-            transform-origin: center center;
-            will-change: transform;
-        }
-
-        /* --- COMPONENTS --- */
-        .btn {
-            width: 40px; height: 40px; border-radius: 8px;
-            color: var(--text); background: transparent;
-            border: none; cursor: pointer; font-size: 1.1rem;
-            display: flex; justify-content: center; align-items: center;
-            transition: 0.2s; position: relative;
-        }
-        .btn:hover { background: var(--hover); color: #fff; }
-        .btn.active { background: var(--accent); color: #fff; }
-        
-        /* Mode Switcher Style */
-        .mode-group {
-            display: flex; flex-direction: column; gap: 5px; background: rgba(0,0,0,0.2);
-            padding: 5px; border-radius: 10px; margin-bottom: 10px;
-        }
-        .mode-item {
-            width: 30px; height: 30px; border-radius: 6px; display: flex; 
-            justify-content: center; align-items: center; cursor: pointer; font-size: 0.9rem;
-            opacity: 0.5; transition: 0.2s;
-        }
-        .mode-item.active { background: var(--accent); color: white; opacity: 1; }
-
-        .divider { width: 60%; height: 1px; background: var(--border); margin: 5px 0; }
-
-        .color-dot {
-            width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
-        }
-        .color-dot.active { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 5px var(--accent); }
-
-        .zoom-display { font-size: 0.7rem; font-weight: bold; color: var(--accent); }
-
-        /* --- LAYERS --- */
-        .page-wrap { position: relative; background: #fff; overflow: hidden; }
-        canvas { position: absolute; top:0; left:0; width:100%; height:100%; }
-        .pdf-layer { z-index: 1; }
-        .ink-layer { z-index: 10; cursor: crosshair; touch-action: none; }
-
-        /* --- OVERLAYS --- */
-        #pan-mask {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            z-index: 50; display: none; cursor: grab;
-        }
-        #pan-mask.grabbing { cursor: grabbing; }
-
-        .spyglass {
-            position: absolute; width: 200px; height: 200px; border-radius: 50%;
-            border: 4px solid #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.5);
-            overflow: hidden; pointer-events: none; z-index: 9999;
-            display: none; background: #fff;
-        }
-
-        /* --- UPLOAD --- */
-        #upload-layer {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.9); z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .upload-btn {
-            padding: 40px; border: 2px dashed #555; border-radius: 20px;
-            color: #888; cursor: pointer; text-align: center; transition: 0.3s;
-        }
-        .upload-btn:hover { border-color: var(--accent); color: #fff; }
-
-        .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; padding: 8px 16px; border-radius: 20px;
-            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 8000; font-size: 0.9rem;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FlipOS Enterprise System V19</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --system-color-background-primary: #1e1e1e;
+    --system-color-background-panel: #252526;
+    --system-color-accent-main: #007acc;
+    --system-color-text-primary: #cccccc;
+    --system-color-border-subtle: #333333;
+    --system-color-state-hover: #2a2d2e;
+    --system-ui-shadow-composite: 0 10px 40px rgba(0,0,0,0.6);
+    --system-ui-backdrop-blur: blur(15px);
+}
+[data-theme="light"] {
+    --system-color-background-primary: #f3f3f3;
+    --system-color-background-panel: #ffffff;
+    --system-color-text-primary: #333333;
+    --system-color-accent-main: #0078d4;
+    --system-color-border-subtle: #e5e5e5;
+    --system-color-state-hover: #f0f0f0;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+body {
+    background-color: var(--system-color-background-primary);
+    color: var(--system-color-text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 60px 1fr 60px;
+    grid-template-rows: 100vh;
+    grid-template-areas: "sidebar-left-region stage-center-region sidebar-right-region";
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.application-sidebar-container {
+    background-color: var(--system-color-background-panel);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    gap: 15px;
+    z-index: 1000;
+    height: 100%;
+    overflow-y: auto;
+}
+.application-sidebar-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+#application-panel-left {
+    grid-area: sidebar-left-region;
+    border-right: 1px solid var(--system-color-border-subtle);
+}
+#application-panel-right {
+    grid-area: sidebar-right-region;
+    border-left: 1px solid var(--system-color-border-subtle);
+}
+#application-stage-area {
+    grid-area: stage-center-region;
+    position: relative;
+    overflow: hidden;
+    background-image: radial-gradient(rgba(128,128,128,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+}
+#application-stage-area:active {
+    cursor: grabbing;
+}
+#visual-book-transform-layer {
+    transform-origin: center center;
+    will-change: transform;
+    transition: transform 0.1s linear;
+}
+.system-ui-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    color: var(--system-color-text-primary);
+    background-color: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.system-ui-button:hover {
+    background-color: var(--system-color-state-hover);
+    color: #ffffff;
+}
+.system-ui-button.state-active {
+    background-color: var(--system-color-accent-main);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.system-mode-switcher-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-color: rgba(0,0,0,0.15);
+    padding: 6px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+.system-mode-item {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+.system-mode-item.state-active {
+    background-color: var(--system-color-accent-main);
+    color: #ffffff;
+    opacity: 1;
+}
+.system-ui-divider {
+    width: 60%;
+    height: 1px;
+    background-color: var(--system-color-border-subtle);
+    margin: 5px 0;
+    flex-shrink: 0;
+}
+.system-color-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.system-color-indicator.state-active {
+    border-color: #ffffff;
+    transform: scale(1.25);
+    box-shadow: 0 0 8px var(--system-color-accent-main);
+}
+.system-zoom-display-text {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--system-color-accent-main);
+    user-select: none;
+    letter-spacing: 0.5px;
+}
+.document-page-wrapper {
+    position: relative;
+    background-color: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 0 25px rgba(0,0,0,0.4);
+}
+.canvas-element-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+.layer-type-pdf-raster {
+    z-index: 1;
+}
+.layer-type-digital-ink {
+    z-index: 10;
+    cursor: crosshair;
+    touch-action: none;
+}
+#interaction-pan-mask-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    display: none;
+}
+.visual-spyglass-lens {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 4px solid #ffffff;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+    background-color: #ffffff;
+}
+#system-upload-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.92);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+.system-upload-button {
+    padding: 40px 60px;
+    border: 2px dashed #555555;
+    border-radius: 24px;
+    color: #888888;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: rgba(255,255,255,0.02);
+}
+.system-upload-button:hover {
+    border-color: var(--system-color-accent-main);
+    color: #ffffff;
+    background-color: rgba(255,255,255,0.05);
+    transform: translateY(-5px);
+}
+.system-toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333333;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 50px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    pointer-events: none;
+    z-index: 8000;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.system-toast-notification.state-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-15px);
+}
+</style>
 </head>
 <body data-theme="dark">
-
-    <div id="upload-layer">
-        <div class="upload-btn" onclick="document.getElementById('inp').click()">
-            <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 10px;"></i>
-            <h2>MỞ FILE PDF</h2>
-            <p>Giao diện Studio - Không che lấp</p>
+<div id="system-upload-overlay">
+    <div class="system-upload-button" onclick="document.getElementById('input-file-source').click()">
+        <i class="fas fa-book-open" style="font-size: 3.5rem; margin-bottom: 15px;"></i>
+        <h2 style="font-weight: 800; letter-spacing: 1px;">FLIP OS V19</h2>
+        <p style="margin-top: 10px; font-weight: 400;">Enterprise Monolith Architecture</p>
+    </div>
+    <input type="file" id="input-file-source" hidden accept="application/pdf">
+</div>
+<div class="application-sidebar-container" id="application-panel-left">
+    <div class="system-mode-switcher-group">
+        <div class="system-mode-item state-active" id="control-mode-read" onclick="FlipOS_Core_Application.setOperationalMode('READ_ONLY')" title="Reading Mode">
+            <i class="fas fa-eye"></i>
         </div>
-        <input type="file" id="inp" hidden accept="application/pdf">
-    </div>
-
-    <div class="sidebar" id="panel-left">
-        <div class="mode-group">
-            <div class="mode-item active" id="m-read" onclick="App.setMode('READ')" title="Đọc"><i class="fas fa-eye"></i></div>
-            <div class="mode-item" id="m-draw" onclick="App.setMode('DRAW')" title="Vẽ"><i class="fas fa-pen"></i></div>
+        <div class="system-mode-item" id="control-mode-draw" onclick="FlipOS_Core_Application.setOperationalMode('STUDIO_ART')" title="Studio Mode">
+            <i class="fas fa-pen"></i>
         </div>
-        
-        <div class="divider"></div>
-
-        <button class="btn" id="t-pen" onclick="Pen.set('pen')"><i class="fas fa-pen-nib"></i></button>
-        <button class="btn" id="t-high" onclick="Pen.set('marker')"><i class="fas fa-highlighter"></i></button>
-        <button class="btn" id="t-erase" onclick="Pen.set('eraser')"><i class="fas fa-eraser"></i></button>
-        
-        <div class="divider"></div>
-
-        <div class="color-dot active" style="background:#ff4757" onclick="Pen.col('#ff4757',this)"></div>
-        <div class="color-dot" style="background:#2ed573" onclick="Pen.col('#2ed573',this)"></div>
-        <div class="color-dot" style="background:#2f3542" style="border:1px solid #777" onclick="Pen.col('#2f3542',this)"></div>
-        
-        <div class="divider"></div>
-        
-        <button class="btn" onclick="Pen.undo()" title="Undo"><i class="fas fa-undo"></i></button>
-        <button class="btn" onclick="Pen.clear()" title="Clear Page"><i class="fas fa-trash"></i></button>
     </div>
-
-    <div id="stage-area">
-        <div id="book-transform">
-            <div id="book"></div>
-        </div>
-        <div id="pan-mask"></div>
-        <div class="spyglass" id="spy"><canvas id="spy-c"></canvas></div>
+    <div class="system-ui-divider"></div>
+    <button class="system-ui-button" id="tool-control-pen" onclick="FlipOS_Ink_Subsystem.setActiveToolType('standard_pen')">
+        <i class="fas fa-pen-nib"></i>
+    </button>
+    <button class="system-ui-button" id="tool-control-highlighter" onclick="FlipOS_Ink_Subsystem.setActiveToolType('marker_highlighter')">
+        <i class="fas fa-highlighter"></i>
+    </button>
+    <button class="system-ui-button" id="tool-control-eraser" onclick="FlipOS_Ink_Subsystem.setActiveToolType('standard_eraser')">
+        <i class="fas fa-eraser"></i>
+    </button>
+    <div class="system-ui-divider"></div>
+    <div class="system-color-indicator state-active" style="background-color:#ff4757" onclick="FlipOS_Ink_Subsystem.setActiveColor('#ff4757', this)"></div>
+    <div class="system-color-indicator" style="background-color:#2ed573" onclick="FlipOS_Ink_Subsystem.setActiveColor('#2ed573', this)"></div>
+    <div class="system-color-indicator" style="background-color:#2f3542; border:1px solid #777" onclick="FlipOS_Ink_Subsystem.setActiveColor('#2f3542', this)"></div>
+    <div class="system-ui-divider"></div>
+    <button class="system-ui-button" onclick="FlipOS_Ink_Subsystem.executeUndoAction()" title="Undo Operation">
+        <i class="fas fa-undo"></i>
+    </button>
+    <button class="system-ui-button" onclick="FlipOS_Ink_Subsystem.executeClearCanvasAction()" title="Clear Active Page">
+        <i class="fas fa-trash"></i>
+    </button>
+</div>
+<div id="application-stage-area" ondblclick="FlipOS_Viewport_Manager.resetViewportMatrix()">
+    <div id="visual-book-transform-layer">
+        <div id="book-component-container"></div>
     </div>
-
-    <div class="sidebar" id="panel-right">
-        <button class="btn" onclick="App.theme()"><i class="fas fa-adjust"></i></button>
-        <div class="divider"></div>
-        
-        <button class="btn" onclick="Zoom.do(1)"><i class="fas fa-plus"></i></button>
-        <span class="zoom-display" id="z-val">100%</span>
-        <button class="btn" onclick="Zoom.do(-1)"><i class="fas fa-minus"></i></button>
-        
-        <div class="divider"></div>
-
-        <button class="btn" onclick="App.flip('prev')"><i class="fas fa-chevron-up"></i></button>
-        <span id="pg-txt" style="font-size:0.8rem; font-weight:bold">--</span>
-        <button class="btn" onclick="App.flip('next')"><i class="fas fa-chevron-down"></i></button>
-        
-        <div class="divider"></div>
-        
-        <button class="btn" id="btn-loupe" onclick="Loupe.toggle()"><i class="fas fa-search"></i></button>
-        <button class="btn" onclick="App.full()"><i class="fas fa-expand"></i></button>
+    <div id="interaction-pan-mask-layer"></div>
+    <div class="visual-spyglass-lens" id="spyglass-component">
+        <canvas id="spyglass-internal-canvas"></canvas>
     </div>
-
-    <div class="toast" id="toast">Ready</div>
-    <audio id="sfx" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
-
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-        const S = { pdf:null, flip:null, mode:'READ', zoom:1 };
-
-        const App = {
-            init() {
-                document.getElementById('inp').onchange = this.load;
-                window.onkeydown = e => {
-                    if(e.key==='ArrowLeft') this.flip('prev');
-                    if(e.key==='ArrowRight') this.flip('next');
-                    if(e.ctrlKey && e.key==='z') Pen.undo();
-                };
-            },
-            async load(e) {
-                if(!e.target.files[0]) return;
-                const ab = await e.target.files[0].arrayBuffer();
-                S.pdf = await pdfjsLib.getDocument(ab).promise;
-                App.render();
-            },
-            async render() {
-                const b = document.getElementById('book'); b.innerHTML='';
-                for(let i=1; i<=S.pdf.numPages; i++){
-                    const p = await S.pdf.getPage(i);
-                    const v = p.getViewport({scale:1.5});
-                    const w = document.createElement('div'); w.className='page-wrap'; w.dataset.idx=i;
-                    
-                    const pc = document.createElement('canvas'); pc.className='pdf-layer'; pc.width=v.width; pc.height=v.height;
-                    await p.render({canvasContext:pc.getContext('2d'), viewport:v}).promise;
-                    
-                    const ic = document.createElement('canvas'); ic.className='ink-layer'; ic.width=v.width; ic.height=v.height;
-                    w.append(pc,ic); b.append(w);
-                }
-                document.getElementById('upload-layer').style.display='none';
-                this.initFlip(); Pen.init(); Zoom.init();
-            },
-            initFlip() {
-                const w = document.getElementById('stage-area').clientWidth;
-                S.flip = new St.PageFlip(document.getElementById('book'), {
-                    width: w<600?350:550, height: w<600?500:750,
-                    size:'stretch', showCover:true, useMouseEvents:true 
-                });
-                S.flip.loadFromHTML(document.querySelectorAll('.page-wrap'));
-                S.flip.on('flip', e=>{
-                    document.getElementById('pg-txt').innerText = (e.data+1)+'/'+S.pdf.numPages;
-                    document.getElementById('sfx').currentTime=0; document.getElementById('sfx').play().catch(()=>{});
-                });
-            },
-            flip(d) { S.flip?.[d==='prev'?'flipPrev':'flipNext'](); },
-            setMode(m) {
-                S.mode=m;
-                document.getElementById('m-read').classList.toggle('active', m==='READ');
-                document.getElementById('m-draw').classList.toggle('active', m==='DRAW');
-                document.getElementById('pan-mask').style.display = 'none';
-                
-                if(m==='READ') {
-                    if(S.flip) S.flip.update({useMouseEvents:true});
-                    UI.msg("Chế độ Đọc");
-                } else {
-                    if(S.flip) S.flip.update({useMouseEvents:false});
-                    UI.msg("Chế độ Vẽ");
-                }
-            },
-            theme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')=='dark'?'light':'dark'); },
-            full() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
-        };
-
-        const Pen = {
-            tool:'pen', color:'#ff4757', ctx:null, can:null, isDown:false, last:{x:0,y:0}, history:{},
-            init() {
-                const s = document.getElementById('stage-area');
-                s.onpointerdown = e => this.down(e);
-                window.onpointermove = e => this.move(e);
-                window.onpointerup = () => this.up();
-            },
-            set(t) {
-                this.tool=t;
-                ['pen','high','erase'].forEach(id => document.getElementById('t-'+id).classList.remove('active'));
-                document.getElementById('t-'+(t==='marker'?'high':(t==='eraser'?'erase':'pen'))).classList.add('active');
-            },
-            col(c,el) {
-                this.color=c; this.set('pen');
-                document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
-                el.classList.add('active');
-            },
-            getHit(e) {
-                const el = document.elementFromPoint(e.clientX, e.clientY);
-                return el?.classList.contains('ink-layer') ? el : null;
-            },
-            down(e) {
-                if(document.getElementById('pan-mask').style.display === 'block') return;
-                const hit = this.getHit(e);
-                if(!hit || S.mode!=='DRAW') return;
-                e.preventDefault(); 
-                this.isDown=true; this.can=hit; this.ctx=hit.getContext('2d');
-                this.setupCtx();
-                const r = hit.getBoundingClientRect();
-                this.last = { x:(e.clientX-r.left)*(hit.width/r.width), y:(e.clientY-r.top)*(hit.height/r.height) };
-                
-                this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y); this.ctx.stroke();
-            },
-            move(e) {
-                if(!this.isDown) return;
-                const hit = this.getHit(e);
-                if(hit && hit !== this.can) {
-                    this.ctx.closePath(); this.can=hit; this.ctx=hit.getContext('2d');
-                    this.setupCtx();
-                    const r = hit.getBoundingClientRect();
-                    this.last = { x:(e.clientX-r.left)*(hit.width/r.width), y:(e.clientY-r.top)*(hit.height/r.height) };
-                    this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
-                }
-                if(this.can) {
-                    const r = this.can.getBoundingClientRect();
-                    const curr = { x:(e.clientX-r.left)*(this.can.width/r.width), y:(e.clientY-r.top)*(this.can.height/r.height) };
-                    this.ctx.quadraticCurveTo(this.last.x, this.last.y, (this.last.x+curr.x)/2, (this.last.y+curr.y)/2);
-                    this.ctx.stroke();
-                    this.last = curr;
-                }
-            },
-            up() { this.isDown=false; if(this.ctx) { this.ctx.closePath(); this.save(this.can); } },
-            setupCtx() {
-                this.ctx.lineCap='round'; this.ctx.lineJoin='round';
-                if(this.tool==='marker') {
-                    this.ctx.globalCompositeOperation='multiply'; this.ctx.strokeStyle=this.color; this.ctx.lineWidth=20; this.ctx.globalAlpha=0.5;
-                } else if(this.tool==='eraser') {
-                    this.ctx.globalCompositeOperation='destination-out'; this.ctx.lineWidth=30; this.ctx.globalAlpha=1;
-                } else {
-                    this.ctx.globalCompositeOperation='source-over'; this.ctx.strokeStyle=this.color; this.ctx.lineWidth=3; this.ctx.globalAlpha=1;
-                }
-            },
-            save(c) {
-                const i = c.parentElement.dataset.idx;
-                if(!this.history[i]) this.history[i]=[];
-                this.history[i].push(this.ctx.getImageData(0,0,c.width,c.height));
-                if(this.history[i].length>10) this.history[i].shift();
-            },
-            undo() {
-                if(!this.can) return;
-                const h = this.history[this.can.parentElement.dataset.idx];
-                if(h?.length) { h.pop(); const p=h[h.length-1]; p ? this.ctx.putImageData(p,0,0) : this.clear(); }
-            },
-            clear() { if(this.can) { this.can.getContext('2d').clearRect(0,0,this.can.width,this.can.height); this.save(this.can); } }
-        };
-
-        const Zoom = {
-            v:1, pan:{x:0,y:0}, isD:false, start:{x:0,y:0},
-            init() {
-                const m = document.getElementById('pan-mask');
-                m.onmousedown=e=>{this.isD=true; this.start={x:e.clientX-this.pan.x, y:e.clientY-this.pan.y}; m.classList.add('grabbing');};
-                window.onmousemove=e=>{
-                    if(this.isD) { e.preventDefault(); this.pan.x=e.clientX-this.start.x; this.pan.y=e.clientY-this.start.y; this.upd(); }
-                    if(Loupe.on) Loupe.draw(e);
-                };
-                window.onmouseup=()=>{this.isD=false; m.classList.remove('grabbing');};
-            },
-            do(d) {
-                if(d>0 && this.v<4) this.v+=0.5; else if(d<0 && this.v>1) this.v-=0.5;
-                this.upd();
-            },
-            upd() {
-                document.getElementById('z-val').innerText=(this.v*100)+'%';
-                const t=document.getElementById('book-transform'), m=document.getElementById('pan-mask');
-                t.style.transform=`translate(${this.pan.x}px,${this.pan.y}px) scale(${this.v})`;
-                if(this.v>1 && S.mode==='READ') { m.style.display='block'; if(S.flip) S.flip.update({useMouseEvents:false}); }
-                else { m.style.display='none'; this.pan={x:0,y:0}; t.style.transform='scale(1)'; if(S.mode==='READ') S.flip.update({useMouseEvents:true}); }
+</div>
+<div class="application-sidebar-container" id="application-panel-right">
+    <button class="system-ui-button" onclick="FlipOS_Core_Application.toggleVisualTheme()">
+        <i class="fas fa-adjust"></i>
+    </button>
+    <div class="system-ui-divider"></div>
+    <button class="system-ui-button" onclick="FlipOS_Viewport_Manager.adjustZoomLevel(1)">
+        <i class="fas fa-plus"></i>
+    </button>
+    <span class="system-zoom-display-text" id="display-zoom-value">100%</span>
+    <button class="system-ui-button" onclick="FlipOS_Viewport_Manager.adjustZoomLevel(-1)">
+        <i class="fas fa-minus"></i>
+    </button>
+    <div class="system-ui-divider"></div>
+    <button class="system-ui-button" onclick="FlipOS_Core_Application.navigatePage('PREVIOUS')">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+    <span id="display-page-counter" style="font-size:0.8rem; font-weight:bold; text-align:center;">--</span>
+    <button class="system-ui-button" onclick="FlipOS_Core_Application.navigatePage('NEXT')">
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="system-ui-divider"></div>
+    <button class="system-ui-button" id="control-btn-loupe" onclick="FlipOS_Magnification_Tool.toggleState()">
+        <i class="fas fa-search"></i>
+    </button>
+    <button class="system-ui-button" onclick="FlipOS_Core_Application.toggleFullscreenMode()">
+        <i class="fas fa-expand"></i>
+    </button>
+</div>
+<div class="system-toast-notification" id="system-toast">System Ready</div>
+<audio id="audio-effect-flip" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    const FLIPOS_GLOBAL_STATE_MANAGER = {
+        pdfDocumentInstance: null,
+        pageFlipInstance: null,
+        operationalMode: 'READ_ONLY',
+        zoomFactorScale: 1
+    };
+    const FlipOS_Core_Application = {
+        initializeApplicationKernel() {
+            document.getElementById('input-file-source').onchange = this.handleFileSelectionEvent;
+            window.onkeydown = (event) => {
+                if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') this.navigatePage('PREVIOUS');
+                if (event.key === 'ArrowDown' || event.key === 'ArrowRight') this.navigatePage('NEXT');
+                if (event.ctrlKey && event.key === 'z') FlipOS_Ink_Subsystem.executeUndoAction();
+                if (event.key === '+' || event.key === '=') FlipOS_Viewport_Manager.adjustZoomLevel(1);
+                if (event.key === '-') FlipOS_Viewport_Manager.adjustZoomLevel(-1);
+            };
+        },
+        async handleFileSelectionEvent(event) {
+            if (!event.target.files[0]) return;
+            const fileArrayBuffer = await event.target.files[0].arrayBuffer();
+            FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance = await pdfjsLib.getDocument(fileArrayBuffer).promise;
+            FlipOS_Core_Application.renderDocumentPages();
+        },
+        async renderDocumentPages() {
+            const containerElement = document.getElementById('book-component-container');
+            containerElement.innerHTML = '';
+            const totalPageCount = FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance.numPages;
+            for (let i = 1; i <= totalPageCount; i++) {
+                const pdfPageObject = await FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance.getPage(i);
+                const viewportConfiguration = pdfPageObject.getViewport({ scale: 1.5 });
+                const pageWrapperDiv = document.createElement('div');
+                pageWrapperDiv.className = 'document-page-wrapper';
+                pageWrapperDiv.dataset.pageIndex = i;
+                const pdfRasterCanvas = document.createElement('canvas');
+                pdfRasterCanvas.className = 'canvas-element-layer layer-type-pdf-raster';
+                pdfRasterCanvas.width = viewportConfiguration.width;
+                pdfRasterCanvas.height = viewportConfiguration.height;
+                await pdfPageObject.render({ canvasContext: pdfRasterCanvas.getContext('2d'), viewport: viewportConfiguration }).promise;
+                const digitalInkCanvas = document.createElement('canvas');
+                digitalInkCanvas.className = 'canvas-element-layer layer-type-digital-ink';
+                digitalInkCanvas.width = viewportConfiguration.width;
+                digitalInkCanvas.height = viewportConfiguration.height;
+                pageWrapperDiv.append(pdfRasterCanvas, digitalInkCanvas);
+                containerElement.append(pageWrapperDiv);
             }
-        };
-
-        const Loupe = {
-            on:false,
-            toggle() { this.on=!this.on; document.getElementById('btn-loupe').classList.toggle('active',this.on); document.getElementById('spy').style.display=this.on?'block':'none'; },
-            draw(e) {
-                const s=document.getElementById('spy'), c=document.getElementById('spy-c').getContext('2d');
-                document.getElementById('spy-c').width=500; document.getElementById('spy-c').height=500;
-                s.style.left=(e.clientX+20)+'px'; s.style.top=(e.clientY+20)+'px';
-                s.style.display='none'; const el=document.elementFromPoint(e.clientX,e.clientY); s.style.display='block';
-                const w=el?.closest('.page-wrap');
-                if(w) {
-                    const pdf=w.querySelector('.pdf-layer'), ink=w.querySelector('.ink-layer');
-                    const r=pdf.getBoundingClientRect();
-                    const rx=pdf.width/r.width, ry=pdf.height/r.height;
-                    const x=(e.clientX-r.left)*rx, y=(e.clientY-r.top)*ry;
-                    c.fillStyle='#fff'; c.fillRect(0,0,500,500);
-                    try { c.drawImage(pdf,x-100,y-100,200,200,0,0,500,500); c.drawImage(ink,x-100,y-100,200,200,0,0,500,500); } catch(e){}
-                }
+            document.getElementById('system-upload-overlay').style.display = 'none';
+            this.initializePageFlipLibrary();
+            FlipOS_Ink_Subsystem.initializeInkEventHandlers();
+            FlipOS_Viewport_Manager.initializeViewportEventHandlers();
+        },
+        initializePageFlipLibrary() {
+            const stageWidth = document.getElementById('application-stage-area').clientWidth;
+            FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance = new St.PageFlip(document.getElementById('book-component-container'), {
+                width: stageWidth < 600 ? 350 : 550,
+                height: stageWidth < 600 ? 500 : 750,
+                size: 'stretch',
+                showCover: true,
+                useMouseEvents: true
+            });
+            FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.loadFromHTML(document.querySelectorAll('.document-page-wrapper'));
+            FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.on('flip', (e) => {
+                const statusString = (e.data + 1) + ' / ' + FLIPOS_GLOBAL_STATE_MANAGER.pdfDocumentInstance.numPages;
+                document.getElementById('display-page-counter').innerText = statusString;
+                const audioObj = document.getElementById('audio-effect-flip');
+                audioObj.currentTime = 0;
+                audioObj.play().catch(() => {});
+            });
+        },
+        navigatePage(direction) {
+            const instance = FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance;
+            if (!instance) return;
+            direction === 'PREVIOUS' ? instance.flipPrev() : instance.flipNext();
+        },
+        setOperationalMode(modeIdentifier) {
+            FLIPOS_GLOBAL_STATE_MANAGER.operationalMode = modeIdentifier;
+            document.getElementById('control-mode-read').classList.toggle('state-active', modeIdentifier === 'READ_ONLY');
+            document.getElementById('control-mode-draw').classList.toggle('state-active', modeIdentifier === 'STUDIO_ART');
+            const interactionMask = document.getElementById('interaction-pan-mask-layer');
+            if (modeIdentifier === 'READ_ONLY') {
+                if (FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance) FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: true });
+                if (FLIPOS_GLOBAL_STATE_MANAGER.zoomFactorScale > 1) interactionMask.style.display = 'block';
+                FlipOS_Interface_Utils.displayToastMessage("Switched to Reader Mode");
+            } else {
+                if (FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance) FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: false });
+                interactionMask.style.display = 'none';
+                FlipOS_Interface_Utils.displayToastMessage("Switched to Studio Mode");
             }
-        };
-
-        const UI = { msg(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); } };
-
-        App.init();
-    </script>
+        },
+        toggleVisualTheme() {
+            const bodyRef = document.body;
+            bodyRef.setAttribute('data-theme', bodyRef.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        },
+        toggleFullscreenMode() {
+            !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen();
+        }
+    };
+    const FlipOS_Ink_Subsystem = {
+        activeToolType: 'standard_pen',
+        activeColorHex: '#ff4757',
+        renderingContext: null,
+        targetCanvas: null,
+        isPointerDown: false,
+        lastCoordinate: { x: 0, y: 0 },
+        operationHistoryMap: {},
+        initializeInkEventHandlers() {
+            const stageElement = document.getElementById('application-stage-area');
+            stageElement.onpointerdown = (e) => this.handlePointerDown(e);
+            window.onpointermove = (e) => this.handlePointerMove(e);
+            window.onpointerup = () => this.handlePointerUp();
+        },
+        setActiveToolType(toolId) {
+            this.activeToolType = toolId;
+            ['pen', 'highlighter', 'eraser'].forEach(id => document.getElementById('tool-control-' + id).classList.remove('state-active'));
+            document.getElementById('tool-control-' + (toolId === 'marker_highlighter' ? 'highlighter' : (toolId === 'standard_eraser' ? 'eraser' : 'pen'))).classList.add('state-active');
+        },
+        setActiveColor(colorCode, elementRef) {
+            this.activeColorHex = colorCode;
+            this.setActiveToolType('standard_pen');
+            document.querySelectorAll('.system-color-indicator').forEach(d => d.classList.remove('state-active'));
+            elementRef.classList.add('state-active');
+        },
+        identifyHitLayer(event) {
+            const hitElement = document.elementFromPoint(event.clientX, event.clientY);
+            return hitElement?.classList.contains('layer-type-digital-ink') ? hitElement : null;
+        },
+        handlePointerDown(event) {
+            if (document.getElementById('interaction-pan-mask-layer').style.display === 'block') return;
+            const hitLayer = this.identifyHitLayer(event);
+            if (!hitLayer || FLIPOS_GLOBAL_STATE_MANAGER.operationalMode !== 'STUDIO_ART') return;
+            event.preventDefault();
+            this.isPointerDown = true;
+            this.targetCanvas = hitLayer;
+            this.renderingContext = hitLayer.getContext('2d');
+            this.configureDrawingContext();
+            const rect = hitLayer.getBoundingClientRect();
+            this.lastCoordinate = {
+                x: (event.clientX - rect.left) * (hitLayer.width / rect.width),
+                y: (event.clientY - rect.top) * (hitLayer.height / rect.height)
+            };
+            this.renderingContext.beginPath();
+            this.renderingContext.moveTo(this.lastCoordinate.x, this.lastCoordinate.y);
+            this.renderingContext.stroke();
+        },
+        handlePointerMove(event) {
+            if (!this.isPointerDown) return;
+            const hitLayer = this.identifyHitLayer(event);
+            if (hitLayer && hitLayer !== this.targetCanvas) {
+                this.renderingContext.closePath();
+                this.targetCanvas = hitLayer;
+                this.renderingContext = hitLayer.getContext('2d');
+                this.configureDrawingContext();
+                const rect = hitLayer.getBoundingClientRect();
+                this.lastCoordinate = {
+                    x: (event.clientX - rect.left) * (hitLayer.width / rect.width),
+                    y: (event.clientY - rect.top) * (hitLayer.height / rect.height)
+                };
+                this.renderingContext.beginPath();
+                this.renderingContext.moveTo(this.lastCoordinate.x, this.lastCoordinate.y);
+            }
+            if (this.targetCanvas) {
+                const rect = this.targetCanvas.getBoundingClientRect();
+                const currentCoordinate = {
+                    x: (event.clientX - rect.left) * (this.targetCanvas.width / rect.width),
+                    y: (event.clientY - rect.top) * (this.targetCanvas.height / rect.height)
+                };
+                this.renderingContext.quadraticCurveTo(this.lastCoordinate.x, this.lastCoordinate.y, (this.lastCoordinate.x + currentCoordinate.x) / 2, (this.lastCoordinate.y + currentCoordinate.y) / 2);
+                this.renderingContext.stroke();
+                this.lastCoordinate = currentCoordinate;
+            }
+        },
+        handlePointerUp() {
+            this.isPointerDown = false;
+            if (this.renderingContext) {
+                this.renderingContext.closePath();
+                this.pushStateToHistory(this.targetCanvas);
+            }
+        },
+        configureDrawingContext() {
+            this.renderingContext.lineCap = 'round';
+            this.renderingContext.lineJoin = 'round';
+            if (this.activeToolType === 'marker_highlighter') {
+                this.renderingContext.globalCompositeOperation = 'multiply';
+                this.renderingContext.strokeStyle = this.activeColorHex;
+                this.renderingContext.lineWidth = 20;
+                this.renderingContext.globalAlpha = 0.5;
+            } else if (this.activeToolType === 'standard_eraser') {
+                this.renderingContext.globalCompositeOperation = 'destination-out';
+                this.renderingContext.lineWidth = 30;
+                this.renderingContext.globalAlpha = 1;
+            } else {
+                this.renderingContext.globalCompositeOperation = 'source-over';
+                this.renderingContext.strokeStyle = this.activeColorHex;
+                this.renderingContext.lineWidth = 3;
+                this.renderingContext.globalAlpha = 1;
+            }
+        },
+        pushStateToHistory(canvasRef) {
+            const pageId = canvasRef.parentElement.dataset.pageIndex;
+            if (!this.operationHistoryMap[pageId]) this.operationHistoryMap[pageId] = [];
+            this.operationHistoryMap[pageId].push(this.renderingContext.getImageData(0, 0, canvasRef.width, canvasRef.height));
+            if (this.operationHistoryMap[pageId].length > 10) this.operationHistoryMap[pageId].shift();
+        },
+        executeUndoAction() {
+            if (!this.targetCanvas) return;
+            const pageId = this.targetCanvas.parentElement.dataset.pageIndex;
+            const historyStack = this.operationHistoryMap[pageId];
+            if (historyStack?.length) {
+                historyStack.pop();
+                const previousState = historyStack[historyStack.length - 1];
+                previousState ? this.renderingContext.putImageData(previousState, 0, 0) : this.executeClearCanvasAction();
+            }
+        },
+        executeClearCanvasAction() {
+            if (this.targetCanvas) {
+                this.targetCanvas.getContext('2d').clearRect(0, 0, this.targetCanvas.width, this.targetCanvas.height);
+                this.pushStateToHistory(this.targetCanvas);
+            }
+        }
+    };
+    const FlipOS_Viewport_Manager = {
+        currentZoomLevel: 1,
+        panCoordinates: { x: 0, y: 0 },
+        isDraggingViewport: false,
+        dragStartCoordinates: { x: 0, y: 0 },
+        initializeViewportEventHandlers() {
+            const maskLayer = document.getElementById('interaction-pan-mask-layer');
+            maskLayer.onmousedown = (e) => {
+                this.isDraggingViewport = true;
+                this.dragStartCoordinates = { x: e.clientX - this.panCoordinates.x, y: e.clientY - this.panCoordinates.y };
+                maskLayer.style.cursor = 'grabbing';
+            };
+            window.onmousemove = (e) => {
+                if (this.isDraggingViewport) {
+                    e.preventDefault();
+                    this.panCoordinates.x = e.clientX - this.dragStartCoordinates.x;
+                    this.panCoordinates.y = e.clientY - this.dragStartCoordinates.y;
+                    this.applyViewportTransformations();
+                }
+                if (FlipOS_Magnification_Tool.isLensActive) FlipOS_Magnification_Tool.renderLensView(e);
+            };
+            window.onmouseup = () => {
+                this.isDraggingViewport = false;
+                maskLayer.style.cursor = 'grab';
+            };
+        },
+        adjustZoomLevel(delta) {
+            if (delta > 0 && this.currentZoomLevel < 4) this.currentZoomLevel += 0.5;
+            else if (delta < 0 && this.currentZoomLevel > 1) this.currentZoomLevel -= 0.5;
+            this.applyViewportTransformations();
+        },
+        resetViewportMatrix() {
+            this.currentZoomLevel = 1;
+            this.panCoordinates = { x: 0, y: 0 };
+            this.applyViewportTransformations();
+            FlipOS_Interface_Utils.displayToastMessage("Viewport Reset");
+        },
+        applyViewportTransformations() {
+            FLIPOS_GLOBAL_STATE_MANAGER.zoomFactorScale = this.currentZoomLevel;
+            document.getElementById('display-zoom-value').innerText = (this.currentZoomLevel * 100) + '%';
+            const transformLayer = document.getElementById('visual-book-transform-layer');
+            const maskLayer = document.getElementById('interaction-pan-mask-layer');
+            transformLayer.style.transform = `translate(${this.panCoordinates.x}px,${this.panCoordinates.y}px) scale(${this.currentZoomLevel})`;
+            if (this.currentZoomLevel > 1 && FLIPOS_GLOBAL_STATE_MANAGER.operationalMode === 'READ_ONLY') {
+                maskLayer.style.display = 'block';
+                if (FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance) FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: false });
+            } else {
+                maskLayer.style.display = 'none';
+                if (this.currentZoomLevel === 1) {
+                    this.panCoordinates = { x: 0, y: 0 };
+                    transformLayer.style.transform = 'scale(1)';
+                }
+                if (FLIPOS_GLOBAL_STATE_MANAGER.operationalMode === 'READ_ONLY') FLIPOS_GLOBAL_STATE_MANAGER.pageFlipInstance.update({ useMouseEvents: true });
+            }
+        }
+    };
+    const FlipOS_Magnification_Tool = {
+        isLensActive: false,
+        toggleState() {
+            this.isLensActive = !this.isLensActive;
+            document.getElementById('control-btn-loupe').classList.toggle('state-active', this.isLensActive);
+            document.getElementById('spyglass-component').style.display = this.isLensActive ? 'block' : 'none';
+        },
+        renderLensView(event) {
+            const lensElement = document.getElementById('spyglass-component');
+            const lensContext = document.getElementById('spyglass-internal-canvas').getContext('2d');
+            document.getElementById('spyglass-internal-canvas').width = 500;
+            document.getElementById('spyglass-internal-canvas').height = 500;
+            lensElement.style.left = (event.clientX + 20) + 'px';
+            lensElement.style.top = (event.clientY + 20) + 'px';
+            lensElement.style.display = 'none';
+            const elementUnderCursor = document.elementFromPoint(event.clientX, event.clientY);
+            lensElement.style.display = 'block';
+            const wrapperElement = elementUnderCursor?.closest('.document-page-wrapper');
+            if (wrapperElement) {
+                const pdfLayer = wrapperElement.querySelector('.layer-type-pdf-raster');
+                const inkLayer = wrapperElement.querySelector('.layer-type-digital-ink');
+                const boundingBox = pdfLayer.getBoundingClientRect();
+                const scaleX = pdfLayer.width / boundingBox.width;
+                const scaleY = pdfLayer.height / boundingBox.height;
+                const localX = (event.clientX - boundingBox.left) * scaleX;
+                const localY = (event.clientY - boundingBox.top) * scaleY;
+                lensContext.fillStyle = '#ffffff';
+                lensContext.fillRect(0, 0, 500, 500);
+                try {
+                    lensContext.drawImage(pdfLayer, localX - 100, localY - 100, 200, 200, 0, 0, 500, 500);
+                    lensContext.drawImage(inkLayer, localX - 100, localY - 100, 200, 200, 0, 0, 500, 500);
+                } catch (e) {}
+            }
+        }
+    };
+    const FlipOS_Interface_Utils = {
+        displayToastMessage(messageString) {
+            const toastElement = document.getElementById('system-toast');
+            toastElement.innerText = messageString;
+            toastElement.classList.add('state-visible');
+            setTimeout(() => toastElement.classList.remove('state-visible'), 2000);
+        }
+    };
+    FlipOS_Core_Application.initializeApplicationKernel();
+</script>
 </body>
 </html>
