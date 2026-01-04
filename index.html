@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V25 | Persistent & Calc</title>
+    <title>FlipOS V26 | Pro Artist</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+        /* CORE VARIABLES */
         :root {
             --sys-bg: #050505;
             --sys-panel: #1a1a1d;
@@ -37,6 +38,7 @@
             grid-template-areas: "left stage right";
         }
 
+        /* SIDEBARS */
         .sidebar {
             background-color: var(--sys-panel);
             border-left: 1px solid var(--sys-border);
@@ -48,6 +50,7 @@
         #ui-left { grid-area: left; border-left: none; }
         #ui-right { grid-area: right; border-right: none; }
 
+        /* STAGE */
         #stage {
             grid-area: stage; position: relative; overflow: hidden;
             background-image: radial-gradient(var(--sys-border) 1px, transparent 1px);
@@ -63,6 +66,7 @@
             transition: transform 0.1s linear;
         }
 
+        /* COMPONENTS */
         .btn {
             width: 48px; height: 48px; border-radius: 12px;
             background: rgba(128,128,128,0.05); color: inherit;
@@ -78,11 +82,35 @@
         .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
         .color-dot.active { border-color: var(--sys-text); transform: scale(1.15); }
 
+        /* SIZE SLIDER (NEW) */
+        .size-slider-container {
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            width: 100%; padding: 0 10px;
+        }
+        .size-slider {
+            -webkit-appearance: none; width: 100%; height: 4px; background: var(--sys-border);
+            border-radius: 2px; outline: none; writing-mode: bt-lr; /* Vertical slider support in some browsers */
+        }
+        .size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+            background: var(--sys-accent); cursor: pointer;
+        }
+
+        /* ERASER CURSOR (NEW) */
+        #eraser-cursor {
+            position: fixed; pointer-events: none; z-index: 9999;
+            border: 2px solid #fff; border-radius: 50%;
+            background: rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            display: none; transform: translate(-50%, -50%);
+        }
+
+        /* BOOK LAYERS */
         .page-wrap { position: relative; background: #fff; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
         canvas { position: absolute; top:0; left:0; width:100%; height:100%; }
         .pdf-l { z-index: 1; pointer-events: none; }
         .ink-l { z-index: 10; cursor: crosshair; touch-action: none; }
 
+        /* OVERLAYS */
         #pan-mask { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 500; display: none; }
         
         .spyglass {
@@ -146,12 +174,14 @@
     <div id="upload-ol">
         <div class="upload-box" onclick="document.getElementById('file-in').click()">
             <i class="fas fa-hdd" style="font-size: 4rem; color: var(--sys-accent); margin-bottom: 24px;"></i>
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V25</h1>
-            <p style="color: #888; font-family: monospace;">Auto-Save • Calculator • Fixed Ink</p>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V26</h1>
+            <p style="color: #888; font-family: monospace;">Pro Artist: Right Click Erase</p>
             <div id="loading-txt" style="margin-top: 20px; font-size: 0.9rem; display:none;">Restoring Session...</div>
         </div>
         <input type="file" id="file-in" hidden accept="application/pdf">
     </div>
+
+    <div id="eraser-cursor"></div>
 
     <div id="calc-app">
         <div class="calc-head" id="calc-drag">
@@ -182,19 +212,26 @@
     </div>
 
     <aside class="sidebar" id="ui-left">
-        <button class="btn active" id="m-read" onclick="Kernel.mode('READ')"><i class="fas fa-eye"></i></button>
-        <button class="btn" id="m-draw" onclick="Kernel.mode('DRAW')"><i class="fas fa-pen"></i></button>
+        <button class="btn active" id="m-read" onclick="Kernel.mode('READ')" title="Reading Mode"><i class="fas fa-eye"></i></button>
+        <button class="btn" id="m-draw" onclick="Kernel.mode('DRAW')" title="Drawing Mode (Right click to Erase)"><i class="fas fa-pen"></i></button>
         <div class="divider"></div>
-        <button class="btn" id="t-pen" onclick="Ink.tool('pen')"><i class="fas fa-pen-nib"></i></button>
-        <button class="btn" id="t-mark" onclick="Ink.tool('marker')"><i class="fas fa-highlighter"></i></button>
-        <button class="btn" id="t-erase" onclick="Ink.tool('eraser')"><i class="fas fa-eraser"></i></button>
+        <button class="btn" id="t-pen" onclick="Ink.tool('pen')" title="Pen"><i class="fas fa-pen-nib"></i></button>
+        <button class="btn" id="t-mark" onclick="Ink.tool('marker')" title="Highlighter"><i class="fas fa-highlighter"></i></button>
+        <button class="btn" id="t-erase" onclick="Ink.tool('eraser')" title="Eraser Tool"><i class="fas fa-eraser"></i></button>
+        
+        <div class="size-slider-container" title="Size Control">
+            <i class="fas fa-circle" style="font-size: 0.5rem; margin-bottom: 5px;"></i>
+            <input type="range" class="size-slider" min="5" max="50" value="20" oninput="Ink.setSize(this.value)">
+            <i class="fas fa-circle" style="font-size: 1rem; margin-top: 5px;"></i>
+        </div>
+
         <div class="divider"></div>
         <div class="color-dot active" style="background:#ef4444" onclick="Ink.color('#ef4444',this)"></div>
         <div class="color-dot" style="background:#22c55e" onclick="Ink.color('#22c55e',this)"></div>
         <div class="color-dot" style="background:#3b82f6" onclick="Ink.color('#3b82f6',this)"></div>
         <div class="divider"></div>
-        <button class="btn" onclick="Ink.undo()"><i class="fas fa-undo"></i></button>
-        <button class="btn" onclick="Storage.clear()"><i class="fas fa-hdd" title="Clear Storage"></i></button>
+        <button class="btn" onclick="Ink.undo()" title="Undo"><i class="fas fa-undo"></i></button>
+        <button class="btn" onclick="Storage.clear()" title="Clear Storage"><i class="fas fa-hdd"></i></button>
     </aside>
 
     <main id="stage" ondblclick="View.reset()">
@@ -262,8 +299,10 @@
 
         const Kernel = {
             async init() {
+                // Prevent Context Menu on Right Click globally
+                window.addEventListener('contextmenu', e => e.preventDefault());
+
                 await DB.init();
-                
                 const savedData = await DB.load();
                 if(savedData) {
                     document.getElementById('loading-txt').style.display = 'block';
@@ -310,7 +349,7 @@
                 } else {
                     if(State.book) State.book.update({useMouseEvents: false});
                     mask.style.display = 'none';
-                    UI.toast("Studio Mode");
+                    UI.toast("Studio Mode (Right-click to Erase)");
                 }
             }
         };
@@ -391,11 +430,20 @@
 
         const Ink = {
             t: 'pen', c: '#ef4444', isD: false, ctx: null, can: null, hist: {}, last: {x:0,y:0},
+            size: 20, // Default Size
+            
             init() {
                 const s = document.getElementById('stage');
                 s.onpointerdown = e => this.down(e);
                 window.onpointermove = e => this.move(e);
                 window.onpointerup = () => this.up();
+            },
+            setSize(v) {
+                this.size = v;
+                // Update cursor size visual
+                const cursor = document.getElementById('eraser-cursor');
+                cursor.style.width = v + 'px';
+                cursor.style.height = v + 'px';
             },
             tool(n) {
                 this.t = n;
@@ -410,36 +458,73 @@
             hit(e) { const el = document.elementFromPoint(e.clientX, e.clientY); return el?.classList.contains('ink-l') ? el : null; },
             pos(e, c) { const r = c.getBoundingClientRect(); return { x: (e.clientX-r.left)*(c.width/r.width), y: (e.clientY-r.top)*(c.height/r.height) }; },
             
-            cfg(ctx) {
+            cfg(ctx, isRightClick) {
                 ctx.lineCap='round'; ctx.lineJoin='round';
-                if(this.t==='marker') { 
+                
+                // FORCE ERASER IF RIGHT CLICK OR ERASER TOOL
+                if(isRightClick || this.t === 'eraser') {
+                    ctx.globalCompositeOperation='destination-out'; 
+                    ctx.lineWidth = this.size; // Use dynamic size
+                    ctx.globalAlpha=1.0;
+                }
+                else if(this.t==='marker') { 
                     ctx.globalCompositeOperation='source-over'; 
                     ctx.strokeStyle=this.c; 
                     ctx.lineWidth=20; 
                     ctx.globalAlpha=0.2; 
                 }
-                else if(this.t==='eraser') { 
-                    ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=30; ctx.globalAlpha=1.0; 
-                }
                 else { 
-                    ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=this.c; ctx.lineWidth=3; ctx.globalAlpha=1.0; 
+                    ctx.globalCompositeOperation='source-over'; 
+                    ctx.strokeStyle=this.c; 
+                    ctx.lineWidth=3; 
+                    ctx.globalAlpha=1.0; 
+                }
+            },
+
+            updateCursor(e, show) {
+                const cursor = document.getElementById('eraser-cursor');
+                if(show && State.mode === 'DRAW') {
+                    cursor.style.display = 'block';
+                    cursor.style.left = e.clientX + 'px';
+                    cursor.style.top = e.clientY + 'px';
+                    cursor.style.width = this.size + 'px';
+                    cursor.style.height = this.size + 'px';
+                } else {
+                    cursor.style.display = 'none';
                 }
             },
 
             down(e) {
                 if(document.getElementById('pan-mask').style.display === 'block') return;
                 const h = this.hit(e); if(!h || State.mode!=='DRAW') return;
-                e.preventDefault(); this.isD=true; this.can=h; this.ctx=h.getContext('2d');
+                
+                // Determine if erasing (Right click = button 2)
+                const isRight = e.button === 2;
+                
+                e.preventDefault(); 
+                this.isD=true; this.can=h; this.ctx=h.getContext('2d');
                 this.push(this.can);
-                this.cfg(this.ctx); this.last=this.pos(e, h);
+                this.cfg(this.ctx, isRight); // Pass isRight flag
+                this.last=this.pos(e, h);
                 this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y); this.ctx.stroke();
+                
+                // Show Eraser Cursor if Right Click or Eraser Tool
+                if(isRight || this.t === 'eraser') this.updateCursor(e, true);
             },
+
             move(e) {
+                // Update cursor position if visible
+                if(this.t === 'eraser' || (this.isD && e.buttons === 2)) this.updateCursor(e, true);
+                else this.updateCursor(e, false);
+
                 if(!this.isD) return;
                 const h = this.hit(e);
+                const isRight = e.buttons === 2; // Check if right button held
+
                 if(h && h !== this.can) {
                     this.ctx.closePath(); this.push(h);
-                    this.can=h; this.ctx=h.getContext('2d'); this.cfg(this.ctx);
+                    this.can=h; this.ctx=h.getContext('2d'); 
+                    this.cfg(this.ctx, isRight);
                     this.last=this.pos(e, h);
                     this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
                 }
@@ -449,13 +534,20 @@
                     this.ctx.stroke(); this.last = curr;
                 }
             },
-            up() { this.isD=false; if(this.ctx) this.ctx.closePath(); },
+
+            up() { 
+                this.isD=false; 
+                if(this.ctx) this.ctx.closePath(); 
+                this.updateCursor(null, false); // Hide cursor
+            },
+
             push(c) {
                 if(!c) return; const i = c.parentElement.dataset.idx;
                 if(!this.hist[i]) this.hist[i]=[];
                 this.hist[i].push(this.ctx.getImageData(0,0,c.width,c.height));
                 if(this.hist[i].length>15) this.hist[i].shift();
             },
+
             undo() {
                 if(!this.can) return; const i = this.can.parentElement.dataset.idx;
                 const h = this.hist[i];
@@ -465,6 +557,7 @@
                     UI.toast("Undo");
                 }
             },
+
             clear() {
                 if(this.can) {
                     this.push(this.can);
