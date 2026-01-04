@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="FlipOS V23 Stable - Fixed Upload & Syntax">
-    <title>FlipOS V23 | Stable Studio</title>
+    <title>FlipOS V24 | Stable Fix</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -126,8 +125,8 @@
     <div id="upload-ol">
         <div class="upload-box" onclick="document.getElementById('file-in').click()">
             <i class="fas fa-file-pdf" style="font-size: 4rem; color: var(--sys-accent); margin-bottom: 24px;"></i>
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V23</h1>
-            <p style="color: #888; font-family: monospace;">Stable Kernel • Dual Spread</p>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V24</h1>
+            <p style="color: #888; font-family: monospace;">Fixed Highlight & Undo</p>
         </div>
         <input type="file" id="file-in" hidden accept="application/pdf">
     </div>
@@ -324,24 +323,50 @@
             },
             hit(e) { const el = document.elementFromPoint(e.clientX, e.clientY); return el?.classList.contains('ink-l') ? el : null; },
             pos(e, c) { const r = c.getBoundingClientRect(); return { x: (e.clientX-r.left)*(c.width/r.width), y: (e.clientY-r.top)*(c.height/r.height) }; },
+            
+            // --- FIX 1: CẤU HÌNH CONTEXT CHUẨN ---
             cfg(ctx) {
                 ctx.lineCap='round'; ctx.lineJoin='round';
-                if(this.t==='marker') { ctx.globalCompositeOperation='multiply'; ctx.strokeStyle=this.c; ctx.lineWidth=20; ctx.globalAlpha=0.5; }
-                else if(this.t==='eraser') { ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=30; ctx.globalAlpha=1; }
-                else { ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=this.c; ctx.lineWidth=3; ctx.globalAlpha=1; }
+                if(this.t==='marker') { 
+                    ctx.globalCompositeOperation='source-over'; // Không dùng multiply nữa
+                    ctx.strokeStyle=this.c; 
+                    ctx.lineWidth=25; 
+                    ctx.globalAlpha=0.4; // Dùng Opacity để nhìn xuyên thấu
+                }
+                else if(this.t==='eraser') { 
+                    ctx.globalCompositeOperation='destination-out'; 
+                    ctx.lineWidth=30; 
+                    ctx.globalAlpha=1.0; 
+                }
+                else { 
+                    ctx.globalCompositeOperation='source-over'; 
+                    ctx.strokeStyle=this.c; 
+                    ctx.lineWidth=3; 
+                    ctx.globalAlpha=1.0; 
+                }
             },
+
             down(e) {
                 if(document.getElementById('pan-mask').style.display === 'block') return;
                 const h = this.hit(e); if(!h || State.mode!=='DRAW') return;
-                e.preventDefault(); this.isD=true; this.can=h; this.ctx=h.getContext('2d');
-                this.cfg(this.ctx); this.last=this.pos(e, h);
+                
+                e.preventDefault(); 
+                this.isD=true; this.can=h; this.ctx=h.getContext('2d');
+                
+                // --- FIX 2: LƯU HISTORY TRƯỚC KHI VẼ (CHO UNDO) ---
+                this.push(this.can);
+
+                this.cfg(this.ctx); 
+                this.last=this.pos(e, h);
                 this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y); this.ctx.stroke();
             },
+
             move(e) {
                 if(!this.isD) return;
                 const h = this.hit(e);
                 if(h && h !== this.can) {
-                    this.ctx.closePath(); this.push(this.can);
+                    this.ctx.closePath(); 
+                    this.push(h); // Lưu history trang mới trước khi vẽ
                     this.can=h; this.ctx=h.getContext('2d'); this.cfg(this.ctx);
                     this.last=this.pos(e, h);
                     this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
@@ -352,53 +377,70 @@
                     this.ctx.stroke(); this.last = curr;
                 }
             },
-            up() { this.isD=false; if(this.ctx) { this.ctx.closePath(); this.push(this.can); } },
+
+            up() { 
+                this.isD=false; 
+                if(this.ctx) this.ctx.closePath(); 
+                // Không cần push ở đây nữa vì đã push ở down rồi
+            },
+
             push(c) {
                 if(!c) return; const i = c.parentElement.dataset.idx;
                 if(!this.hist[i]) this.hist[i]=[];
                 this.hist[i].push(this.ctx.getImageData(0,0,c.width,c.height));
-                if(this.hist[i].length>10) this.hist[i].shift();
+                if(this.hist[i].length>15) this.hist[i].shift();
             },
+
             undo() {
-                if(!this.can) return; const i = this.can.parentElement.dataset.idx;
-                const h = this.hist[i];
-                if(h?.length) { h.pop(); const p=h[h.length-1]; p ? this.ctx.putImageData(p,0,0) : this.ctx.clearRect(0,0,this.can.width,this.can.height); }
+                if(!this.can) return; 
+                const idx = this.can.parentElement.dataset.idx;
+                const h = this.hist[idx];
+                
+                if(h && h.length > 0) { 
+                    const prev = h.pop(); // Lấy trạng thái cũ nhất ra
+                    if(prev) {
+                        this.ctx.putImageData(prev,0,0);
+                        UI.toast("Undo");
+                    }
+                } else {
+                    // Nếu hết history thì xóa trắng
+                    this.ctx.clearRect(0,0,this.can.width,this.can.height);
+                }
             },
+
             clear() {
                 if(this.can) {
+                    this.push(this.can); // Lưu trước khi xóa
                     this.can.getContext('2d').clearRect(0,0,this.can.width,this.can.height);
-                    this.push(this.can);
+                    UI.toast("Cleared");
                 }
             }
         };
 
         const Spy = {
             on: false,
-            toggle() {
-                this.on = !this.on;
-                document.getElementById('btn-spy').classList.toggle('active', this.on);
-                document.getElementById('spy-root').style.display = this.on ? 'block' : 'none';
-            },
+            toggle() { this.on=!this.on; document.getElementById('btn-spy').classList.toggle('active',this.on); document.getElementById('spy-root').style.display=this.on?'block':'none'; },
             render(e) {
                 const s=document.getElementById('spy-root'), c=document.getElementById('spy-c').getContext('2d');
                 document.getElementById('spy-c').width=500; document.getElementById('spy-c').height=500;
                 s.style.left=(e.clientX+20)+'px'; s.style.top=(e.clientY+20)+'px';
-                s.style.display='none'; const el=document.elementFromPoint(e.clientX, e.clientY); s.style.display='block';
-                const w = el?.closest('.page-wrap');
+                s.style.display='none'; const el=document.elementFromPoint(e.clientX,e.clientY); s.style.display='block';
+                const w=el?.closest('.page-wrap');
                 if(w) {
                     const pdf=w.querySelector('.pdf-l'), ink=w.querySelector('.ink-l');
                     const r=pdf.getBoundingClientRect();
-                    const x=(e.clientX-r.left)*(pdf.width/r.width), y=(e.clientY-r.top)*(pdf.height/r.height);
+                    const rx=pdf.width/r.width, ry=pdf.height/r.height;
+                    const x=(e.clientX-r.left)*rx, y=(e.clientY-r.top)*ry;
                     c.fillStyle='#fff'; c.fillRect(0,0,500,500);
-                    try { c.drawImage(pdf, x-100, y-100, 200, 200, 0,0,500,500); c.drawImage(ink, x-100, y-100, 200, 200, 0,0,500,500); } catch(e){}
+                    try { c.drawImage(pdf,x-100,y-100,200,200,0,0,500,500); c.drawImage(ink,x-100,y-100,200,200,0,0,500,500); } catch(e){}
                 }
             }
         };
 
-        const UI = {
+        const UI = { 
             theme() { const b=document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')=='dark'?'light':'dark'); },
             full() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); },
-            toast(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+            toast(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); } 
         };
 
         Kernel.init();
