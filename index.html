@@ -3,384 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="FlipOS V21 Enterprise Edition - Advanced PDF Visualization & Annotation System">
+    <meta name="description" content="FlipOS V22 Ultimate Studio - Dual Page Spread & Magnification System">
     <meta name="author" content="Dang Duc Dai - Lead Architect">
-    <title>FlipOS V21 | Thesis Defense Edition</title>
+    <title>FlipOS V22 | Ultimate Studio Edition</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         /* * ======================================================================================
-         * MODULE 1: GLOBAL DESIGN TOKENS & SYSTEM VARIABLES
-         * Description: Centralized configuration for theming and layout metrics.
+         * MODULE 1: GLOBAL DESIGN TOKENS
          * ======================================================================================
          */
         :root {
-            /* Semantic Color Palette: Deep Space Dark Mode */
-            --sys-color-background-primary: #050505; /* Absolute Black */
-            --sys-color-background-secondary: #121212; /* Elevation 1 */
-            --sys-color-background-panel: #1a1a1d; /* Elevation 2 */
-            
+            --sys-color-background-primary: #050505;
+            --sys-color-background-panel: #1a1a1d;
             --sys-color-text-primary: #ffffff;
             --sys-color-text-secondary: #a1a1aa;
-            
-            --sys-color-accent-main: #3b82f6; /* Enterprise Blue */
-            --sys-color-accent-hover: #2563eb;
-            
+            --sys-color-accent-main: #3b82f6;
             --sys-color-border-subtle: #27272a;
-            --sys-color-border-active: #3f3f46;
-            
-            /* Layout Metrics */
-            --sys-layout-sidebar-width: 72px; /* Fixed Width */
+            --sys-layout-sidebar-width: 72px;
             --sys-layout-z-index-ui: 1000;
-            --sys-layout-z-index-stage: 10;
-            
-            /* Effects */
             --sys-effect-shadow-panel: 0 0 0 1px rgba(255,255,255,0.05), 0 10px 15px -3px rgba(0,0,0,0.5);
         }
 
-        /* Light Mode Override */
         [data-theme="light"] {
             --sys-color-background-primary: #f0f2f5;
-            --sys-color-background-secondary: #ffffff;
             --sys-color-background-panel: #ffffff;
             --sys-color-text-primary: #18181b;
             --sys-color-text-secondary: #71717a;
             --sys-color-border-subtle: #e4e4e7;
-            --sys-color-border-active: #d4d4d8;
-            --sys-effect-shadow-panel: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            --sys-color-accent-main: #2563eb;
         }
 
-        /* Global Reset */
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         
         /* * ======================================================================================
-         * MODULE 2: MASTER GRID LAYOUT ARCHITECTURE (THE "CONCRETE" FIX)
-         * Description: Hard-locks the UI regions. They CANNOT move or resize.
+         * MODULE 2: MASTER GRID LAYOUT (HARD-LOCKED)
          * ======================================================================================
          */
         body {
             background-color: var(--sys-color-background-primary);
             color: var(--sys-color-text-primary);
             font-family: 'Inter', sans-serif;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden; /* Critical: Disables body scroll */
-            
-            /* CSS GRID LEVEL 3: 3-COLUMN HARD LAYOUT */
+            height: 100vh; width: 100vw; overflow: hidden;
             display: grid;
             grid-template-columns: var(--sys-layout-sidebar-width) 1fr var(--sys-layout-sidebar-width);
             grid-template-rows: 100%;
             grid-template-areas: "region-sidebar-left region-viewport-center region-sidebar-right";
         }
 
-        /* --- UI REGION: LEFT SIDEBAR (TOOLS) --- */
+        /* --- UI SIDEBARS --- */
         .system-sidebar-container {
             background-color: var(--sys-color-background-panel);
             border-right: 1px solid var(--sys-color-border-subtle);
             border-left: 1px solid var(--sys-color-border-subtle);
             z-index: var(--sys-layout-z-index-ui);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            gap: 16px;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px 0; gap: 16px;
             box-shadow: var(--sys-effect-shadow-panel);
         }
+        #ui-region-left { grid-area: region-sidebar-left; border-left: none; }
+        #ui-region-right { grid-area: region-sidebar-right; border-right: none; }
 
-        #ui-region-left {
-            grid-area: region-sidebar-left;
-            border-left: none; /* Leftmost edge */
-        }
-
-        #ui-region-right {
-            grid-area: region-sidebar-right;
-            border-right: none; /* Rightmost edge */
-        }
-
-        /* --- VIEWPORT REGION: CENTER STAGE (THE BOOK) --- */
+        /* --- VIEWPORT STAGE --- */
         #system-viewport-stage {
             grid-area: region-viewport-center;
-            position: relative;
-            overflow: hidden; /* Cages the zoom inside */
-            background-image: 
-                radial-gradient(var(--sys-color-border-subtle) 1px, transparent 1px);
+            position: relative; overflow: hidden;
+            background-image: radial-gradient(var(--sys-color-border-subtle) 1px, transparent 1px);
             background-size: 24px 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             cursor: grab;
         }
-        #system-viewport-stage:active {
-            cursor: grabbing;
-        }
+        #system-viewport-stage:active { cursor: grabbing; }
 
-        /* The Transformation Matrix Target */
+        /* The Transformation Matrix Target (Zooms/Pans) */
         #visual-transform-matrix {
-            /* This div gets Scaled/Translated. It's ISOLATED from the UI */
             transform-origin: center center;
             will-change: transform;
-            transition: transform 0.1s linear; /* Smooth linear interpolation */
+            transition: transform 0.1s linear;
         }
 
         /* * ======================================================================================
-         * MODULE 3: COMPONENT LIBRARY
+         * MODULE 3: COMPONENTS & LAYERS
          * ======================================================================================
          */
-        
-        /* Interactive Buttons */
         .sys-btn-control {
-            width: 48px; height: 48px;
-            border-radius: 12px;
-            background-color: rgba(128,128,128,0.05);
-            color: var(--sys-color-text-secondary);
-            border: 1px solid transparent;
-            cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.25rem;
+            width: 48px; height: 48px; border-radius: 12px;
+            background-color: rgba(128,128,128,0.05); color: var(--sys-color-text-secondary);
+            border: 1px solid transparent; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; font-size: 1.25rem;
             transition: all 0.2s ease;
         }
-        .sys-btn-control:hover {
-            background-color: rgba(128,128,128,0.15);
-            color: var(--sys-color-text-primary);
-            transform: translateY(-2px);
-        }
-        .sys-btn-control.state-active {
-            background-color: var(--sys-color-accent-main);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
+        .sys-btn-control:hover { background-color: rgba(128,128,128,0.15); color: var(--sys-color-text-primary); transform: translateY(-2px); }
+        .sys-btn-control.state-active { background-color: var(--sys-color-accent-main); color: #ffffff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
 
-        /* Mode Switcher Group */
-        .sys-mode-group {
-            background-color: rgba(0,0,0,0.2);
-            padding: 6px;
-            border-radius: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .sys-mode-item {
-            width: 36px; height: 36px;
-            border-radius: 10px;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer;
-            opacity: 0.5;
-            transition: 0.2s;
-        }
-        .sys-mode-item.state-active {
-            background-color: var(--sys-color-background-secondary);
-            color: var(--sys-color-accent-main);
-            opacity: 1;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        .sys-mode-group { background-color: rgba(0,0,0,0.2); padding: 6px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .sys-mode-item { width: 36px; height: 36px; border-radius: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.5; transition: 0.2s; }
+        .sys-mode-item.state-active { background-color: var(--sys-color-background-panel); color: var(--sys-color-accent-main); opacity: 1; }
 
-        /* Color Indicators */
-        .sys-color-swatch {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .sys-color-swatch.state-active {
-            border-color: var(--sys-color-text-primary);
-            transform: scale(1.15);
-        }
+        .sys-color-swatch { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: transform 0.2s; }
+        .sys-color-swatch.state-active { border-color: var(--sys-color-text-primary); transform: scale(1.15); }
+        .sys-ui-divider { width: 60%; height: 1px; background-color: var(--sys-color-border-subtle); margin: 4px 0; }
+        .sys-zoom-label { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--sys-color-accent-main); margin: 5px 0; }
 
-        /* Horizontal Divider */
-        .sys-ui-divider {
-            width: 60%; height: 1px;
-            background-color: var(--sys-color-border-subtle);
-            margin: 4px 0;
-        }
-
-        /* Zoom Label */
-        .sys-zoom-label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--sys-color-accent-main);
-            margin: 5px 0;
-        }
-
-        /* * ======================================================================================
-         * MODULE 4: RENDERING LAYERS (Canvas & PDF)
-         * ======================================================================================
-         */
-        
-        /* The "Book" container managed by St.PageFlip library */
-        .document-page-wrapper {
-            position: relative;
-            background-color: #fff;
-            overflow: hidden;
-            /* Box shadow for realism */
-            box-shadow: inset 20px 0 50px -20px rgba(0,0,0,0.2); 
-        }
-
-        /* Layer Stacking Context */
+        /* Rendering Layers */
+        .document-page-wrapper { position: relative; background-color: #fff; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.1); border-right: 1px solid #eee; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        
         .layer-type-pdf-raster { z-index: 1; pointer-events: none; }
+        .layer-type-digital-ink { z-index: 10; cursor: crosshair; touch-action: none; }
+
+        /* Overlays */
+        #interaction-pan-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; display: none; }
         
-        /* Ink Layer: Receives Input */
-        .layer-type-digital-ink { 
-            z-index: 10; 
-            cursor: crosshair; 
-            touch-action: none; 
+        /* Spyglass Lens (New V22) */
+        .tool-spyglass-lens {
+            position: fixed; /* Fixed to viewport, not zoomed */
+            width: 220px; height: 220px;
+            border-radius: 50%;
+            border: 4px solid var(--sys-color-text-primary);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            overflow: hidden; pointer-events: none; z-index: 9000;
+            display: none; background: #fff;
         }
 
-        /* Interaction Pan Mask (Visible only when Zoom > 1) */
-        #interaction-pan-mask {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 500; display: none; /* Default Hidden */
-        }
-
-        /* * ======================================================================================
-         * MODULE 5: UTILITY SCREENS (Upload, Loading)
-         * ======================================================================================
-         */
-        #system-overlay-upload {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(5,5,5,0.96);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(10px);
-        }
-        .upload-interface-box {
-            padding: 60px 80px;
-            border: 2px dashed var(--sys-color-border-active);
-            border-radius: 32px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: linear-gradient(145deg, rgba(255,255,255,0.03), transparent);
-        }
-        .upload-interface-box:hover {
-            border-color: var(--sys-color-accent-main);
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        #system-notification-toast {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            background-color: var(--sys-color-background-panel);
-            color: var(--sys-color-text-primary);
-            padding: 12px 24px;
-            border-radius: 50px;
-            border: 1px solid var(--sys-color-border-active);
-            font-size: 0.9rem;
-            font-weight: 600;
-            opacity: 0; pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 8000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        #system-notification-toast.state-visible {
-            opacity: 1; transform: translateX(-50%) translateY(-10px);
-        }
-
+        /* Utility Screens */
+        #system-overlay-upload { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(5,5,5,0.96); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        .upload-interface-box { padding: 60px 80px; border: 2px dashed var(--sys-color-border-subtle); border-radius: 32px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+        .upload-interface-box:hover { border-color: var(--sys-color-accent-main); transform: translateY(-5px); }
+        #system-notification-toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background-color: var(--sys-color-background-panel); color: var(--sys-color-text-primary); padding: 12px 24px; border-radius: 50px; font-size: 0.9rem; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 8000; }
+        #system-notification-toast.state-visible { opacity: 1; transform: translateX(-50%) translateY(-10px); }
     </style>
 </head>
 <body data-theme="dark">
 
     <div id="system-overlay-upload">
         <div class="upload-interface-box" onclick="document.getElementById('core-file-input').click()">
-            <i class="fas fa-file-pdf" style="font-size: 4rem; color: var(--sys-color-accent-main); margin-bottom: 24px;"></i>
-            <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px;">FLIP OS V21</h1>
-            <p style="color: var(--sys-color-text-secondary); font-family: 'JetBrains Mono';">Enterprise Thesis Edition</p>
-            <div style="margin-top: 20px; font-size: 0.8rem; opacity: 0.6;">CLICK TO MOUNT FILE SYSTEM</div>
+            <i class="fas fa-book-open" style="font-size: 4rem; color: var(--sys-color-accent-main); margin-bottom: 24px;"></i>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V22</h1>
+            <p style="color: var(--sys-color-text-secondary); font-family: 'JetBrains Mono';">Ultimate Studio Edition</p>
+            <div style="margin-top: 20px; font-size: 0.8rem; opacity: 0.6;">CLICK TO LOAD PDF</div>
         </div>
         <input type="file" id="core-file-input" hidden accept="application/pdf">
     </div>
 
     <aside class="system-sidebar-container" id="ui-region-left">
         <div class="sys-mode-group">
-            <div class="sys-mode-item state-active" id="ctrl-mode-read" onclick="FlipOS_Kernel_System.setOperationalMode('MODE_READ')" title="Reader Mode">
-                <i class="fas fa-book-open"></i>
-            </div>
-            <div class="sys-mode-item" id="ctrl-mode-draw" onclick="FlipOS_Kernel_System.setOperationalMode('MODE_STUDIO')" title="Studio Mode">
-                <i class="fas fa-pencil-alt"></i>
-            </div>
+            <div class="sys-mode-item state-active" id="ctrl-mode-read" onclick="FlipOS_Kernel_System.setOperationalMode('MODE_READ')"><i class="fas fa-eye"></i></div>
+            <div class="sys-mode-item" id="ctrl-mode-draw" onclick="FlipOS_Kernel_System.setOperationalMode('MODE_STUDIO')"><i class="fas fa-pencil-alt"></i></div>
         </div>
-
         <div class="sys-ui-divider"></div>
-
-        <button class="sys-btn-control" id="tool-pen" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_PEN')" title="Ballpoint Pen">
-            <i class="fas fa-pen"></i>
-        </button>
-        <button class="sys-btn-control" id="tool-marker" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_MARKER')" title="Highlighter">
-            <i class="fas fa-highlighter"></i>
-        </button>
-        <button class="sys-btn-control" id="tool-eraser" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_ERASER')" title="Eraser">
-            <i class="fas fa-eraser"></i>
-        </button>
-
+        <button class="sys-btn-control" id="tool-pen" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_PEN')"><i class="fas fa-pen"></i></button>
+        <button class="sys-btn-control" id="tool-marker" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_MARKER')"><i class="fas fa-highlighter"></i></button>
+        <button class="sys-btn-control" id="tool-eraser" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_ERASER')"><i class="fas fa-eraser"></i></button>
         <div class="sys-ui-divider"></div>
-
         <div class="sys-color-swatch state-active" style="background-color: #ef4444;" onclick="FlipOS_Ink_Subsystem.setInkColor('#ef4444', this)"></div>
         <div class="sys-color-swatch" style="background-color: #22c55e;" onclick="FlipOS_Ink_Subsystem.setInkColor('#22c55e', this)"></div>
         <div class="sys-color-swatch" style="background-color: #3b82f6;" onclick="FlipOS_Ink_Subsystem.setInkColor('#3b82f6', this)"></div>
-        <div class="sys-color-swatch" style="background-color: #eab308;" onclick="FlipOS_Ink_Subsystem.setInkColor('#eab308', this)"></div>
-
         <div class="sys-ui-divider"></div>
-
-        <button class="sys-btn-control" onclick="FlipOS_Ink_Subsystem.executeUndoSequence()" title="Undo (Ctrl+Z)">
-            <i class="fas fa-undo"></i>
-        </button>
-        <button class="sys-btn-control" onclick="FlipOS_Ink_Subsystem.executeClearCanvas()" title="Purge Page">
-            <i class="fas fa-trash-alt"></i>
-        </button>
+        <button class="sys-btn-control" onclick="FlipOS_Ink_Subsystem.executeUndoSequence()"><i class="fas fa-undo"></i></button>
+        <button class="sys-btn-control" onclick="FlipOS_Ink_Subsystem.executeClearCanvas()"><i class="fas fa-trash-alt"></i></button>
     </aside>
 
     <main id="system-viewport-stage" ondblclick="FlipOS_Viewport_Manager.resetTransformationMatrix()">
-        
         <div id="visual-transform-matrix">
             <div id="book-component-root"></div>
         </div>
-
         <div id="interaction-pan-mask"></div>
-
     </main>
 
     <aside class="system-sidebar-container" id="ui-region-right">
-        <button class="sys-btn-control" onclick="FlipOS_Interface_Utils.toggleSystemTheme()" title="Toggle Dark/Light">
-            <i class="fas fa-adjust"></i>
-        </button>
-
+        <button class="sys-btn-control" onclick="FlipOS_Interface_Utils.toggleSystemTheme()"><i class="fas fa-adjust"></i></button>
         <div class="sys-ui-divider"></div>
-
-        <button class="sys-btn-control" onclick="FlipOS_Viewport_Manager.modifyZoomFactor(1)" title="Zoom In">
-            <i class="fas fa-plus"></i>
-        </button>
+        <button class="sys-btn-control" onclick="FlipOS_Viewport_Manager.modifyZoomFactor(1)"><i class="fas fa-plus"></i></button>
         <span class="sys-zoom-label" id="display-zoom-metric">100%</span>
-        <button class="sys-btn-control" onclick="FlipOS_Viewport_Manager.modifyZoomFactor(-1)" title="Zoom Out">
-            <i class="fas fa-minus"></i>
-        </button>
-
+        <button class="sys-btn-control" onclick="FlipOS_Viewport_Manager.modifyZoomFactor(-1)"><i class="fas fa-minus"></i></button>
         <div class="sys-ui-divider"></div>
-
-        <button class="sys-btn-control" onclick="FlipOS_Book_Engine.navigatePages('NAV_PREV')">
-            <i class="fas fa-chevron-up"></i>
-        </button>
+        <button class="sys-btn-control" onclick="FlipOS_Book_Engine.navigatePages('NAV_PREV')"><i class="fas fa-chevron-left"></i></button>
         <span id="display-pagination-metric" style="font-family:'JetBrains Mono'; font-size:0.75rem; font-weight:700;">--/--</span>
-        <button class="sys-btn-control" onclick="FlipOS_Book_Engine.navigatePages('NAV_NEXT')">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-
+        <button class="sys-btn-control" onclick="FlipOS_Book_Engine.navigatePages('NAV_NEXT')"><i class="fas fa-chevron-right"></i></button>
         <div class="sys-ui-divider"></div>
-
-        <button class="sys-btn-control" onclick="FlipOS_Interface_Utils.triggerFullscreen()" title="Fullscreen">
-            <i class="fas fa-expand"></i>
-        </button>
+        <button class="sys-btn-control" id="btn-spyglass-toggle" onclick="FlipOS_Magnification_System.toggleLensState()"><i class="fas fa-search"></i></button>
+        <button class="sys-btn-control" onclick="FlipOS_Interface_Utils.triggerFullscreen()"><i class="fas fa-expand"></i></button>
     </aside>
 
-    <div id="system-notification-toast">System Initialized. Ready.</div>
-    
+    <div class="tool-spyglass-lens" id="spyglass-component-root">
+        <canvas id="spyglass-render-canvas"></canvas>
+    </div>
+
+    <div id="system-notification-toast">System Ready.</div>
     <audio id="sfx-page-turn" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -389,171 +200,66 @@
     <script>
         /**
          * ======================================================================================
-         * FLIP OS CORE KERNEL V21
-         * Architecture: Singleton State Management with Event-Driven Services
-         * Developed for: Thesis Defense
+         * FLIP OS KERNEL V22 - ULTIMATE STUDIO EDITION
+         * Features: Dual-Page Spread & Advanced Magnification
          * ======================================================================================
          */
 
-        // Configuration: PDF.js Worker Thread
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        // --- SINGLETON STATE REGISTRY ---
         const FLIPOS_GLOBAL_STORE = {
-            runtime: {
-                pdfDocument: null,
-                bookInstance: null,
-                operationalMode: 'MODE_READ', // Enum: MODE_READ | MODE_STUDIO
-                zoomLevel: 1.0,
-                totalPages: 0,
-                currentPage: 0
-            },
-            config: {
-                maxZoom: 4.0,
-                minZoom: 1.0,
-                zoomStep: 0.5,
-                renderScale: 1.5 // High DPI
-            }
+            runtime: { pdfDocument: null, bookInstance: null, operationalMode: 'MODE_READ', zoomLevel: 1.0, totalPages: 0, currentPage: 0 },
+            config: { maxZoom: 4.0, minZoom: 1.0, zoomStep: 0.5, renderScale: 1.5 }
         };
 
-        // --- SERVICE: KERNEL SYSTEM CONTROLLER ---
         const FlipOS_Kernel_System = {
-            /**
-             * Bootstraps the application, binding IO events.
-             */
             initializeBootSequence() {
-                console.log("[FlipOS Kernel] Boot sequence initiated.");
-                
-                // Bind File Input
                 document.getElementById('core-file-input').addEventListener('change', this.handleFileIngestion);
-
-                // Bind Global Keyboard Shortcuts
                 window.addEventListener('keydown', (event) => {
-                    switch(event.key) {
-                        case 'ArrowLeft': 
-                        case 'ArrowUp':
-                            FlipOS_Book_Engine.navigatePages('NAV_PREV');
-                            break;
-                        case 'ArrowRight':
-                        case 'ArrowDown':
-                            FlipOS_Book_Engine.navigatePages('NAV_NEXT');
-                            break;
-                        case 'z':
-                            if (event.ctrlKey) FlipOS_Ink_Subsystem.executeUndoSequence();
-                            break;
-                        case '+':
-                        case '=':
-                            FlipOS_Viewport_Manager.modifyZoomFactor(1);
-                            break;
-                        case '-':
-                            FlipOS_Viewport_Manager.modifyZoomFactor(-1);
-                            break;
-                    }
+                    if (event.key === 'ArrowLeft') FlipOS_Book_Engine.navigatePages('NAV_PREV');
+                    if (event.key === 'ArrowRight') FlipOS_Book_Engine.navigatePages('NAV_NEXT');
+                    if (event.ctrlKey && event.key === 'z') FlipOS_Ink_Subsystem.executeUndoSequence();
+                    if (event.key === '+' || event.key === '=') FlipOS_Viewport_Manager.modifyZoomFactor(1);
+                    if (event.key === '-') FlipOS_Viewport_Manager.modifyZoomFactor(-1);
                 });
             },
-
-            /**
-             * Processes the raw binary stream from file input.
-             */
             async handleFileIngestion(event) {
-                const fileObject = event.target.files[0];
-                if (!fileObject) return;
-
-                // UI Feedback
-                const uploadBox = document.querySelector('.upload-interface-box');
-                uploadBox.innerHTML = '<i class="fas fa-cog fa-spin" style="font-size:3rem; color:var(--sys-color-accent-main)"></i><br><br>INITIALIZING RENDER PIPELINE...';
-
-                try {
-                    const arrayBuffer = await fileObject.arrayBuffer();
-                    FLIPOS_GLOBAL_STORE.runtime.pdfDocument = await pdfjsLib.getDocument(arrayBuffer).promise;
-                    FLIPOS_GLOBAL_STORE.runtime.totalPages = FLIPOS_GLOBAL_STORE.runtime.pdfDocument.numPages;
-                    
-                    // Trigger Render Pipeline
-                    await FlipOS_Render_Engine.constructVisualDOM();
-                } catch (exception) {
-                    console.error("[FlipOS Kernel] Critical Error:", exception);
-                    alert("FATAL ERROR: Unable to parse document structure.");
-                    location.reload();
-                }
+                if (!event.target.files[0]) return;
+                document.querySelector('.upload-interface-box').innerHTML = '<i class="fas fa-cog fa-spin" style="font-size:3rem;"></i><br>PROCESSING...';
+                const arrayBuffer = await event.target.files[0].arrayBuffer();
+                FLIPOS_GLOBAL_STORE.runtime.pdfDocument = await pdfjsLib.getDocument(arrayBuffer).promise;
+                FLIPOS_GLOBAL_STORE.runtime.totalPages = FLIPOS_GLOBAL_STORE.runtime.pdfDocument.numPages;
+                await FlipOS_Render_Engine.constructVisualDOM();
             },
-
-            /**
-             * Toggles between Reader (View) and Studio (Draw) modes.
-             */
             setOperationalMode(targetMode) {
                 FLIPOS_GLOBAL_STORE.runtime.operationalMode = targetMode;
-                
-                // Update UI Indicators
                 document.getElementById('ctrl-mode-read').classList.toggle('state-active', targetMode === 'MODE_READ');
                 document.getElementById('ctrl-mode-draw').classList.toggle('state-active', targetMode === 'MODE_STUDIO');
-
-                // Logic Branching
                 const interactionMask = document.getElementById('interaction-pan-mask');
-                const bookInstance = FLIPOS_GLOBAL_STORE.runtime.bookInstance;
-
                 if (targetMode === 'MODE_READ') {
-                    // Enable page flipping mechanics
-                    if (bookInstance) bookInstance.update({ useMouseEvents: true });
-                    
-                    // If zoomed in, ensure pan mask is active
-                    if (FLIPOS_GLOBAL_STORE.runtime.zoomLevel > 1) {
-                        interactionMask.style.display = 'block';
-                    }
-                    FlipOS_Interface_Utils.displaySystemToast("Switched to: Reader Mode");
+                    if (FLIPOS_GLOBAL_STORE.runtime.bookInstance) FLIPOS_GLOBAL_STORE.runtime.bookInstance.update({ useMouseEvents: true });
+                    if (FLIPOS_GLOBAL_STORE.runtime.zoomLevel > 1) interactionMask.style.display = 'block';
+                    FlipOS_Interface_Utils.displaySystemToast("Mode: Reader");
                 } else {
-                    // Disable page flipping mechanics to prevent conflicts with drawing
-                    if (bookInstance) bookInstance.update({ useMouseEvents: false });
-                    
-                    // Disable pan mask to allow direct canvas interaction
+                    if (FLIPOS_GLOBAL_STORE.runtime.bookInstance) FLIPOS_GLOBAL_STORE.runtime.bookInstance.update({ useMouseEvents: false });
                     interactionMask.style.display = 'none';
-                    FlipOS_Interface_Utils.displaySystemToast("Switched to: Studio Mode");
+                    FlipOS_Interface_Utils.displaySystemToast("Mode: Studio Draw");
                 }
             }
         };
 
-        // --- SERVICE: RENDER ENGINE (DOM CONSTRUCTION) ---
         const FlipOS_Render_Engine = {
-            /**
-             * Generates HTML Canvas elements for PDF and Ink layers.
-             */
             async constructVisualDOM() {
-                const bookRoot = document.getElementById('book-component-root');
-                bookRoot.innerHTML = ''; // Clean slate
-
-                const totalPages = FLIPOS_GLOBAL_STORE.runtime.totalPages;
-
-                for (let i = 1; i <= totalPages; i++) {
+                const bookRoot = document.getElementById('book-component-root'); bookRoot.innerHTML = '';
+                for (let i = 1; i <= FLIPOS_GLOBAL_STORE.runtime.totalPages; i++) {
                     const pdfPage = await FLIPOS_GLOBAL_STORE.runtime.pdfDocument.getPage(i);
                     const viewport = pdfPage.getViewport({ scale: FLIPOS_GLOBAL_STORE.config.renderScale });
-
-                    // Create Page Container (Wrapper)
-                    const pageWrapper = document.createElement('div');
-                    pageWrapper.className = 'document-page-wrapper';
-                    pageWrapper.dataset.pageIndex = i;
-
-                    // Layer 1: Raster PDF Content
-                    const rasterCanvas = document.createElement('canvas');
-                    rasterCanvas.className = 'layer-type-pdf-raster';
-                    rasterCanvas.width = viewport.width;
-                    rasterCanvas.height = viewport.height;
-                    
-                    // Render PDF to Canvas
-                    const rasterContext = rasterCanvas.getContext('2d', { alpha: false });
-                    await pdfPage.render({ canvasContext: rasterContext, viewport: viewport }).promise;
-
-                    // Layer 2: Vector Ink Content
-                    const vectorCanvas = document.createElement('canvas');
-                    vectorCanvas.className = 'layer-type-digital-ink';
-                    vectorCanvas.width = viewport.width;
-                    vectorCanvas.height = viewport.height;
-
-                    // Assemble DOM Hierarchy
-                    pageWrapper.appendChild(rasterCanvas);
-                    pageWrapper.appendChild(vectorCanvas);
-                    bookRoot.appendChild(pageWrapper);
+                    const pageWrapper = document.createElement('div'); pageWrapper.className = 'document-page-wrapper'; pageWrapper.dataset.pageIndex = i;
+                    const rasterCanvas = document.createElement('canvas'); rasterCanvas.className = 'layer-type-pdf-raster'; rasterCanvas.width = viewport.width; rasterCanvas.height = viewport.height;
+                    await pdfPage.render({ canvasContext: rasterCanvas.getContext('2d', { alpha: false }), viewport: viewport }).promise;
+                    const vectorCanvas = document.createElement('canvas'); vectorCanvas.className = 'layer-type-digital-ink'; vectorCanvas.width = viewport.width; vectorCanvas.height = viewport.height;
+                    pageWrapper.appendChild(rasterCanvas); pageWrapper.appendChild(vectorCanvas); bookRoot.appendChild(pageWrapper);
                 }
-
-                // Cleanup & Init Subsystems
                 document.getElementById('system-overlay-upload').style.display = 'none';
                 FlipOS_Book_Engine.initializeLibrary();
                 FlipOS_Ink_Subsystem.attachEventListeners();
@@ -561,387 +267,182 @@
             }
         };
 
-        // --- SERVICE: BOOK ENGINE (PAGE FLIP LOGIC) ---
         const FlipOS_Book_Engine = {
-            /**
-             * Initializes the 3rd party St.PageFlip library.
-             */
             initializeLibrary() {
-                // Calculate available viewport width (Dynamic)
                 const stageWidth = document.getElementById('system-viewport-stage').clientWidth;
+                const stageHeight = document.getElementById('system-viewport-stage').clientHeight;
                 
-                // Logic: Desktop usually fits 2 pages (Landscape), Mobile fits 1 (Portrait)
-                // We force specific dimensions to ensure it looks good.
-                const bookWidth = stageWidth < 800 ? 400 : 550;
-                const bookHeight = stageWidth < 800 ? 600 : 800;
+                // V22 CONFIG: Force 2-Page Spread on Desktop
+                const isDesktop = stageWidth > 800;
+                // Tính toán kích thước sách dựa trên không gian có sẵn
+                const bookWidth = isDesktop ? Math.min(stageWidth * 0.9, 1200) : stageWidth * 0.95;
+                const bookHeight = isDesktop ? Math.min(stageHeight * 0.9, 800) : stageHeight * 0.8;
 
                 FLIPOS_GLOBAL_STORE.runtime.bookInstance = new St.PageFlip(document.getElementById('book-component-root'), {
-                    width: bookWidth,
-                    height: bookHeight,
-                    size: 'stretch',
-                    minWidth: 300,
-                    maxWidth: 1000,
-                    minHeight: 400,
-                    maxHeight: 1200,
-                    showCover: true,
-                    maxShadowOpacity: 0.5,
-                    useMouseEvents: true // Enabled by default
+                    width: bookWidth, height: bookHeight,
+                    size: isDesktop ? 'fixed' : 'stretch', // Fixed size for real 2-page spread
+                    usePortrait: !isDesktop, // Force landscape on desktop
+                    startPage: 0,
+                    showCover: true, useMouseEvents: true, maxShadowOpacity: 0.5
                 });
-
-                // Load pages into engine
                 FLIPOS_GLOBAL_STORE.runtime.bookInstance.loadFromHTML(document.querySelectorAll('.document-page-wrapper'));
-
-                // Bind Flip Events
                 FLIPOS_GLOBAL_STORE.runtime.bookInstance.on('flip', (e) => {
                     FLIPOS_GLOBAL_STORE.runtime.currentPage = e.data + 1;
-                    document.getElementById('display-pagination-metric').innerText = 
-                        `${FLIPOS_GLOBAL_STORE.runtime.currentPage} / ${FLIPOS_GLOBAL_STORE.runtime.totalPages}`;
-                    
-                    // Audio Playback
-                    const sfx = document.getElementById('sfx-page-turn');
-                    sfx.currentTime = 0;
-                    sfx.play().catch(() => { /* Silent fail */ });
+                    document.getElementById('display-pagination-metric').innerText = `${FLIPOS_GLOBAL_STORE.runtime.currentPage}/${FLIPOS_GLOBAL_STORE.runtime.totalPages}`;
+                    const sfx = document.getElementById('sfx-page-turn'); sfx.currentTime = 0; sfx.play().catch(() => {});
                 });
             },
-
             navigatePages(command) {
-                const book = FLIPOS_GLOBAL_STORE.runtime.bookInstance;
-                if (!book) return;
-                
-                if (command === 'NAV_PREV') book.flipPrev();
-                if (command === 'NAV_NEXT') book.flipNext();
+                if (command === 'NAV_PREV') FLIPOS_GLOBAL_STORE.runtime.bookInstance?.flipPrev();
+                if (command === 'NAV_NEXT') FLIPOS_GLOBAL_STORE.runtime.bookInstance?.flipNext();
             }
         };
 
-        // --- SERVICE: VIEWPORT MANAGER (ZOOM & PAN) ---
         const FlipOS_Viewport_Manager = {
-            state: {
-                panX: 0,
-                panY: 0,
-                isPanning: false,
-                startCoords: { x: 0, y: 0 }
-            },
-
+            state: { panX: 0, panY: 0, isPanning: false, startCoords: { x: 0, y: 0 } },
             initializePanLogic() {
                 const mask = document.getElementById('interaction-pan-mask');
-                
-                mask.addEventListener('mousedown', (e) => {
-                    this.state.isPanning = true;
-                    this.state.startCoords = {
-                        x: e.clientX - this.state.panX,
-                        y: e.clientY - this.state.panY
-                    };
-                    mask.style.cursor = 'grabbing';
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if (this.state.isPanning) {
-                        e.preventDefault();
-                        this.state.panX = e.clientX - this.state.startCoords.x;
-                        this.state.panY = e.clientY - this.state.startCoords.y;
-                        this.applyTransformation();
-                    }
-                });
-
-                window.addEventListener('mouseup', () => {
-                    this.state.isPanning = false;
-                    mask.style.cursor = 'grab';
-                });
+                mask.onmousedown = (e) => { this.state.isPanning = true; this.state.startCoords = { x: e.clientX - this.state.panX, y: e.clientY - this.state.panY }; mask.style.cursor = 'grabbing'; };
+                window.onmousemove = (e) => {
+                    if (this.state.isPanning) { e.preventDefault(); this.state.panX = e.clientX - this.state.startCoords.x; this.state.panY = e.clientY - this.state.startCoords.y; this.applyTransformation(); }
+                    // V22: Trigger Magnification Render
+                    if (FlipOS_Magnification_System.runtime.isActive) FlipOS_Magnification_System.renderLensView(e);
+                };
+                window.onmouseup = () => { this.state.isPanning = false; mask.style.cursor = 'grab'; };
             },
-
             modifyZoomFactor(direction) {
-                const cfg = FLIPOS_GLOBAL_STORE.config;
-                let newZoom = FLIPOS_GLOBAL_STORE.runtime.zoomLevel + (direction * cfg.zoomStep);
-
-                // Clamp values
-                if (newZoom < cfg.minZoom) newZoom = cfg.minZoom;
-                if (newZoom > cfg.maxZoom) newZoom = cfg.maxZoom;
-
-                FLIPOS_GLOBAL_STORE.runtime.zoomLevel = newZoom;
-                this.applyTransformation();
+                const cfg = FLIPOS_GLOBAL_STORE.config; let newZoom = FLIPOS_GLOBAL_STORE.runtime.zoomLevel + (direction * cfg.zoomStep);
+                if (newZoom < cfg.minZoom) newZoom = cfg.minZoom; if (newZoom > cfg.maxZoom) newZoom = cfg.maxZoom;
+                FLIPOS_GLOBAL_STORE.runtime.zoomLevel = newZoom; this.applyTransformation();
             },
-
-            resetTransformationMatrix() {
-                FLIPOS_GLOBAL_STORE.runtime.zoomLevel = 1.0;
-                this.state.panX = 0;
-                this.state.panY = 0;
-                this.applyTransformation();
-                FlipOS_Interface_Utils.displaySystemToast("Viewport Reset");
-            },
-
+            resetTransformationMatrix() { FLIPOS_GLOBAL_STORE.runtime.zoomLevel = 1.0; this.state.panX = 0; this.state.panY = 0; this.applyTransformation(); FlipOS_Interface_Utils.displaySystemToast("Viewport Reset"); },
             applyTransformation() {
-                const target = document.getElementById('visual-transform-matrix');
-                const mask = document.getElementById('interaction-pan-mask');
-                const display = document.getElementById('display-zoom-metric');
-                const currentZoom = FLIPOS_GLOBAL_STORE.runtime.zoomLevel;
-
-                // Update UI Display
-                display.innerText = Math.round(currentZoom * 100) + '%';
-
-                // Apply CSS Transform
-                target.style.transform = 
-                    `translate(${this.state.panX}px, ${this.state.panY}px) scale(${currentZoom})`;
-
-                // Logic: Interaction Mask Visibility
-                // If Zoomed IN and in READ mode -> Enable Mask to allow Panning
-                if (currentZoom > 1 && FLIPOS_GLOBAL_STORE.runtime.operationalMode === 'MODE_READ') {
-                    mask.style.display = 'block';
-                    if (FLIPOS_GLOBAL_STORE.runtime.bookInstance) 
-                        FLIPOS_GLOBAL_STORE.runtime.bookInstance.update({ useMouseEvents: false });
+                const target = document.getElementById('visual-transform-matrix'), mask = document.getElementById('interaction-pan-mask');
+                document.getElementById('display-zoom-metric').innerText = Math.round(FLIPOS_GLOBAL_STORE.runtime.zoomLevel * 100) + '%';
+                target.style.transform = `translate(${this.state.panX}px, ${this.state.panY}px) scale(${FLIPOS_GLOBAL_STORE.runtime.zoomLevel})`;
+                if (FLIPOS_GLOBAL_STORE.runtime.zoomLevel > 1 && FLIPOS_GLOBAL_STORE.runtime.operationalMode === 'MODE_READ') {
+                    mask.style.display = 'block'; FLIPOS_GLOBAL_STORE.runtime.bookInstance?.update({ useMouseEvents: false });
                 } else {
-                    mask.style.display = 'none';
-                    // Auto-center if reset to 1.0
-                    if (currentZoom === 1) {
-                        this.state.panX = 0; this.state.panY = 0;
-                        target.style.transform = 'scale(1)';
-                    }
-                    // Re-enable page flipping if in Read mode
-                    if (FLIPOS_GLOBAL_STORE.runtime.operationalMode === 'MODE_READ' && FLIPOS_GLOBAL_STORE.runtime.bookInstance) {
-                        FLIPOS_GLOBAL_STORE.runtime.bookInstance.update({ useMouseEvents: true });
-                    }
+                    mask.style.display = 'none'; if (FLIPOS_GLOBAL_STORE.runtime.zoomLevel === 1) { this.state.panX = 0; this.state.panY = 0; target.style.transform = 'scale(1)'; }
+                    if (FLIPOS_GLOBAL_STORE.runtime.operationalMode === 'MODE_READ') FLIPOS_GLOBAL_STORE.runtime.bookInstance?.update({ useMouseEvents: true });
                 }
             }
         };
 
-        // --- SERVICE: INK SUBSYSTEM (DRAWING ENGINE) ---
+        // --- V22 MODULE: MAGNIFICATION SYSTEM (SPYGLASS) ---
+        const FlipOS_Magnification_System = {
+            runtime: { isActive: false },
+            toggleLensState() {
+                this.runtime.isActive = !this.runtime.isActive;
+                document.getElementById('btn-spyglass-toggle').classList.toggle('state-active', this.runtime.isActive);
+                document.getElementById('spyglass-component-root').style.display = this.runtime.isActive ? 'block' : 'none';
+            },
+            renderLensView(event) {
+                const lens = document.getElementById('spyglass-component-root');
+                const ctx = document.getElementById('spyglass-render-canvas').getContext('2d');
+                const lensSize = 500; // Internal resolution
+                document.getElementById('spyglass-render-canvas').width = lensSize;
+                document.getElementById('spyglass-render-canvas').height = lensSize;
+
+                // Position Lens fixed to pointer
+                lens.style.left = (event.clientX + 20) + 'px';
+                lens.style.top = (event.clientY + 20) + 'px';
+
+                // Hide lens to perform raycasting
+                lens.style.display = 'none';
+                const elementUnderneath = document.elementFromPoint(event.clientX, event.clientY);
+                lens.style.display = 'block';
+
+                const pageWrapper = elementUnderneath?.closest('.document-page-wrapper');
+                if (pageWrapper) {
+                    const pdfCanvas = pageWrapper.querySelector('.layer-type-pdf-raster');
+                    const inkCanvas = pageWrapper.querySelector('.layer-type-digital-ink');
+                    const rect = pdfCanvas.getBoundingClientRect();
+
+                    // Calculate relative coordinates accounting for Zoom transformation
+                    const scaleX = pdfCanvas.width / rect.width;
+                    const scaleY = pdfCanvas.height / rect.height;
+                    const sourceX = (event.clientX - rect.left) * scaleX;
+                    const sourceY = (event.clientY - rect.top) * scaleY;
+
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, lensSize, lensSize);
+                    // Draw magnified region (Source 100px -> Dest 500px = 5x Zoom)
+                    const region = 100;
+                    try {
+                        ctx.drawImage(pdfCanvas, sourceX - region, sourceY - region, region*2, region*2, 0, 0, lensSize, lensSize);
+                        ctx.drawImage(inkCanvas, sourceX - region, sourceY - region, region*2, region*2, 0, 0, lensSize, lensSize);
+                    } catch (e) {}
+                }
+            }
+        };
+
         const FlipOS_Ink_Subsystem = {
-            runtime: {
-                activeInstrument: 'TOOL_PEN',
-                activeColor: '#ef4444',
-                isDrawing: false,
-                currentCanvasContext: null,
-                currentCanvasElement: null,
-                lastCoordinate: { x: 0, y: 0 },
-                historyStack: {} // Key: PageIndex, Value: Array<ImageData>
-            },
-
+            runtime: { activeInstrument: 'TOOL_PEN', activeColor: '#ef4444', isDrawing: false, currentCanvasContext: null, currentCanvasElement: null, lastCoordinate: { x: 0, y: 0 }, historyStack: {} },
             attachEventListeners() {
-                // Attach to stage area to capture events across multiple canvases (Seamless Drawing)
                 const stage = document.getElementById('system-viewport-stage');
-                
-                stage.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
-                window.addEventListener('pointermove', (e) => this.handlePointerMove(e));
-                window.addEventListener('pointerup', () => this.handlePointerUp());
+                stage.onpointerdown = (e) => this.handlePointerDown(e);
+                window.onpointermove = (e) => this.handlePointerMove(e);
+                window.onpointerup = () => this.handlePointerUp();
             },
-
             setActiveInstrument(toolID) {
                 this.runtime.activeInstrument = toolID;
-                
-                // UI Refresh
-                ['tool-pen', 'tool-marker', 'tool-eraser'].forEach(id => 
-                    document.getElementById(id).classList.remove('state-active')
-                );
-                
-                let targetId = 'tool-pen';
-                if (toolID === 'TOOL_MARKER') targetId = 'tool-marker';
-                if (toolID === 'TOOL_ERASER') targetId = 'tool-eraser';
-                
-                document.getElementById(targetId).classList.add('state-active');
+                ['tool-pen', 'tool-marker', 'tool-eraser'].forEach(id => document.getElementById(id).classList.remove('state-active'));
+                document.getElementById(toolID === 'TOOL_MARKER' ? 'tool-marker' : toolID === 'TOOL_ERASER' ? 'tool-eraser' : 'tool-pen').classList.add('state-active');
             },
-
             setInkColor(hexColor, domElement) {
-                this.runtime.activeColor = hexColor;
-                this.setActiveInstrument('TOOL_PEN'); // Auto-switch back to pen
-                
-                // UI Refresh
+                this.runtime.activeColor = hexColor; this.setActiveInstrument('TOOL_PEN');
                 document.querySelectorAll('.sys-color-swatch').forEach(el => el.classList.remove('state-active'));
                 domElement.classList.add('state-active');
             },
-
-            // --- Vector Calculation Logic ---
-
-            identifyTargetLayer(event) {
-                // Raycasting to find element under cursor
-                const element = document.elementFromPoint(event.clientX, event.clientY);
-                return element && element.classList.contains('layer-type-digital-ink') ? element : null;
+            identifyTargetLayer(event) { const el = document.elementFromPoint(event.clientX, event.clientY); return el?.classList.contains('layer-type-digital-ink') ? el : null; },
+            calculateLocalCoordinates(event, canvas) { const r = canvas.getBoundingClientRect(); return { x: (event.clientX - r.left)*(canvas.width/r.width), y: (event.clientY - r.top)*(canvas.height/r.height) }; },
+            configureContext(ctx) {
+                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                if (this.runtime.activeInstrument === 'TOOL_MARKER') { ctx.globalCompositeOperation = 'multiply'; ctx.strokeStyle = this.runtime.activeColor; ctx.lineWidth = 20; ctx.globalAlpha = 0.5; }
+                else if (this.runtime.activeInstrument === 'TOOL_ERASER') { ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 30; ctx.globalAlpha = 1.0; }
+                else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = this.runtime.activeColor; ctx.lineWidth = 3; ctx.globalAlpha = 1.0; }
             },
-
-            calculateLocalCoordinates(event, canvas) {
-                const rect = canvas.getBoundingClientRect();
-                // Map screen coordinates to internal canvas resolution
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                return {
-                    x: (event.clientX - rect.left) * scaleX,
-                    y: (event.clientY - rect.top) * scaleY
-                };
-            },
-
-            configureContextAttributes(ctx) {
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                
-                if (this.runtime.activeInstrument === 'TOOL_MARKER') {
-                    ctx.globalCompositeOperation = 'multiply';
-                    ctx.strokeStyle = this.runtime.activeColor;
-                    ctx.lineWidth = 20;
-                    ctx.globalAlpha = 0.5;
-                } else if (this.runtime.activeInstrument === 'TOOL_ERASER') {
-                    ctx.globalCompositeOperation = 'destination-out';
-                    ctx.lineWidth = 30;
-                    ctx.globalAlpha = 1.0;
-                } else {
-                    ctx.globalCompositeOperation = 'source-over';
-                    ctx.strokeStyle = this.runtime.activeColor;
-                    ctx.lineWidth = 3;
-                    ctx.globalAlpha = 1.0;
-                }
-            },
-
-            // --- Event Handlers ---
-
             handlePointerDown(event) {
-                // Security check: Only draw in Studio Mode and when Pan Mask is hidden
-                if (FLIPOS_GLOBAL_STORE.runtime.operationalMode !== 'MODE_STUDIO') return;
-                if (document.getElementById('interaction-pan-mask').style.display === 'block') return;
-
-                const target = this.identifyTargetLayer(event);
-                if (!target) return;
-
-                event.preventDefault();
-                this.runtime.isDrawing = true;
-                this.runtime.currentCanvasElement = target;
-                this.runtime.currentCanvasContext = target.getContext('2d');
-                
-                this.configureContextAttributes(this.runtime.currentCanvasContext);
+                if (FLIPOS_GLOBAL_STORE.runtime.operationalMode !== 'MODE_STUDIO' || document.getElementById('interaction-pan-mask').style.display === 'block') return;
+                const target = this.identifyTargetLayer(event); if (!target) return;
+                event.preventDefault(); this.runtime.isDrawing = true; this.runtime.currentCanvasElement = target; this.runtime.currentCanvasContext = target.getContext('2d');
+                this.configureContext(this.runtime.currentCanvasContext);
                 this.runtime.lastCoordinate = this.calculateLocalCoordinates(event, target);
-                
-                // Draw initial dot (Point)
-                const ctx = this.runtime.currentCanvasContext;
-                ctx.beginPath();
-                ctx.moveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y);
-                ctx.stroke();
+                this.runtime.currentCanvasContext.beginPath(); this.runtime.currentCanvasContext.moveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y); this.runtime.currentCanvasContext.stroke();
             },
-
             handlePointerMove(event) {
                 if (!this.runtime.isDrawing) return;
-
                 const target = this.identifyTargetLayer(event);
-                
-                // ALGORITHM: CONTEXT HANDOVER (SEAMLESS DRAWING)
-                // Detects if cursor moved to a different page/canvas
                 if (target && target !== this.runtime.currentCanvasElement) {
-                    // Close path on old canvas
-                    this.runtime.currentCanvasContext.closePath();
-                    this.pushToHistory(this.runtime.currentCanvasElement); // Autosave history
-                    
-                    // Switch to new canvas
-                    this.runtime.currentCanvasElement = target;
-                    this.runtime.currentCanvasContext = target.getContext('2d');
-                    this.configureContextAttributes(this.runtime.currentCanvasContext);
-                    
-                    // Reset coordinates relative to new canvas
+                    this.runtime.currentCanvasContext.closePath(); this.pushToHistory(this.runtime.currentCanvasElement);
+                    this.runtime.currentCanvasElement = target; this.runtime.currentCanvasContext = target.getContext('2d');
+                    this.configureContext(this.runtime.currentCanvasContext);
                     this.runtime.lastCoordinate = this.calculateLocalCoordinates(event, target);
-                    
-                    this.runtime.currentCanvasContext.beginPath();
-                    this.runtime.currentCanvasContext.moveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y);
+                    this.runtime.currentCanvasContext.beginPath(); this.runtime.currentCanvasContext.moveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y);
                 }
-
                 if (this.runtime.currentCanvasElement) {
-                    const currentPos = this.calculateLocalCoordinates(event, this.runtime.currentCanvasElement);
-                    const ctx = this.runtime.currentCanvasContext;
-
-                    // Render Bezier Curve for smoothness
-                    const midPoint = {
-                        x: (this.runtime.lastCoordinate.x + currentPos.x) / 2,
-                        y: (this.runtime.lastCoordinate.y + currentPos.y) / 2
-                    };
-
-                    ctx.quadraticCurveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y, midPoint.x, midPoint.y);
-                    ctx.stroke();
-                    
-                    this.runtime.lastCoordinate = currentPos;
+                    const curr = this.calculateLocalCoordinates(event, this.runtime.currentCanvasElement);
+                    this.runtime.currentCanvasContext.quadraticCurveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y, (this.runtime.lastCoordinate.x+curr.x)/2, (this.runtime.lastCoordinate.y+curr.y)/2);
+                    this.runtime.currentCanvasContext.stroke(); this.runtime.lastCoordinate = curr;
                 }
             },
-
-            handlePointerUp() {
-                if (this.runtime.isDrawing) {
-                    this.runtime.isDrawing = false;
-                    if (this.runtime.currentCanvasContext) {
-                        this.runtime.currentCanvasContext.closePath();
-                    }
-                    if (this.runtime.currentCanvasElement) {
-                        this.pushToHistory(this.runtime.currentCanvasElement);
-                    }
-                }
-            },
-
-            // --- History Manager (Undo/Redo) ---
-
-            pushToHistory(canvasElement) {
-                const pageIdx = canvasElement.parentElement.dataset.pageIndex;
-                if (!this.runtime.historyStack[pageIdx]) this.runtime.historyStack[pageIdx] = [];
-                
-                const snapshot = this.runtime.currentCanvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                this.runtime.historyStack[pageIdx].push(snapshot);
-                
-                // Memory Optimization: Limit 15 steps
-                if (this.runtime.historyStack[pageIdx].length > 15) this.runtime.historyStack[pageIdx].shift();
-            },
-
+            handlePointerUp() { if (this.runtime.isDrawing) { this.runtime.isDrawing = false; this.runtime.currentCanvasContext?.closePath(); if(this.runtime.currentCanvasElement) this.pushToHistory(this.runtime.currentCanvasElement); } },
+            pushToHistory(c) { const id = c.parentElement.dataset.pageIndex; if(!this.runtime.historyStack[id]) this.runtime.historyStack[id]=[]; this.runtime.historyStack[id].push(this.runtime.currentCanvasContext.getImageData(0,0,c.width,c.height)); if(this.runtime.historyStack[id].length>15) this.runtime.historyStack[id].shift(); },
             executeUndoSequence() {
-                if (!this.runtime.currentCanvasElement) return;
-                
-                const pageIdx = this.runtime.currentCanvasElement.parentElement.dataset.pageIndex;
-                const stack = this.runtime.historyStack[pageIdx];
-                
-                if (stack && stack.length > 0) {
-                    stack.pop(); // Remove current state
-                    const previousState = stack[stack.length - 1];
-                    const ctx = this.runtime.currentCanvasElement.getContext('2d');
-                    
-                    if (previousState) {
-                        ctx.putImageData(previousState, 0, 0);
-                    } else {
-                        // If no history left, clear canvas
-                        ctx.clearRect(0, 0, this.runtime.currentCanvasElement.width, this.runtime.currentCanvasElement.height);
-                    }
-                    FlipOS_Interface_Utils.displaySystemToast("Undo Operation Successful");
-                }
+                if(!this.runtime.currentCanvasElement) return;
+                const h=this.runtime.historyStack[this.runtime.currentCanvasElement.parentElement.dataset.pageIndex];
+                if(h?.length){ h.pop(); const p=h[h.length-1]; p?this.runtime.currentCanvasContext.putImageData(p,0,0):this.executeClearCanvas(); FlipOS_Interface_Utils.displaySystemToast("Undo Successful");}
             },
-
-            executeClearCanvas() {
-                if (this.runtime.currentCanvasElement) {
-                    const ctx = this.runtime.currentCanvasElement.getContext('2d');
-                    ctx.clearRect(0, 0, this.runtime.currentCanvasElement.width, this.runtime.currentCanvasElement.height);
-                    this.pushToHistory(this.runtime.currentCanvasElement);
-                    FlipOS_Interface_Utils.displaySystemToast("Page Cleared");
-                }
-            }
+            executeClearCanvas() {If(this.runtime.currentCanvasElement){this.runtime.currentCanvasElement.getContext('2d').clearRect(0,0,this.runtime.currentCanvasElement.width,this.runtime.currentCanvasElement.height);this.pushToHistory(this.runtime.currentCanvasElement);FlipOS_Interface_Utils.displaySystemToast("Page Cleared");}}
         };
 
-        // --- SERVICE: INTERFACE UTILITIES ---
         const FlipOS_Interface_Utils = {
-            toggleSystemTheme() {
-                const body = document.body;
-                const currentTheme = body.getAttribute('data-theme');
-                body.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
-            },
-
-            triggerFullscreen() {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen();
-                } else {
-                    if (document.exitFullscreen) document.exitFullscreen();
-                }
-            },
-
-            displaySystemToast(message) {
-                const toast = document.getElementById('system-notification-toast');
-                toast.innerText = message;
-                toast.classList.add('state-visible');
-                
-                // Debounce timeout
-                if (this.toastTimeout) clearTimeout(this.toastTimeout);
-                this.toastTimeout = setTimeout(() => {
-                    toast.classList.remove('state-visible');
-                }, 2500);
-            }
+            toggleSystemTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); },
+            triggerFullscreen() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); },
+            displaySystemToast(m) { const t=document.getElementById('system-notification-toast'); t.innerText=m; t.classList.add('state-visible'); setTimeout(()=>t.classList.remove('state-visible'),2500); }
         };
 
-        // --- KERNEL INITIALIZATION ---
         FlipOS_Kernel_System.initializeBootSequence();
-
     </script>
 </body>
 </html>
