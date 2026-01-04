@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlipOS V24 | Stable Fix</title>
+    <title>FlipOS V25 | Persistent & Calc</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* CORE VARIABLES */
         :root {
             --sys-bg: #050505;
             --sys-panel: #1a1a1d;
@@ -38,7 +37,6 @@
             grid-template-areas: "left stage right";
         }
 
-        /* SIDEBARS */
         .sidebar {
             background-color: var(--sys-panel);
             border-left: 1px solid var(--sys-border);
@@ -50,7 +48,6 @@
         #ui-left { grid-area: left; border-left: none; }
         #ui-right { grid-area: right; border-right: none; }
 
-        /* STAGE */
         #stage {
             grid-area: stage; position: relative; overflow: hidden;
             background-image: radial-gradient(var(--sys-border) 1px, transparent 1px);
@@ -66,7 +63,6 @@
             transition: transform 0.1s linear;
         }
 
-        /* COMPONENTS */
         .btn {
             width: 48px; height: 48px; border-radius: 12px;
             background: rgba(128,128,128,0.05); color: inherit;
@@ -82,13 +78,11 @@
         .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
         .color-dot.active { border-color: var(--sys-text); transform: scale(1.15); }
 
-        /* BOOK LAYERS */
         .page-wrap { position: relative; background: #fff; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
         canvas { position: absolute; top:0; left:0; width:100%; height:100%; }
         .pdf-l { z-index: 1; pointer-events: none; }
         .ink-l { z-index: 10; cursor: crosshair; touch-action: none; }
 
-        /* OVERLAYS */
         #pan-mask { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 500; display: none; }
         
         .spyglass {
@@ -99,7 +93,34 @@
             display: none; background: #fff;
         }
 
-        /* UPLOAD */
+        #calc-app {
+            position: fixed; top: 100px; right: 100px; width: 260px;
+            background: var(--sys-panel); border: 1px solid var(--sys-border);
+            border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            z-index: 9500; display: none; flex-direction: column; overflow: hidden;
+        }
+        .calc-head {
+            padding: 10px 15px; background: rgba(128,128,128,0.1);
+            cursor: grab; display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; font-size: 0.9rem;
+        }
+        .calc-head:active { cursor: grabbing; }
+        .calc-screen {
+            padding: 20px; text-align: right; font-size: 1.8rem; font-family: monospace;
+            border-bottom: 1px solid var(--sys-border); color: var(--sys-accent);
+            white-space: nowrap; overflow: hidden;
+        }
+        .calc-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--sys-border);
+        }
+        .calc-btn {
+            background: var(--sys-panel); border: none; padding: 15px;
+            font-size: 1.1rem; color: var(--sys-text); cursor: pointer;
+        }
+        .calc-btn:hover { background: rgba(128,128,128,0.1); }
+        .calc-btn.op { color: var(--sys-accent); font-weight: bold; }
+        .calc-btn.eq { background: var(--sys-accent); color: #fff; grid-column: span 2; }
+
         #upload-ol { 
             position: fixed; top:0; left:0; width:100%; height:100%; 
             background: rgba(0,0,0,0.95); z-index: 9999; 
@@ -124,11 +145,40 @@
 
     <div id="upload-ol">
         <div class="upload-box" onclick="document.getElementById('file-in').click()">
-            <i class="fas fa-file-pdf" style="font-size: 4rem; color: var(--sys-accent); margin-bottom: 24px;"></i>
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V24</h1>
-            <p style="color: #888; font-family: monospace;">Fixed Highlight & Undo</p>
+            <i class="fas fa-hdd" style="font-size: 4rem; color: var(--sys-accent); margin-bottom: 24px;"></i>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V25</h1>
+            <p style="color: #888; font-family: monospace;">Auto-Save • Calculator • Fixed Ink</p>
+            <div id="loading-txt" style="margin-top: 20px; font-size: 0.9rem; display:none;">Restoring Session...</div>
         </div>
         <input type="file" id="file-in" hidden accept="application/pdf">
+    </div>
+
+    <div id="calc-app">
+        <div class="calc-head" id="calc-drag">
+            <span>CALCULATOR</span>
+            <i class="fas fa-times" style="cursor:pointer;" onclick="Calc.toggle()"></i>
+        </div>
+        <div class="calc-screen" id="calc-disp">0</div>
+        <div class="calc-grid">
+            <button class="calc-btn" onclick="Calc.clr()">C</button>
+            <button class="calc-btn" onclick="Calc.del()">DEL</button>
+            <button class="calc-btn op" onclick="Calc.add('/')">/</button>
+            <button class="calc-btn op" onclick="Calc.add('*')">×</button>
+            <button class="calc-btn" onclick="Calc.add('7')">7</button>
+            <button class="calc-btn" onclick="Calc.add('8')">8</button>
+            <button class="calc-btn" onclick="Calc.add('9')">9</button>
+            <button class="calc-btn op" onclick="Calc.add('-')">-</button>
+            <button class="calc-btn" onclick="Calc.add('4')">4</button>
+            <button class="calc-btn" onclick="Calc.add('5')">5</button>
+            <button class="calc-btn" onclick="Calc.add('6')">6</button>
+            <button class="calc-btn op" onclick="Calc.add('+')">+</button>
+            <button class="calc-btn" onclick="Calc.add('1')">1</button>
+            <button class="calc-btn" onclick="Calc.add('2')">2</button>
+            <button class="calc-btn" onclick="Calc.add('3')">3</button>
+            <button class="calc-btn" style="grid-row: span 2;" onclick="Calc.exec()">=</button>
+            <button class="calc-btn" onclick="Calc.add('0')" style="grid-column: span 2;">0</button>
+            <button class="calc-btn" onclick="Calc.add('.')">.</button>
+        </div>
     </div>
 
     <aside class="sidebar" id="ui-left">
@@ -144,7 +194,7 @@
         <div class="color-dot" style="background:#3b82f6" onclick="Ink.color('#3b82f6',this)"></div>
         <div class="divider"></div>
         <button class="btn" onclick="Ink.undo()"><i class="fas fa-undo"></i></button>
-        <button class="btn" onclick="Ink.clear()"><i class="fas fa-trash"></i></button>
+        <button class="btn" onclick="Storage.clear()"><i class="fas fa-hdd" title="Clear Storage"></i></button>
     </aside>
 
     <main id="stage" ondblclick="View.reset()">
@@ -165,6 +215,7 @@
         <span id="pg-txt" style="font-family:monospace; font-weight:700;">--/--</span>
         <button class="btn" onclick="Book.nav(1)"><i class="fas fa-chevron-right"></i></button>
         <div class="divider"></div>
+        <button class="btn" id="btn-calc" onclick="Calc.toggle()"><i class="fas fa-calculator"></i></button>
         <button class="btn" id="btn-spy" onclick="Spy.toggle()"><i class="fas fa-search"></i></button>
         <button class="btn" onclick="UI.full()"><i class="fas fa-expand"></i></button>
     </aside>
@@ -181,8 +232,47 @@
 
         const State = { pdf: null, book: null, mode: 'READ', zoom: 1, total: 0, current: 0 };
 
-        const Kernel = {
+        const DB = {
+            name: 'FlipOS_DB', version: 1, db: null,
             init() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(this.name, this.version);
+                    req.onupgradeneeded = e => { e.target.result.createObjectStore('files'); };
+                    req.onsuccess = e => { this.db = e.target.result; resolve(); };
+                    req.onerror = e => reject(e);
+                });
+            },
+            save(data) {
+                const tx = this.db.transaction('files', 'readwrite');
+                tx.objectStore('files').put(data, 'current_pdf');
+            },
+            load() {
+                return new Promise((resolve) => {
+                    const tx = this.db.transaction('files', 'readonly');
+                    const req = tx.objectStore('files').get('current_pdf');
+                    req.onsuccess = e => resolve(e.target.result);
+                    req.onerror = () => resolve(null);
+                });
+            },
+            clear() {
+                const tx = this.db.transaction('files', 'readwrite');
+                tx.objectStore('files').delete('current_pdf');
+            }
+        };
+
+        const Kernel = {
+            async init() {
+                await DB.init();
+                
+                const savedData = await DB.load();
+                if(savedData) {
+                    document.getElementById('loading-txt').style.display = 'block';
+                    State.pdf = await pdfjsLib.getDocument(savedData).promise;
+                    State.total = State.pdf.numPages;
+                    await Render.build();
+                    UI.toast("Restored Saved File");
+                }
+
                 document.getElementById('file-in').addEventListener('change', this.upload);
                 window.addEventListener('keydown', e => {
                     if(e.key==='ArrowLeft') Book.nav(-1);
@@ -191,17 +281,20 @@
                     if(e.key==='+') View.zoom(1);
                     if(e.key==='-') View.zoom(-1);
                 });
+                
+                Calc.init();
             },
             async upload(e) {
                 if(!e.target.files[0]) return;
                 try {
                     document.querySelector('.upload-box').innerHTML = '<i class="fas fa-spin fa-spinner" style="font-size:3rem"></i>';
                     const ab = await e.target.files[0].arrayBuffer();
+                    DB.save(ab); 
                     State.pdf = await pdfjsLib.getDocument(ab).promise;
                     State.total = State.pdf.numPages;
                     await Render.build();
                 } catch(err) {
-                    alert("Error loading PDF: " + err.message);
+                    alert("Error: " + err.message);
                     location.reload();
                 }
             },
@@ -210,7 +303,6 @@
                 document.getElementById('m-read').classList.toggle('active', m==='READ');
                 document.getElementById('m-draw').classList.toggle('active', m==='DRAW');
                 const mask = document.getElementById('pan-mask');
-                
                 if(m==='READ') {
                     if(State.book) State.book.update({useMouseEvents: true});
                     if(State.zoom > 1) mask.style.display = 'block';
@@ -231,12 +323,9 @@
                     const v = p.getViewport({scale: 1.5});
                     const wrap = document.createElement('div');
                     wrap.className = 'page-wrap'; wrap.dataset.idx = i;
-                    
                     const pc = document.createElement('canvas'); pc.className='pdf-l'; pc.width=v.width; pc.height=v.height;
                     await p.render({canvasContext: pc.getContext('2d'), viewport: v}).promise;
-                    
                     const ic = document.createElement('canvas'); ic.className='ink-l'; ic.width=v.width; ic.height=v.height;
-                    
                     wrap.append(pc, ic); root.append(wrap);
                 }
                 document.getElementById('upload-ol').style.display = 'none';
@@ -247,7 +336,6 @@
         const Book = {
             init() {
                 const w = document.getElementById('stage').clientWidth;
-                // Force landscape spread if width allows
                 const isWide = w > 800;
                 State.book = new St.PageFlip(document.getElementById('book-root'), {
                     width: isWide ? 550 : 400, height: isWide ? 800 : 600,
@@ -289,9 +377,7 @@
                 document.getElementById('zoom-txt').innerText = (this.val*100)+'%';
                 const t = document.getElementById('transform-target');
                 const m = document.getElementById('pan-mask');
-                
                 t.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.val})`;
-                
                 if(this.val > 1 && State.mode === 'READ') {
                     m.style.display = 'block';
                     if(State.book) State.book.update({useMouseEvents: false});
@@ -324,49 +410,35 @@
             hit(e) { const el = document.elementFromPoint(e.clientX, e.clientY); return el?.classList.contains('ink-l') ? el : null; },
             pos(e, c) { const r = c.getBoundingClientRect(); return { x: (e.clientX-r.left)*(c.width/r.width), y: (e.clientY-r.top)*(c.height/r.height) }; },
             
-            // --- FIX 1: CẤU HÌNH CONTEXT CHUẨN ---
             cfg(ctx) {
                 ctx.lineCap='round'; ctx.lineJoin='round';
                 if(this.t==='marker') { 
-                    ctx.globalCompositeOperation='source-over'; // Không dùng multiply nữa
-                    ctx.strokeStyle=this.c; 
-                    ctx.lineWidth=25; 
-                    ctx.globalAlpha=0.4; // Dùng Opacity để nhìn xuyên thấu
-                }
-                else if(this.t==='eraser') { 
-                    ctx.globalCompositeOperation='destination-out'; 
-                    ctx.lineWidth=30; 
-                    ctx.globalAlpha=1.0; 
-                }
-                else { 
                     ctx.globalCompositeOperation='source-over'; 
                     ctx.strokeStyle=this.c; 
-                    ctx.lineWidth=3; 
-                    ctx.globalAlpha=1.0; 
+                    ctx.lineWidth=20; 
+                    ctx.globalAlpha=0.2; 
+                }
+                else if(this.t==='eraser') { 
+                    ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=30; ctx.globalAlpha=1.0; 
+                }
+                else { 
+                    ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=this.c; ctx.lineWidth=3; ctx.globalAlpha=1.0; 
                 }
             },
 
             down(e) {
                 if(document.getElementById('pan-mask').style.display === 'block') return;
                 const h = this.hit(e); if(!h || State.mode!=='DRAW') return;
-                
-                e.preventDefault(); 
-                this.isD=true; this.can=h; this.ctx=h.getContext('2d');
-                
-                // --- FIX 2: LƯU HISTORY TRƯỚC KHI VẼ (CHO UNDO) ---
+                e.preventDefault(); this.isD=true; this.can=h; this.ctx=h.getContext('2d');
                 this.push(this.can);
-
-                this.cfg(this.ctx); 
-                this.last=this.pos(e, h);
+                this.cfg(this.ctx); this.last=this.pos(e, h);
                 this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y); this.ctx.stroke();
             },
-
             move(e) {
                 if(!this.isD) return;
                 const h = this.hit(e);
                 if(h && h !== this.can) {
-                    this.ctx.closePath(); 
-                    this.push(h); // Lưu history trang mới trước khi vẽ
+                    this.ctx.closePath(); this.push(h);
                     this.can=h; this.ctx=h.getContext('2d'); this.cfg(this.ctx);
                     this.last=this.pos(e, h);
                     this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
@@ -377,40 +449,25 @@
                     this.ctx.stroke(); this.last = curr;
                 }
             },
-
-            up() { 
-                this.isD=false; 
-                if(this.ctx) this.ctx.closePath(); 
-                // Không cần push ở đây nữa vì đã push ở down rồi
-            },
-
+            up() { this.isD=false; if(this.ctx) this.ctx.closePath(); },
             push(c) {
                 if(!c) return; const i = c.parentElement.dataset.idx;
                 if(!this.hist[i]) this.hist[i]=[];
                 this.hist[i].push(this.ctx.getImageData(0,0,c.width,c.height));
                 if(this.hist[i].length>15) this.hist[i].shift();
             },
-
             undo() {
-                if(!this.can) return; 
-                const idx = this.can.parentElement.dataset.idx;
-                const h = this.hist[idx];
-                
-                if(h && h.length > 0) { 
-                    const prev = h.pop(); // Lấy trạng thái cũ nhất ra
-                    if(prev) {
-                        this.ctx.putImageData(prev,0,0);
-                        UI.toast("Undo");
-                    }
-                } else {
-                    // Nếu hết history thì xóa trắng
-                    this.ctx.clearRect(0,0,this.can.width,this.can.height);
+                if(!this.can) return; const i = this.can.parentElement.dataset.idx;
+                const h = this.hist[i];
+                if(h?.length) { 
+                    h.pop(); const p=h[h.length-1]; 
+                    if(p) this.ctx.putImageData(p,0,0); else this.ctx.clearRect(0,0,this.can.width,this.can.height); 
+                    UI.toast("Undo");
                 }
             },
-
             clear() {
                 if(this.can) {
-                    this.push(this.can); // Lưu trước khi xóa
+                    this.push(this.can);
                     this.can.getContext('2d').clearRect(0,0,this.can.width,this.can.height);
                     UI.toast("Cleared");
                 }
@@ -433,6 +490,55 @@
                     const x=(e.clientX-r.left)*rx, y=(e.clientY-r.top)*ry;
                     c.fillStyle='#fff'; c.fillRect(0,0,500,500);
                     try { c.drawImage(pdf,x-100,y-100,200,200,0,0,500,500); c.drawImage(ink,x-100,y-100,200,200,0,0,500,500); } catch(e){}
+                }
+            }
+        };
+
+        const Calc = {
+            init() {
+                const el = document.getElementById('calc-app');
+                const head = document.getElementById('calc-drag');
+                let isDown = false, offX, offY;
+                head.addEventListener('mousedown', e => {
+                    isDown = true;
+                    offX = e.clientX - el.offsetLeft;
+                    offY = e.clientY - el.offsetTop;
+                    head.style.cursor = 'grabbing';
+                });
+                window.addEventListener('mousemove', e => {
+                    if(!isDown) return;
+                    el.style.left = (e.clientX - offX) + 'px';
+                    el.style.top = (e.clientY - offY) + 'px';
+                });
+                window.addEventListener('mouseup', () => { isDown = false; head.style.cursor = 'grab'; });
+            },
+            toggle() {
+                const el = document.getElementById('calc-app');
+                el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+                document.getElementById('btn-calc').classList.toggle('active');
+            },
+            add(v) { document.getElementById('calc-disp').innerText += v; },
+            clr() { document.getElementById('calc-disp').innerText = ''; },
+            del() { 
+                const s = document.getElementById('calc-disp').innerText; 
+                document.getElementById('calc-disp').innerText = s.substring(0, s.length - 1); 
+            },
+            exec() {
+                try {
+                    const res = eval(document.getElementById('calc-disp').innerText);
+                    document.getElementById('calc-disp').innerText = res;
+                } catch {
+                    document.getElementById('calc-disp').innerText = 'Error';
+                }
+            }
+        };
+
+        const Storage = {
+            clear() {
+                if(confirm("Clear saved PDF?")) {
+                    DB.clear();
+                    UI.toast("Storage Cleared");
+                    setTimeout(() => location.reload(), 1000);
                 }
             }
         };
