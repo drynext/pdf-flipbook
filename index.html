@@ -3,446 +3,405 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="FlipOS V22 Ultimate Studio - Dual Page Spread & Magnification System">
-    <meta name="author" content="Dang Duc Dai - Lead Architect">
-    <title>FlipOS V22 | Ultimate Studio Edition</title>
+    <meta name="description" content="FlipOS V23 Stable - Fixed Upload & Syntax">
+    <title>FlipOS V23 | Stable Studio</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* * ======================================================================================
-         * MODULE 1: GLOBAL DESIGN TOKENS
-         * ======================================================================================
-         */
+        /* CORE VARIABLES */
         :root {
-            --sys-color-background-primary: #050505;
-            --sys-color-background-panel: #1a1a1d;
-            --sys-color-text-primary: #ffffff;
-            --sys-color-text-secondary: #a1a1aa;
-            --sys-color-accent-main: #3b82f6;
-            --sys-color-border-subtle: #27272a;
-            --sys-layout-sidebar-width: 72px;
-            --sys-layout-z-index-ui: 1000;
-            --sys-effect-shadow-panel: 0 0 0 1px rgba(255,255,255,0.05), 0 10px 15px -3px rgba(0,0,0,0.5);
+            --sys-bg: #050505;
+            --sys-panel: #1a1a1d;
+            --sys-text: #ffffff;
+            --sys-accent: #3b82f6;
+            --sys-border: #27272a;
+            --sys-sidebar-w: 72px;
         }
-
         [data-theme="light"] {
-            --sys-color-background-primary: #f0f2f5;
-            --sys-color-background-panel: #ffffff;
-            --sys-color-text-primary: #18181b;
-            --sys-color-text-secondary: #71717a;
-            --sys-color-border-subtle: #e4e4e7;
-            --sys-color-accent-main: #2563eb;
+            --sys-bg: #f0f2f5;
+            --sys-panel: #ffffff;
+            --sys-text: #18181b;
+            --sys-border: #e4e4e7;
+            --sys-accent: #2563eb;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        * { margin:0; padding:0; box-sizing:border-box; outline:none; -webkit-tap-highlight-color:transparent; }
         
-        /* * ======================================================================================
-         * MODULE 2: MASTER GRID LAYOUT (HARD-LOCKED)
-         * ======================================================================================
-         */
         body {
-            background-color: var(--sys-color-background-primary);
-            color: var(--sys-color-text-primary);
+            background-color: var(--sys-bg); color: var(--sys-text);
             font-family: 'Inter', sans-serif;
             height: 100vh; width: 100vw; overflow: hidden;
             display: grid;
-            grid-template-columns: var(--sys-layout-sidebar-width) 1fr var(--sys-layout-sidebar-width);
+            grid-template-columns: var(--sys-sidebar-w) 1fr var(--sys-sidebar-w);
             grid-template-rows: 100%;
-            grid-template-areas: "region-sidebar-left region-viewport-center region-sidebar-right";
+            grid-template-areas: "left stage right";
         }
 
-        /* --- UI SIDEBARS --- */
-        .system-sidebar-container {
-            background-color: var(--sys-color-background-panel);
-            border-right: 1px solid var(--sys-color-border-subtle);
-            border-left: 1px solid var(--sys-color-border-subtle);
-            z-index: var(--sys-layout-z-index-ui);
-            display: flex; flex-direction: column; align-items: center;
-            padding: 20px 0; gap: 16px;
-            box-shadow: var(--sys-effect-shadow-panel);
+        /* SIDEBARS */
+        .sidebar {
+            background-color: var(--sys-panel);
+            border-left: 1px solid var(--sys-border);
+            border-right: 1px solid var(--sys-border);
+            z-index: 1000; display: flex; flex-direction: column; 
+            align-items: center; padding: 20px 0; gap: 16px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
-        #ui-region-left { grid-area: region-sidebar-left; border-left: none; }
-        #ui-region-right { grid-area: region-sidebar-right; border-right: none; }
+        #ui-left { grid-area: left; border-left: none; }
+        #ui-right { grid-area: right; border-right: none; }
 
-        /* --- VIEWPORT STAGE --- */
-        #system-viewport-stage {
-            grid-area: region-viewport-center;
-            position: relative; overflow: hidden;
-            background-image: radial-gradient(var(--sys-color-border-subtle) 1px, transparent 1px);
+        /* STAGE */
+        #stage {
+            grid-area: stage; position: relative; overflow: hidden;
+            background-image: radial-gradient(var(--sys-border) 1px, transparent 1px);
             background-size: 24px 24px;
             display: flex; justify-content: center; align-items: center;
             cursor: grab;
         }
-        #system-viewport-stage:active { cursor: grabbing; }
+        #stage:active { cursor: grabbing; }
 
-        /* The Transformation Matrix Target (Zooms/Pans) */
-        #visual-transform-matrix {
+        #transform-target {
             transform-origin: center center;
             will-change: transform;
             transition: transform 0.1s linear;
         }
 
-        /* * ======================================================================================
-         * MODULE 3: COMPONENTS & LAYERS
-         * ======================================================================================
-         */
-        .sys-btn-control {
+        /* COMPONENTS */
+        .btn {
             width: 48px; height: 48px; border-radius: 12px;
-            background-color: rgba(128,128,128,0.05); color: var(--sys-color-text-secondary);
+            background: rgba(128,128,128,0.05); color: inherit;
             border: 1px solid transparent; cursor: pointer;
             display: flex; justify-content: center; align-items: center; font-size: 1.25rem;
-            transition: all 0.2s ease;
+            transition: 0.2s;
         }
-        .sys-btn-control:hover { background-color: rgba(128,128,128,0.15); color: var(--sys-color-text-primary); transform: translateY(-2px); }
-        .sys-btn-control.state-active { background-color: var(--sys-color-accent-main); color: #ffffff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .btn:hover { background: rgba(128,128,128,0.2); transform: translateY(-2px); }
+        .btn.active { background: var(--sys-accent); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
 
-        .sys-mode-group { background-color: rgba(0,0,0,0.2); padding: 6px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px; }
-        .sys-mode-item { width: 36px; height: 36px; border-radius: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.5; transition: 0.2s; }
-        .sys-mode-item.state-active { background-color: var(--sys-color-background-panel); color: var(--sys-color-accent-main); opacity: 1; }
-
-        .sys-color-swatch { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: transform 0.2s; }
-        .sys-color-swatch.state-active { border-color: var(--sys-color-text-primary); transform: scale(1.15); }
-        .sys-ui-divider { width: 60%; height: 1px; background-color: var(--sys-color-border-subtle); margin: 4px 0; }
-        .sys-zoom-label { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--sys-color-accent-main); margin: 5px 0; }
-
-        /* Rendering Layers */
-        .document-page-wrapper { position: relative; background-color: #fff; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.1); border-right: 1px solid #eee; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .layer-type-pdf-raster { z-index: 1; pointer-events: none; }
-        .layer-type-digital-ink { z-index: 10; cursor: crosshair; touch-action: none; }
-
-        /* Overlays */
-        #interaction-pan-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; display: none; }
+        .divider { width: 60%; height: 1px; background: var(--sys-border); margin: 4px 0; }
         
-        /* Spyglass Lens (New V22) */
-        .tool-spyglass-lens {
-            position: fixed; /* Fixed to viewport, not zoomed */
-            width: 220px; height: 220px;
-            border-radius: 50%;
-            border: 4px solid var(--sys-color-text-primary);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
+        .color-dot.active { border-color: var(--sys-text); transform: scale(1.15); }
+
+        /* BOOK LAYERS */
+        .page-wrap { position: relative; background: #fff; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        canvas { position: absolute; top:0; left:0; width:100%; height:100%; }
+        .pdf-l { z-index: 1; pointer-events: none; }
+        .ink-l { z-index: 10; cursor: crosshair; touch-action: none; }
+
+        /* OVERLAYS */
+        #pan-mask { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 500; display: none; }
+        
+        .spyglass {
+            position: fixed; width: 220px; height: 220px;
+            border-radius: 50%; border: 4px solid var(--sys-text);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
             overflow: hidden; pointer-events: none; z-index: 9000;
             display: none; background: #fff;
         }
 
-        /* Utility Screens */
-        #system-overlay-upload { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(5,5,5,0.96); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
-        .upload-interface-box { padding: 60px 80px; border: 2px dashed var(--sys-color-border-subtle); border-radius: 32px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
-        .upload-interface-box:hover { border-color: var(--sys-color-accent-main); transform: translateY(-5px); }
-        #system-notification-toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background-color: var(--sys-color-background-panel); color: var(--sys-color-text-primary); padding: 12px 24px; border-radius: 50px; font-size: 0.9rem; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 8000; }
-        #system-notification-toast.state-visible { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+        /* UPLOAD */
+        #upload-ol { 
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(0,0,0,0.95); z-index: 9999; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        }
+        .upload-box { 
+            padding: 60px 80px; border: 2px dashed var(--sys-border); border-radius: 32px; 
+            text-align: center; cursor: pointer; transition: 0.3s; 
+        }
+        .upload-box:hover { border-color: var(--sys-accent); transform: translateY(-5px); }
+
+        #toast { 
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            background: var(--sys-panel); color: var(--sys-text); padding: 12px 24px; 
+            border-radius: 50px; font-weight: 600; opacity: 0; pointer-events: none; 
+            transition: 0.3s; z-index: 8000; border: 1px solid var(--sys-border);
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div id="system-overlay-upload">
-        <div class="upload-interface-box" onclick="document.getElementById('core-file-input').click()">
-            <i class="fas fa-book-open" style="font-size: 4rem; color: var(--sys-color-accent-main); margin-bottom: 24px;"></i>
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V22</h1>
-            <p style="color: var(--sys-color-text-secondary); font-family: 'JetBrains Mono';">Ultimate Studio Edition</p>
-            <div style="margin-top: 20px; font-size: 0.8rem; opacity: 0.6;">CLICK TO LOAD PDF</div>
+    <div id="upload-ol">
+        <div class="upload-box" onclick="document.getElementById('file-in').click()">
+            <i class="fas fa-file-pdf" style="font-size: 4rem; color: var(--sys-accent); margin-bottom: 24px;"></i>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">FLIP OS V23</h1>
+            <p style="color: #888; font-family: monospace;">Stable Kernel • Dual Spread</p>
         </div>
-        <input type="file" id="core-file-input" hidden accept="application/pdf">
+        <input type="file" id="file-in" hidden accept="application/pdf">
     </div>
 
-    <aside class="system-sidebar-container" id="ui-region-left">
-        <div class="sys-mode-group">
-            <div class="sys-mode-item state-active" id="ctrl-mode-read" onclick="FlipOS_Kernel_System.setOperationalMode('MODE_READ')"><i class="fas fa-eye"></i></div>
-            <div class="sys-mode-item" id="ctrl-mode-draw" onclick="FlipOS_Kernel_System.setOperationalMode('MODE_STUDIO')"><i class="fas fa-pencil-alt"></i></div>
-        </div>
-        <div class="sys-ui-divider"></div>
-        <button class="sys-btn-control" id="tool-pen" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_PEN')"><i class="fas fa-pen"></i></button>
-        <button class="sys-btn-control" id="tool-marker" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_MARKER')"><i class="fas fa-highlighter"></i></button>
-        <button class="sys-btn-control" id="tool-eraser" onclick="FlipOS_Ink_Subsystem.setActiveInstrument('TOOL_ERASER')"><i class="fas fa-eraser"></i></button>
-        <div class="sys-ui-divider"></div>
-        <div class="sys-color-swatch state-active" style="background-color: #ef4444;" onclick="FlipOS_Ink_Subsystem.setInkColor('#ef4444', this)"></div>
-        <div class="sys-color-swatch" style="background-color: #22c55e;" onclick="FlipOS_Ink_Subsystem.setInkColor('#22c55e', this)"></div>
-        <div class="sys-color-swatch" style="background-color: #3b82f6;" onclick="FlipOS_Ink_Subsystem.setInkColor('#3b82f6', this)"></div>
-        <div class="sys-ui-divider"></div>
-        <button class="sys-btn-control" onclick="FlipOS_Ink_Subsystem.executeUndoSequence()"><i class="fas fa-undo"></i></button>
-        <button class="sys-btn-control" onclick="FlipOS_Ink_Subsystem.executeClearCanvas()"><i class="fas fa-trash-alt"></i></button>
+    <aside class="sidebar" id="ui-left">
+        <button class="btn active" id="m-read" onclick="Kernel.mode('READ')"><i class="fas fa-eye"></i></button>
+        <button class="btn" id="m-draw" onclick="Kernel.mode('DRAW')"><i class="fas fa-pen"></i></button>
+        <div class="divider"></div>
+        <button class="btn" id="t-pen" onclick="Ink.tool('pen')"><i class="fas fa-pen-nib"></i></button>
+        <button class="btn" id="t-mark" onclick="Ink.tool('marker')"><i class="fas fa-highlighter"></i></button>
+        <button class="btn" id="t-erase" onclick="Ink.tool('eraser')"><i class="fas fa-eraser"></i></button>
+        <div class="divider"></div>
+        <div class="color-dot active" style="background:#ef4444" onclick="Ink.color('#ef4444',this)"></div>
+        <div class="color-dot" style="background:#22c55e" onclick="Ink.color('#22c55e',this)"></div>
+        <div class="color-dot" style="background:#3b82f6" onclick="Ink.color('#3b82f6',this)"></div>
+        <div class="divider"></div>
+        <button class="btn" onclick="Ink.undo()"><i class="fas fa-undo"></i></button>
+        <button class="btn" onclick="Ink.clear()"><i class="fas fa-trash"></i></button>
     </aside>
 
-    <main id="system-viewport-stage" ondblclick="FlipOS_Viewport_Manager.resetTransformationMatrix()">
-        <div id="visual-transform-matrix">
-            <div id="book-component-root"></div>
+    <main id="stage" ondblclick="View.reset()">
+        <div id="transform-target">
+            <div id="book-root"></div>
         </div>
-        <div id="interaction-pan-mask"></div>
+        <div id="pan-mask"></div>
     </main>
 
-    <aside class="system-sidebar-container" id="ui-region-right">
-        <button class="sys-btn-control" onclick="FlipOS_Interface_Utils.toggleSystemTheme()"><i class="fas fa-adjust"></i></button>
-        <div class="sys-ui-divider"></div>
-        <button class="sys-btn-control" onclick="FlipOS_Viewport_Manager.modifyZoomFactor(1)"><i class="fas fa-plus"></i></button>
-        <span class="sys-zoom-label" id="display-zoom-metric">100%</span>
-        <button class="sys-btn-control" onclick="FlipOS_Viewport_Manager.modifyZoomFactor(-1)"><i class="fas fa-minus"></i></button>
-        <div class="sys-ui-divider"></div>
-        <button class="sys-btn-control" onclick="FlipOS_Book_Engine.navigatePages('NAV_PREV')"><i class="fas fa-chevron-left"></i></button>
-        <span id="display-pagination-metric" style="font-family:'JetBrains Mono'; font-size:0.75rem; font-weight:700;">--/--</span>
-        <button class="sys-btn-control" onclick="FlipOS_Book_Engine.navigatePages('NAV_NEXT')"><i class="fas fa-chevron-right"></i></button>
-        <div class="sys-ui-divider"></div>
-        <button class="sys-btn-control" id="btn-spyglass-toggle" onclick="FlipOS_Magnification_System.toggleLensState()"><i class="fas fa-search"></i></button>
-        <button class="sys-btn-control" onclick="FlipOS_Interface_Utils.triggerFullscreen()"><i class="fas fa-expand"></i></button>
+    <aside class="sidebar" id="ui-right">
+        <button class="btn" onclick="UI.theme()"><i class="fas fa-adjust"></i></button>
+        <div class="divider"></div>
+        <button class="btn" onclick="View.zoom(1)"><i class="fas fa-plus"></i></button>
+        <span id="zoom-txt" style="font-family:monospace; font-weight:700; color:var(--sys-accent)">100%</span>
+        <button class="btn" onclick="View.zoom(-1)"><i class="fas fa-minus"></i></button>
+        <div class="divider"></div>
+        <button class="btn" onclick="Book.nav(-1)"><i class="fas fa-chevron-left"></i></button>
+        <span id="pg-txt" style="font-family:monospace; font-weight:700;">--/--</span>
+        <button class="btn" onclick="Book.nav(1)"><i class="fas fa-chevron-right"></i></button>
+        <div class="divider"></div>
+        <button class="btn" id="btn-spy" onclick="Spy.toggle()"><i class="fas fa-search"></i></button>
+        <button class="btn" onclick="UI.full()"><i class="fas fa-expand"></i></button>
     </aside>
 
-    <div class="tool-spyglass-lens" id="spyglass-component-root">
-        <canvas id="spyglass-render-canvas"></canvas>
-    </div>
-
-    <div id="system-notification-toast">System Ready.</div>
-    <audio id="sfx-page-turn" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
+    <div class="spyglass" id="spy-root"><canvas id="spy-c"></canvas></div>
+    <div id="toast">Ready</div>
+    <audio id="sfx" src="https://www.soundjay.com/books/sounds/book-page-turn-03.mp3"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
 
     <script>
-        /**
-         * ======================================================================================
-         * FLIP OS KERNEL V22 - ULTIMATE STUDIO EDITION
-         * Features: Dual-Page Spread & Advanced Magnification
-         * ======================================================================================
-         */
-
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const FLIPOS_GLOBAL_STORE = {
-            runtime: { pdfDocument: null, bookInstance: null, operationalMode: 'MODE_READ', zoomLevel: 1.0, totalPages: 0, currentPage: 0 },
-            config: { maxZoom: 4.0, minZoom: 1.0, zoomStep: 0.5, renderScale: 1.5 }
-        };
+        const State = { pdf: null, book: null, mode: 'READ', zoom: 1, total: 0, current: 0 };
 
-        const FlipOS_Kernel_System = {
-            initializeBootSequence() {
-                document.getElementById('core-file-input').addEventListener('change', this.handleFileIngestion);
-                window.addEventListener('keydown', (event) => {
-                    if (event.key === 'ArrowLeft') FlipOS_Book_Engine.navigatePages('NAV_PREV');
-                    if (event.key === 'ArrowRight') FlipOS_Book_Engine.navigatePages('NAV_NEXT');
-                    if (event.ctrlKey && event.key === 'z') FlipOS_Ink_Subsystem.executeUndoSequence();
-                    if (event.key === '+' || event.key === '=') FlipOS_Viewport_Manager.modifyZoomFactor(1);
-                    if (event.key === '-') FlipOS_Viewport_Manager.modifyZoomFactor(-1);
+        const Kernel = {
+            init() {
+                document.getElementById('file-in').addEventListener('change', this.upload);
+                window.addEventListener('keydown', e => {
+                    if(e.key==='ArrowLeft') Book.nav(-1);
+                    if(e.key==='ArrowRight') Book.nav(1);
+                    if(e.ctrlKey && e.key==='z') Ink.undo();
+                    if(e.key==='+') View.zoom(1);
+                    if(e.key==='-') View.zoom(-1);
                 });
             },
-            async handleFileIngestion(event) {
-                if (!event.target.files[0]) return;
-                document.querySelector('.upload-interface-box').innerHTML = '<i class="fas fa-cog fa-spin" style="font-size:3rem;"></i><br>PROCESSING...';
-                const arrayBuffer = await event.target.files[0].arrayBuffer();
-                FLIPOS_GLOBAL_STORE.runtime.pdfDocument = await pdfjsLib.getDocument(arrayBuffer).promise;
-                FLIPOS_GLOBAL_STORE.runtime.totalPages = FLIPOS_GLOBAL_STORE.runtime.pdfDocument.numPages;
-                await FlipOS_Render_Engine.constructVisualDOM();
+            async upload(e) {
+                if(!e.target.files[0]) return;
+                try {
+                    document.querySelector('.upload-box').innerHTML = '<i class="fas fa-spin fa-spinner" style="font-size:3rem"></i>';
+                    const ab = await e.target.files[0].arrayBuffer();
+                    State.pdf = await pdfjsLib.getDocument(ab).promise;
+                    State.total = State.pdf.numPages;
+                    await Render.build();
+                } catch(err) {
+                    alert("Error loading PDF: " + err.message);
+                    location.reload();
+                }
             },
-            setOperationalMode(targetMode) {
-                FLIPOS_GLOBAL_STORE.runtime.operationalMode = targetMode;
-                document.getElementById('ctrl-mode-read').classList.toggle('state-active', targetMode === 'MODE_READ');
-                document.getElementById('ctrl-mode-draw').classList.toggle('state-active', targetMode === 'MODE_STUDIO');
-                const interactionMask = document.getElementById('interaction-pan-mask');
-                if (targetMode === 'MODE_READ') {
-                    if (FLIPOS_GLOBAL_STORE.runtime.bookInstance) FLIPOS_GLOBAL_STORE.runtime.bookInstance.update({ useMouseEvents: true });
-                    if (FLIPOS_GLOBAL_STORE.runtime.zoomLevel > 1) interactionMask.style.display = 'block';
-                    FlipOS_Interface_Utils.displaySystemToast("Mode: Reader");
-                } else {
-                    if (FLIPOS_GLOBAL_STORE.runtime.bookInstance) FLIPOS_GLOBAL_STORE.runtime.bookInstance.update({ useMouseEvents: false });
-                    interactionMask.style.display = 'none';
-                    FlipOS_Interface_Utils.displaySystemToast("Mode: Studio Draw");
-                }
-            }
-        };
-
-        const FlipOS_Render_Engine = {
-            async constructVisualDOM() {
-                const bookRoot = document.getElementById('book-component-root'); bookRoot.innerHTML = '';
-                for (let i = 1; i <= FLIPOS_GLOBAL_STORE.runtime.totalPages; i++) {
-                    const pdfPage = await FLIPOS_GLOBAL_STORE.runtime.pdfDocument.getPage(i);
-                    const viewport = pdfPage.getViewport({ scale: FLIPOS_GLOBAL_STORE.config.renderScale });
-                    const pageWrapper = document.createElement('div'); pageWrapper.className = 'document-page-wrapper'; pageWrapper.dataset.pageIndex = i;
-                    const rasterCanvas = document.createElement('canvas'); rasterCanvas.className = 'layer-type-pdf-raster'; rasterCanvas.width = viewport.width; rasterCanvas.height = viewport.height;
-                    await pdfPage.render({ canvasContext: rasterCanvas.getContext('2d', { alpha: false }), viewport: viewport }).promise;
-                    const vectorCanvas = document.createElement('canvas'); vectorCanvas.className = 'layer-type-digital-ink'; vectorCanvas.width = viewport.width; vectorCanvas.height = viewport.height;
-                    pageWrapper.appendChild(rasterCanvas); pageWrapper.appendChild(vectorCanvas); bookRoot.appendChild(pageWrapper);
-                }
-                document.getElementById('system-overlay-upload').style.display = 'none';
-                FlipOS_Book_Engine.initializeLibrary();
-                FlipOS_Ink_Subsystem.attachEventListeners();
-                FlipOS_Viewport_Manager.initializePanLogic();
-            }
-        };
-
-        const FlipOS_Book_Engine = {
-            initializeLibrary() {
-                const stageWidth = document.getElementById('system-viewport-stage').clientWidth;
-                const stageHeight = document.getElementById('system-viewport-stage').clientHeight;
+            mode(m) {
+                State.mode = m;
+                document.getElementById('m-read').classList.toggle('active', m==='READ');
+                document.getElementById('m-draw').classList.toggle('active', m==='DRAW');
+                const mask = document.getElementById('pan-mask');
                 
-                // V22 CONFIG: Force 2-Page Spread on Desktop
-                const isDesktop = stageWidth > 800;
-                // Tính toán kích thước sách dựa trên không gian có sẵn
-                const bookWidth = isDesktop ? Math.min(stageWidth * 0.9, 1200) : stageWidth * 0.95;
-                const bookHeight = isDesktop ? Math.min(stageHeight * 0.9, 800) : stageHeight * 0.8;
-
-                FLIPOS_GLOBAL_STORE.runtime.bookInstance = new St.PageFlip(document.getElementById('book-component-root'), {
-                    width: bookWidth, height: bookHeight,
-                    size: isDesktop ? 'fixed' : 'stretch', // Fixed size for real 2-page spread
-                    usePortrait: !isDesktop, // Force landscape on desktop
-                    startPage: 0,
-                    showCover: true, useMouseEvents: true, maxShadowOpacity: 0.5
-                });
-                FLIPOS_GLOBAL_STORE.runtime.bookInstance.loadFromHTML(document.querySelectorAll('.document-page-wrapper'));
-                FLIPOS_GLOBAL_STORE.runtime.bookInstance.on('flip', (e) => {
-                    FLIPOS_GLOBAL_STORE.runtime.currentPage = e.data + 1;
-                    document.getElementById('display-pagination-metric').innerText = `${FLIPOS_GLOBAL_STORE.runtime.currentPage}/${FLIPOS_GLOBAL_STORE.runtime.totalPages}`;
-                    const sfx = document.getElementById('sfx-page-turn'); sfx.currentTime = 0; sfx.play().catch(() => {});
-                });
-            },
-            navigatePages(command) {
-                if (command === 'NAV_PREV') FLIPOS_GLOBAL_STORE.runtime.bookInstance?.flipPrev();
-                if (command === 'NAV_NEXT') FLIPOS_GLOBAL_STORE.runtime.bookInstance?.flipNext();
-            }
-        };
-
-        const FlipOS_Viewport_Manager = {
-            state: { panX: 0, panY: 0, isPanning: false, startCoords: { x: 0, y: 0 } },
-            initializePanLogic() {
-                const mask = document.getElementById('interaction-pan-mask');
-                mask.onmousedown = (e) => { this.state.isPanning = true; this.state.startCoords = { x: e.clientX - this.state.panX, y: e.clientY - this.state.panY }; mask.style.cursor = 'grabbing'; };
-                window.onmousemove = (e) => {
-                    if (this.state.isPanning) { e.preventDefault(); this.state.panX = e.clientX - this.state.startCoords.x; this.state.panY = e.clientY - this.state.startCoords.y; this.applyTransformation(); }
-                    // V22: Trigger Magnification Render
-                    if (FlipOS_Magnification_System.runtime.isActive) FlipOS_Magnification_System.renderLensView(e);
-                };
-                window.onmouseup = () => { this.state.isPanning = false; mask.style.cursor = 'grab'; };
-            },
-            modifyZoomFactor(direction) {
-                const cfg = FLIPOS_GLOBAL_STORE.config; let newZoom = FLIPOS_GLOBAL_STORE.runtime.zoomLevel + (direction * cfg.zoomStep);
-                if (newZoom < cfg.minZoom) newZoom = cfg.minZoom; if (newZoom > cfg.maxZoom) newZoom = cfg.maxZoom;
-                FLIPOS_GLOBAL_STORE.runtime.zoomLevel = newZoom; this.applyTransformation();
-            },
-            resetTransformationMatrix() { FLIPOS_GLOBAL_STORE.runtime.zoomLevel = 1.0; this.state.panX = 0; this.state.panY = 0; this.applyTransformation(); FlipOS_Interface_Utils.displaySystemToast("Viewport Reset"); },
-            applyTransformation() {
-                const target = document.getElementById('visual-transform-matrix'), mask = document.getElementById('interaction-pan-mask');
-                document.getElementById('display-zoom-metric').innerText = Math.round(FLIPOS_GLOBAL_STORE.runtime.zoomLevel * 100) + '%';
-                target.style.transform = `translate(${this.state.panX}px, ${this.state.panY}px) scale(${FLIPOS_GLOBAL_STORE.runtime.zoomLevel})`;
-                if (FLIPOS_GLOBAL_STORE.runtime.zoomLevel > 1 && FLIPOS_GLOBAL_STORE.runtime.operationalMode === 'MODE_READ') {
-                    mask.style.display = 'block'; FLIPOS_GLOBAL_STORE.runtime.bookInstance?.update({ useMouseEvents: false });
+                if(m==='READ') {
+                    if(State.book) State.book.update({useMouseEvents: true});
+                    if(State.zoom > 1) mask.style.display = 'block';
+                    UI.toast("Reader Mode");
                 } else {
-                    mask.style.display = 'none'; if (FLIPOS_GLOBAL_STORE.runtime.zoomLevel === 1) { this.state.panX = 0; this.state.panY = 0; target.style.transform = 'scale(1)'; }
-                    if (FLIPOS_GLOBAL_STORE.runtime.operationalMode === 'MODE_READ') FLIPOS_GLOBAL_STORE.runtime.bookInstance?.update({ useMouseEvents: true });
+                    if(State.book) State.book.update({useMouseEvents: false});
+                    mask.style.display = 'none';
+                    UI.toast("Studio Mode");
                 }
             }
         };
 
-        // --- V22 MODULE: MAGNIFICATION SYSTEM (SPYGLASS) ---
-        const FlipOS_Magnification_System = {
-            runtime: { isActive: false },
-            toggleLensState() {
-                this.runtime.isActive = !this.runtime.isActive;
-                document.getElementById('btn-spyglass-toggle').classList.toggle('state-active', this.runtime.isActive);
-                document.getElementById('spyglass-component-root').style.display = this.runtime.isActive ? 'block' : 'none';
+        const Render = {
+            async build() {
+                const root = document.getElementById('book-root'); root.innerHTML = '';
+                for(let i=1; i<=State.total; i++) {
+                    const p = await State.pdf.getPage(i);
+                    const v = p.getViewport({scale: 1.5});
+                    const wrap = document.createElement('div');
+                    wrap.className = 'page-wrap'; wrap.dataset.idx = i;
+                    
+                    const pc = document.createElement('canvas'); pc.className='pdf-l'; pc.width=v.width; pc.height=v.height;
+                    await p.render({canvasContext: pc.getContext('2d'), viewport: v}).promise;
+                    
+                    const ic = document.createElement('canvas'); ic.className='ink-l'; ic.width=v.width; ic.height=v.height;
+                    
+                    wrap.append(pc, ic); root.append(wrap);
+                }
+                document.getElementById('upload-ol').style.display = 'none';
+                Book.init(); Ink.init(); View.init();
+            }
+        };
+
+        const Book = {
+            init() {
+                const w = document.getElementById('stage').clientWidth;
+                // Force landscape spread if width allows
+                const isWide = w > 800;
+                State.book = new St.PageFlip(document.getElementById('book-root'), {
+                    width: isWide ? 550 : 400, height: isWide ? 800 : 600,
+                    size: isWide ? 'fixed' : 'stretch',
+                    usePortrait: !isWide,
+                    showCover: true, useMouseEvents: true
+                });
+                State.book.loadFromHTML(document.querySelectorAll('.page-wrap'));
+                State.book.on('flip', e => {
+                    State.current = e.data + 1;
+                    document.getElementById('pg-txt').innerText = `${State.current}/${State.total}`;
+                    const sfx = document.getElementById('sfx'); sfx.currentTime=0; sfx.play().catch(()=>{});
+                });
             },
-            renderLensView(event) {
-                const lens = document.getElementById('spyglass-component-root');
-                const ctx = document.getElementById('spyglass-render-canvas').getContext('2d');
-                const lensSize = 500; // Internal resolution
-                document.getElementById('spyglass-render-canvas').width = lensSize;
-                document.getElementById('spyglass-render-canvas').height = lensSize;
+            nav(d) {
+                if(!State.book) return;
+                d === -1 ? State.book.flipPrev() : State.book.flipNext();
+            }
+        };
 
-                // Position Lens fixed to pointer
-                lens.style.left = (event.clientX + 20) + 'px';
-                lens.style.top = (event.clientY + 20) + 'px';
-
-                // Hide lens to perform raycasting
-                lens.style.display = 'none';
-                const elementUnderneath = document.elementFromPoint(event.clientX, event.clientY);
-                lens.style.display = 'block';
-
-                const pageWrapper = elementUnderneath?.closest('.document-page-wrapper');
-                if (pageWrapper) {
-                    const pdfCanvas = pageWrapper.querySelector('.layer-type-pdf-raster');
-                    const inkCanvas = pageWrapper.querySelector('.layer-type-digital-ink');
-                    const rect = pdfCanvas.getBoundingClientRect();
-
-                    // Calculate relative coordinates accounting for Zoom transformation
-                    const scaleX = pdfCanvas.width / rect.width;
-                    const scaleY = pdfCanvas.height / rect.height;
-                    const sourceX = (event.clientX - rect.left) * scaleX;
-                    const sourceY = (event.clientY - rect.top) * scaleY;
-
-                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, lensSize, lensSize);
-                    // Draw magnified region (Source 100px -> Dest 500px = 5x Zoom)
-                    const region = 100;
-                    try {
-                        ctx.drawImage(pdfCanvas, sourceX - region, sourceY - region, region*2, region*2, 0, 0, lensSize, lensSize);
-                        ctx.drawImage(inkCanvas, sourceX - region, sourceY - region, region*2, region*2, 0, 0, lensSize, lensSize);
-                    } catch (e) {}
+        const View = {
+            pan: {x:0, y:0}, val: 1, isD: false, start: {x:0,y:0},
+            init() {
+                const m = document.getElementById('pan-mask');
+                m.onmousedown = e => { this.isD=true; this.start={x:e.clientX-this.pan.x, y:e.clientY-this.pan.y}; m.style.cursor='grabbing'; };
+                window.onmousemove = e => {
+                    if(this.isD) { e.preventDefault(); this.pan.x=e.clientX-this.start.x; this.pan.y=e.clientY-this.start.y; this.apply(); }
+                    if(Spy.on) Spy.render(e);
+                };
+                window.onmouseup = () => { this.isD=false; m.style.cursor='grab'; };
+            },
+            zoom(d) {
+                if(d>0 && this.val<4) this.val+=0.5; else if(d<0 && this.val>1) this.val-=0.5;
+                this.apply();
+            },
+            reset() { this.val=1; this.pan={x:0,y:0}; this.apply(); UI.toast("Reset View"); },
+            apply() {
+                State.zoom = this.val;
+                document.getElementById('zoom-txt').innerText = (this.val*100)+'%';
+                const t = document.getElementById('transform-target');
+                const m = document.getElementById('pan-mask');
+                
+                t.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.val})`;
+                
+                if(this.val > 1 && State.mode === 'READ') {
+                    m.style.display = 'block';
+                    if(State.book) State.book.update({useMouseEvents: false});
+                } else {
+                    m.style.display = 'none';
+                    if(this.val===1) { this.pan={x:0,y:0}; t.style.transform='scale(1)'; }
+                    if(State.mode === 'READ' && State.book) State.book.update({useMouseEvents: true});
                 }
             }
         };
 
-        const FlipOS_Ink_Subsystem = {
-            runtime: { activeInstrument: 'TOOL_PEN', activeColor: '#ef4444', isDrawing: false, currentCanvasContext: null, currentCanvasElement: null, lastCoordinate: { x: 0, y: 0 }, historyStack: {} },
-            attachEventListeners() {
-                const stage = document.getElementById('system-viewport-stage');
-                stage.onpointerdown = (e) => this.handlePointerDown(e);
-                window.onpointermove = (e) => this.handlePointerMove(e);
-                window.onpointerup = () => this.handlePointerUp();
+        const Ink = {
+            t: 'pen', c: '#ef4444', isD: false, ctx: null, can: null, hist: {}, last: {x:0,y:0},
+            init() {
+                const s = document.getElementById('stage');
+                s.onpointerdown = e => this.down(e);
+                window.onpointermove = e => this.move(e);
+                window.onpointerup = () => this.up();
             },
-            setActiveInstrument(toolID) {
-                this.runtime.activeInstrument = toolID;
-                ['tool-pen', 'tool-marker', 'tool-eraser'].forEach(id => document.getElementById(id).classList.remove('state-active'));
-                document.getElementById(toolID === 'TOOL_MARKER' ? 'tool-marker' : toolID === 'TOOL_ERASER' ? 'tool-eraser' : 'tool-pen').classList.add('state-active');
+            tool(n) {
+                this.t = n;
+                ['pen','mark','erase'].forEach(id => document.getElementById('t-'+id).classList.remove('active'));
+                document.getElementById('t-'+(n==='marker'?'mark':(n==='eraser'?'erase':'pen'))).classList.add('active');
             },
-            setInkColor(hexColor, domElement) {
-                this.runtime.activeColor = hexColor; this.setActiveInstrument('TOOL_PEN');
-                document.querySelectorAll('.sys-color-swatch').forEach(el => el.classList.remove('state-active'));
-                domElement.classList.add('state-active');
+            color(hex, el) {
+                this.c = hex; this.tool('pen');
+                document.querySelectorAll('.color-dot').forEach(e => e.classList.remove('active'));
+                el.classList.add('active');
             },
-            identifyTargetLayer(event) { const el = document.elementFromPoint(event.clientX, event.clientY); return el?.classList.contains('layer-type-digital-ink') ? el : null; },
-            calculateLocalCoordinates(event, canvas) { const r = canvas.getBoundingClientRect(); return { x: (event.clientX - r.left)*(canvas.width/r.width), y: (event.clientY - r.top)*(canvas.height/r.height) }; },
-            configureContext(ctx) {
-                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                if (this.runtime.activeInstrument === 'TOOL_MARKER') { ctx.globalCompositeOperation = 'multiply'; ctx.strokeStyle = this.runtime.activeColor; ctx.lineWidth = 20; ctx.globalAlpha = 0.5; }
-                else if (this.runtime.activeInstrument === 'TOOL_ERASER') { ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 30; ctx.globalAlpha = 1.0; }
-                else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = this.runtime.activeColor; ctx.lineWidth = 3; ctx.globalAlpha = 1.0; }
+            hit(e) { const el = document.elementFromPoint(e.clientX, e.clientY); return el?.classList.contains('ink-l') ? el : null; },
+            pos(e, c) { const r = c.getBoundingClientRect(); return { x: (e.clientX-r.left)*(c.width/r.width), y: (e.clientY-r.top)*(c.height/r.height) }; },
+            cfg(ctx) {
+                ctx.lineCap='round'; ctx.lineJoin='round';
+                if(this.t==='marker') { ctx.globalCompositeOperation='multiply'; ctx.strokeStyle=this.c; ctx.lineWidth=20; ctx.globalAlpha=0.5; }
+                else if(this.t==='eraser') { ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=30; ctx.globalAlpha=1; }
+                else { ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=this.c; ctx.lineWidth=3; ctx.globalAlpha=1; }
             },
-            handlePointerDown(event) {
-                if (FLIPOS_GLOBAL_STORE.runtime.operationalMode !== 'MODE_STUDIO' || document.getElementById('interaction-pan-mask').style.display === 'block') return;
-                const target = this.identifyTargetLayer(event); if (!target) return;
-                event.preventDefault(); this.runtime.isDrawing = true; this.runtime.currentCanvasElement = target; this.runtime.currentCanvasContext = target.getContext('2d');
-                this.configureContext(this.runtime.currentCanvasContext);
-                this.runtime.lastCoordinate = this.calculateLocalCoordinates(event, target);
-                this.runtime.currentCanvasContext.beginPath(); this.runtime.currentCanvasContext.moveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y); this.runtime.currentCanvasContext.stroke();
+            down(e) {
+                if(document.getElementById('pan-mask').style.display === 'block') return;
+                const h = this.hit(e); if(!h || State.mode!=='DRAW') return;
+                e.preventDefault(); this.isD=true; this.can=h; this.ctx=h.getContext('2d');
+                this.cfg(this.ctx); this.last=this.pos(e, h);
+                this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y); this.ctx.stroke();
             },
-            handlePointerMove(event) {
-                if (!this.runtime.isDrawing) return;
-                const target = this.identifyTargetLayer(event);
-                if (target && target !== this.runtime.currentCanvasElement) {
-                    this.runtime.currentCanvasContext.closePath(); this.pushToHistory(this.runtime.currentCanvasElement);
-                    this.runtime.currentCanvasElement = target; this.runtime.currentCanvasContext = target.getContext('2d');
-                    this.configureContext(this.runtime.currentCanvasContext);
-                    this.runtime.lastCoordinate = this.calculateLocalCoordinates(event, target);
-                    this.runtime.currentCanvasContext.beginPath(); this.runtime.currentCanvasContext.moveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y);
+            move(e) {
+                if(!this.isD) return;
+                const h = this.hit(e);
+                if(h && h !== this.can) {
+                    this.ctx.closePath(); this.push(this.can);
+                    this.can=h; this.ctx=h.getContext('2d'); this.cfg(this.ctx);
+                    this.last=this.pos(e, h);
+                    this.ctx.beginPath(); this.ctx.moveTo(this.last.x, this.last.y);
                 }
-                if (this.runtime.currentCanvasElement) {
-                    const curr = this.calculateLocalCoordinates(event, this.runtime.currentCanvasElement);
-                    this.runtime.currentCanvasContext.quadraticCurveTo(this.runtime.lastCoordinate.x, this.runtime.lastCoordinate.y, (this.runtime.lastCoordinate.x+curr.x)/2, (this.runtime.lastCoordinate.y+curr.y)/2);
-                    this.runtime.currentCanvasContext.stroke(); this.runtime.lastCoordinate = curr;
+                if(this.can) {
+                    const curr = this.pos(e, this.can);
+                    this.ctx.quadraticCurveTo(this.last.x, this.last.y, (this.last.x+curr.x)/2, (this.last.y+curr.y)/2);
+                    this.ctx.stroke(); this.last = curr;
                 }
             },
-            handlePointerUp() { if (this.runtime.isDrawing) { this.runtime.isDrawing = false; this.runtime.currentCanvasContext?.closePath(); if(this.runtime.currentCanvasElement) this.pushToHistory(this.runtime.currentCanvasElement); } },
-            pushToHistory(c) { const id = c.parentElement.dataset.pageIndex; if(!this.runtime.historyStack[id]) this.runtime.historyStack[id]=[]; this.runtime.historyStack[id].push(this.runtime.currentCanvasContext.getImageData(0,0,c.width,c.height)); if(this.runtime.historyStack[id].length>15) this.runtime.historyStack[id].shift(); },
-            executeUndoSequence() {
-                if(!this.runtime.currentCanvasElement) return;
-                const h=this.runtime.historyStack[this.runtime.currentCanvasElement.parentElement.dataset.pageIndex];
-                if(h?.length){ h.pop(); const p=h[h.length-1]; p?this.runtime.currentCanvasContext.putImageData(p,0,0):this.executeClearCanvas(); FlipOS_Interface_Utils.displaySystemToast("Undo Successful");}
+            up() { this.isD=false; if(this.ctx) { this.ctx.closePath(); this.push(this.can); } },
+            push(c) {
+                if(!c) return; const i = c.parentElement.dataset.idx;
+                if(!this.hist[i]) this.hist[i]=[];
+                this.hist[i].push(this.ctx.getImageData(0,0,c.width,c.height));
+                if(this.hist[i].length>10) this.hist[i].shift();
             },
-            executeClearCanvas() {If(this.runtime.currentCanvasElement){this.runtime.currentCanvasElement.getContext('2d').clearRect(0,0,this.runtime.currentCanvasElement.width,this.runtime.currentCanvasElement.height);this.pushToHistory(this.runtime.currentCanvasElement);FlipOS_Interface_Utils.displaySystemToast("Page Cleared");}}
+            undo() {
+                if(!this.can) return; const i = this.can.parentElement.dataset.idx;
+                const h = this.hist[i];
+                if(h?.length) { h.pop(); const p=h[h.length-1]; p ? this.ctx.putImageData(p,0,0) : this.ctx.clearRect(0,0,this.can.width,this.can.height); }
+            },
+            clear() {
+                if(this.can) {
+                    this.can.getContext('2d').clearRect(0,0,this.can.width,this.can.height);
+                    this.push(this.can);
+                }
+            }
         };
 
-        const FlipOS_Interface_Utils = {
-            toggleSystemTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); },
-            triggerFullscreen() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); },
-            displaySystemToast(m) { const t=document.getElementById('system-notification-toast'); t.innerText=m; t.classList.add('state-visible'); setTimeout(()=>t.classList.remove('state-visible'),2500); }
+        const Spy = {
+            on: false,
+            toggle() {
+                this.on = !this.on;
+                document.getElementById('btn-spy').classList.toggle('active', this.on);
+                document.getElementById('spy-root').style.display = this.on ? 'block' : 'none';
+            },
+            render(e) {
+                const s=document.getElementById('spy-root'), c=document.getElementById('spy-c').getContext('2d');
+                document.getElementById('spy-c').width=500; document.getElementById('spy-c').height=500;
+                s.style.left=(e.clientX+20)+'px'; s.style.top=(e.clientY+20)+'px';
+                s.style.display='none'; const el=document.elementFromPoint(e.clientX, e.clientY); s.style.display='block';
+                const w = el?.closest('.page-wrap');
+                if(w) {
+                    const pdf=w.querySelector('.pdf-l'), ink=w.querySelector('.ink-l');
+                    const r=pdf.getBoundingClientRect();
+                    const x=(e.clientX-r.left)*(pdf.width/r.width), y=(e.clientY-r.top)*(pdf.height/r.height);
+                    c.fillStyle='#fff'; c.fillRect(0,0,500,500);
+                    try { c.drawImage(pdf, x-100, y-100, 200, 200, 0,0,500,500); c.drawImage(ink, x-100, y-100, 200, 200, 0,0,500,500); } catch(e){}
+                }
+            }
         };
 
-        FlipOS_Kernel_System.initializeBootSequence();
+        const UI = {
+            theme() { const b=document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')=='dark'?'light':'dark'); },
+            full() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); },
+            toast(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+        };
+
+        Kernel.init();
     </script>
 </body>
 </html>
