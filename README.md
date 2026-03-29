@@ -1,66 +1,62 @@
-# FlipOS V24 (Stable Studio)
+# 🏛️ FlipArch (FlipOS V27) | Geometry Architect on Stellar
 
-FlipOS V24 is an advanced web-based PDF visualization engine that transforms static PDF documents into a realistic 3D interactive flipbook with professional studio-grade annotation capabilities. Built on a robust Monolith Architecture with a Hard-Locked Split Layout, it ensures a seamless reading and drawing experience without UI overlaps.
-
-## ✨ Features
-
-* **Core Architecture:**
-    * **Hard-Locked Split Layout:** Uses CSS Grid to separate the screen into rigid zones (Tools, Viewport, Navigation), ensuring UI elements never obstruct the book content.
-    * **Dual UI Modes:** Automatically switches between **Desktop Mode** (Vertical sidebars) and **Mobile Mode** (Horizontal bars).
-* **Reading Engine:**
-    * **3D Page Flip:** Realistic physical page-turning effects.
-    * **Smart Rendering:** Auto-calculates dimensions for Single or Dual-page spreads.
-* **Advanced Ink Subsystem:**
-    * **Seamless Handover:** Draw continuous lines across the book spine (from left page to right page) without interruption.
-    * **Smart Tools:** Pen (Pressure simulated), Highlighter (Fixed opacity for visibility), and Real-time Eraser.
-    * **Shape Snap:** Draw a rough line and hold the cursor still for 600ms to automatically straighten it.
-    * **Advanced Undo:** Precise state management capturing canvas states before strokes are rendered.
-* **Zoom & View:**
-    * **Vector Zoom:** High-fidelity zooming without pixelation.
-    * **Pan Interaction:** Drag-and-drop panning when zoomed in (similar to map applications).
-    * **Spyglass:** A floating 5x magnifying lens with automatic cursor correction.
-* **Interface:**
-    * **Dark/Light Theme:** Toggle between deep space dark mode and clean light mode.
-    * **Responsive Design:** Fully adapts to any screen size.
-
-## 🛠️ Technology Stack
-
-* **HTML5/CSS3:** Semantic markup with CSS Grid Level 3 Layout.
-* **JavaScript (ES6+):** Pure Vanilla JS with Object-Oriented Architecture.
-* **PDF.js:** Rendering PDF documents into HTML5 Canvases.
-* **St.PageFlip:** Library for the 3D page-flipping physics.
-* **FontAwesome:** Scalable vector icons.
-* **JetBrains Mono & Inter:** Professional typography.
-
-## 🚀 How to Use
-
-1.  **Open the Application:** Open `index.html` in any modern web browser (Chrome, Edge, Safari).
-2.  **Upload PDF:** Click the upload box to select a PDF file from your device.
-3.  **Navigation:**
-    * Use the on-screen arrows or keyboard arrow keys (`←`, `→`) to flip pages.
-    * Toggle between **READ** and **STUDIO** (Draw) modes using the top-left switcher.
-4.  **Drawing (Studio Mode):**
-    * Switch to **STUDIO** mode.
-    * Select a tool (Pen, Highlighter, Eraser) from the left sidebar.
-    * Choose a color from the palette.
-    * **Shape Snap:** Draw a line and hold the mouse button down at the end for ~600ms to snap it straight.
-5.  **Zooming:**
-    * Use the `+` and `-` buttons in the right sidebar.
-    * **Pan:** When zoomed in (Read mode), click and drag the page to move around.
-    * **Reset:** Double-click anywhere on the background to reset zoom to 100%.
-6.  **Magnifier:** Click the search icon (`🔍`) to toggle the Spyglass lens.
-
-## 📦 Installation
-
-No installation is required. This is a client-side web application.
-
-1.  Clone or download the repository.
-2.  Ensure you have an internet connection (to load CDNs for PDF.js and PageFlip).
-3.  Open `index.html` in your browser.
-
-## 📝 License
-
-This project is created by **Dang Duc Dai**.
+**FlipArch** là một ứng dụng phi tập trung (dApp) kết hợp giữa trình đọc PDF tương tác và công nghệ Blockchain Stellar. Dự án cho phép các kiến trúc sư và sinh viên thiết kế không chỉ vẽ đồ họa hình học trên tài liệu mà còn có thể **xác thực quyền sở hữu trí tuệ** ngay trên chuỗi khối.
 
 ---
-*Note: This application relies on external CDN links for libraries. For offline use, you would need to download `pdf.js`, `pdf.worker.js`, and `page-flip.browser.js` locally.*
+
+## 📝 Thông tin dự án (Stellar Hackathon)
+
+* **TÊN DỰ ÁN:** FlipArch
+* **VẤN ĐỀ:** Các kiến trúc sư và sinh viên thiết kế hiện nay gặp khó khăn trong việc chứng minh quyền sở hữu đối với các bản vẽ nháp trên tài liệu PDF, dẫn đến rủi ro bị sao chép ý tưởng khi chia sẻ bản thảo.
+* **GIẢI PHÁP:** dApp tích hợp công nghệ Stellar để "đóng dấu" (timestamp) bản vẽ. Bằng cách lưu trữ mã băm (hash) của tài liệu kèm chữ ký số của tác giả lên Ledger của Stellar, người dùng có thể xác lập quyền tác giả vĩnh viễn và không thể chối bỏ.
+
+---
+
+## 🛠️ Tính năng Stellar sử dụng
+
+* **Soroban Smart Contracts:** Quản lý logic xác thực bản vẽ, lưu trữ mã Hash của tài liệu và thông tin tác giả.
+* **Custom Tokens:** Phát hành chứng chỉ số (Certificate Token) đại diện cho mỗi bản thiết kế đã được xác thực.
+* **Trustlines:** Đảm bảo tính an toàn khi chuyển giao quyền sở hữu bản vẽ giữa các bên (ví dụ: sinh viên và giảng viên).
+
+---
+
+## 👥 Người dùng mục tiêu
+* **Sinh viên kiến trúc:** Bảo vệ đồ án môn học trước khi nộp bài.
+* **Freelancers:** Gửi bản thảo cho khách hàng mà vẫn giữ được bằng chứng sở hữu gốc.
+* **Kỹ sư xây dựng:** Ghi chú và xác thực các thay đổi bản vẽ kỹ thuật trực tiếp tại công trường.
+
+---
+
+## 💎 Tính năng cốt lõi (MVP)
+**Giao dịch Duy nhất (The Single Transaction):**
+Thực thi hàm `notarize_design(file_hash)` trên Soroban Smart Contract. Giao dịch này sẽ ghi lại vĩnh viễn dấu thời gian (Timestamp) và địa chỉ ví của người tạo bản vẽ lên mạng lưới Stellar, tạo thành một bằng chứng pháp lý kỹ thuật số.
+
+---
+
+## ⚖️ Tại sao chọn Stellar?
+
+| Tiêu chí | Tài chính truyền thống | Ethereum / Khác | Stellar Network |
+| :--- | :--- | :--- | :--- |
+| **Chi phí** | Rất cao (Phí công chứng) | 5$ - 20$ (Gas fee) | **~0.00001$** |
+| **Tốc độ** | Vài ngày làm việc | 2 - 15 phút | **~5 giây** |
+| **Trải nghiệm** | Thủ tục giấy tờ phức tạp | Phức tạp cho người mới | **Mượt mà & Thân thiện** |
+
+---
+
+## 🖥️ Giao diện hệ điều hành (FlipOS V27)
+
+Dự án mô phỏng một hệ điều hành chuyên dụng với các công cụ:
+- **3D Page Flip:** Trải nghiệm đọc PDF như lật sách thật.
+- **Geometry Tools:** Vẽ khối 2D/3D (Cube, Cylinder, Pyramid) trực tiếp trên trang.
+- **System Apps:** Tích hợp máy tính (Calculator), kính lúp (Spyglass) và quản lý bộ nhớ IndexedDB.
+
+---
+
+## 🚀 Hướng dẫn khởi chạy
+
+1. **Clone Repo:** `git clone https://github.com/your-username/fliparch-stellar.git`
+2. **Mở index.html:** Chạy trực tiếp trên trình duyệt.
+3. **Connect Wallet:** Sử dụng tiện ích mở rộng **Freighter** để ký giao dịch xác thực bản vẽ.
+
+---
+*Developed for Stellar Workshop 2026 - Geometry Meets Blockchain.*
