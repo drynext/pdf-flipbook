@@ -1,6 +1,6 @@
-# FlipOS V31
+# FlipOS
 
-FlipOS V31 is a high-performance, web-based PDF visualization engine. It transforms static documents into an interactive 3D flipbook, integrated with a secure AI-powered studio for geometric drafting and intelligent data analysis.
+FlipOS is a high-performance, web-based PDF visualization engine. It transforms static documents into an interactive 3D flipbook, integrated with a secure AI-powered studio for geometric drafting and intelligent data analysis.
 
 ---
 
